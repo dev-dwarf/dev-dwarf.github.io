@@ -1,0 +1,92 @@
+/* colors */
+:root {
+    --purple:   #230C45;
+    --red:      #FF0059;
+    --white:    #FFFFF7;
+    --yellow:   #ffcf00;
+    --black:    #030A0D;
+    --green:    #004d57;
+    --blue:     #2CE8F5;
+    --grey:     #797366;
+    --bone:     #EFEFE0;
+}
+
+html {
+    --c1: var(--white);
+    --c2: var(--black);
+    --c3: var(--green);
+}
+
+.articles ul {
+  /* remove bullet points */
+ list-style: none;
+}
+
+img {
+    /* smaller */
+    width: 50%;
+    height:50%;
+    /* center */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    /* center */
+    width:100%;
+    text-align:center;
+    /* style */
+    color: var(--c3);
+    font-family: "Times New Roman", Times, serif;
+}
+
+li {
+    padding: 5px ;
+}
+
+body {
+    color: var(--c2);
+    background-color: var(--c1);
+    width: 50% !important;
+    margin: auto !important;
+    font-family: "Garamond", Garamond, sans-serif;
+    font-size: 1.25rem;
+}
+
+a {
+    color: var(--c2);
+    font-family: "Times New Roman", Times, serif !important;
+    text-align: center;
+    color: var(--c2);
+    text-decoration:none;
+}
+
+a.current {
+    color: var(--c3);
+    text-align: center;
+}
+
+a:hover {
+    color: var(--c3);
+}
+
+
+/* nav bar sections */
+nav {
+  display: block;
+  width: 100%;
+}
+.nav-left {
+  float:left;
+}
+.nav-right {
+  float:right;
+}
+
+/* mobile overrides */
+@media only screen and (max-width: 900px) {
+    body {
+      width: 90% !important;
+    }
+}

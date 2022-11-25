@@ -1,1 +1,23 @@
-Hello World!
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}" class = "light">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+          <!-- {{ page.title }} -->
+        </title>
+        <link rel="stylesheet" href={{ 'dwarf.css' | relative_url }}>
+        <script type="text/javascript"
+                src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+        </script>
+    </head>
+
+    <body>
+        <main class="page-content" aria-label="Content">
+            <div class="wrapper">
+              <!-- {{ content }} -->
+              Hello World!
+            </div>
+        </main>
+    </body>
+</html>

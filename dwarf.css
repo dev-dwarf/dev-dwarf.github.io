@@ -12,14 +12,16 @@
 }
 
 html {
-    --c1: var(--white);
-    --c2: var(--black);
-    --c3: var(--green);
+    --bg: var(--white);
+    --text: var(--black);
+    --highlight: var(--yellow);
+    --mark: var(--red);
+    --lowlight: var(--grey);
 }
 
 .articles ul {
-  /* remove bullet points */
- list-style: none;
+    /* remove bullet points */
+    list-style: none;
 }
 
 img {
@@ -37,8 +39,10 @@ h1, h2, h3, h4, h5, h6 {
     width:100%;
     text-align:center;
     /* style */
-    color: var(--c3);
-    font-family: "Times New Roman", Times, serif;
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--highlight);
+    font-family: "Georgia", Georgia, sans-serif;
 }
 
 li {
@@ -46,47 +50,68 @@ li {
 }
 
 body {
-    color: var(--c2);
-    background-color: var(--c1);
+    color: var(--text);
+    background-color: var(--bg);
     width: 50% !important;
     margin: auto !important;
-    font-family: "Garamond", Garamond, sans-serif;
+    font-family: "Times New Roman", Times, serif;
     font-size: 1.25rem;
 }
 
 a {
-    color: var(--c2);
-    font-family: "Times New Roman", Times, serif !important;
+    color: var(--text);
     text-align: center;
-    color: var(--c2);
+    color: var(--text);
     text-decoration:none;
+    text-decoration-color: var(--text);
+}
+
+a:visited {
+    color: var(--lowlight);
 }
 
 a.current {
-    color: var(--c3);
-    text-align: center;
+    color: var(--text) !important;
+    text-decoration: underline;
+    text-decoration-color: var(--highlight);
 }
 
 a:hover {
-    color: var(--c3);
+    color: var(--mark);
 }
 
+hr {
+    margin-left: auto;
+	margin-right: auto;
+	padding-top: 0.5em;
+	margin-bottom: 0.5em;
+	border: none;
+	border-bottom: 2px solid;
+	height: 1px;
+	color: var(--text);
+}
 
 /* nav bar sections */
 nav {
-  display: block;
-  width: 100%;
+    display: block;
+    width: 100%;
+    padding-bottom: 2em;
 }
 .nav-left {
-  float:left;
+    float:left;
 }
 .nav-right {
-  float:right;
+    display: inline-block;
+    float:right;
+}
+.nav-link {
+    text-align: right;
+    padding-left: 0.5em;
 }
 
 /* mobile overrides */
 @media only screen and (max-width: 900px) {
     body {
-      width: 90% !important;
+        width: 90% !important;
     }
 }

@@ -3,7 +3,7 @@
 struct Text {
     Text *next;
     
-    enum { /* Most nodes can contain any (inner) structure. Some need more: */
+    enum { 
         NIL = 0,
         
         BOLD,
@@ -13,7 +13,8 @@ struct Text {
         CODE_BLOCK,
         LINK,
         IMAGE,
-        BREAK,
+        BREAK,    
+        LIST_ITEM,
         TEXT,
     } type;
     b32 end;
@@ -24,18 +25,16 @@ struct Text {
 struct Block {
     /* Navigation */
     Block *next;
-    Block *child;
 
-    enum { /* Most nodes can contain any (inner) structure of text nodes. Some need more: */
+    enum { 
         NIL = 0,
 
-        HEADING, /* (num, inner, id) */
+        HEADING, 
         QUOTE,
-        ORD_LIST, /* (child[(num, inner), ...]) */
-        UN_LIST, /* (child[(inner), ...]) */
-        LIST_ITEM, /* (num, inner) */
-        CODE, /* (text) */
-        RULE, /* () */
+        ORD_LIST,
+        UN_LIST,
+        CODE, 
+        RULE, 
         PARAGRAPH,
     } type;
 

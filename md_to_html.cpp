@@ -35,12 +35,18 @@ Text* parse_text(Arena* arena, Text* text) {
         }                                                               \
     }
 
-    for (; curr->text.len > 0; pre = curr, curr = curr->next) {
+    for (; curr->next != 0; pre = curr, curr = curr->next) {
         str8 s = curr->text;
+        if (curr->type == Text::NIL) {
+            curr->type = Text::TEXT;
+        }
+        if (curr->type == Text::LIST_ITEM) {
+            continue;
+        }
         str8_iter(s) {
             if (ignore_next) {
+                PUSH_TEXT(Text::TEXT, i-1, 1);
                 ignore_next = false;
-                continue;
             } else if (s.str[i] == '*' && s.len > i+1 && s.str[i+1] == '*') {
                 /* bold */
                 PUSH_TEXT(Text::BOLD, i, 2);
@@ -78,17 +84,17 @@ Text* parse_text(Arena* arena, Text* text) {
                 if (TEST_FLAG(inside, TO_FLAG(Text::LINK))) {
                     PUSH_TEXT(Text::LINK, i, 1);
                 }
+                break;
             } else if (s.str[i] == '\\') {
                 ignore_next = true;
             }
         } /* end str8_iter */
-        if (s.len == 0 || s.len == 1 && s.str[0] == '\r') {
-            if (curr->next && curr->type == Text::NIL) {
-                curr->type = Text::BREAK;
-            } 
-        } else if (curr->type == Text::NIL) {
-            curr->type = Text::TEXT;
+        if ((s.str != 0 && s.len == 0) || (s.len == 1 && s.str[0] == '\r')) {
+            PUSH_TEXT(Text::BREAK, i-s.len, s.len);
+            curr = curr->next;
         }
+        ASSERT(curr->type != Text::NIL);
+        ASSERT(pre == &pre_filler || pre->type != Text::NIL);
     }
 
     if (root && root->type == Text::NIL) {
@@ -112,6 +118,8 @@ Block* parse(Arena *arena, str8 str) {
         
     u64 next_len = 0;
     b32 code_lock = false;
+
+    b32 in_un_list = false;
 
 #define PUSH_STR(str) { \
     end->text = str; \
@@ -169,21 +177,33 @@ Block* parse(Arena *arena, str8 str) {
             
             PUSH_STR(str8_skip(rem, next.id.len+1));
             PUSH_BLOCK();
-        }
-        else if (c == '>' && line.str[1] == ' ') {
+        } else if (c == '>' && line.str[1] == ' ') {
             BREAK_BLOCK_IF_NOT(Block::QUOTE);
             next.type = Block::QUOTE;
             PUSH_STR(str8_skip(line, 2));
-        }
-        else if (c >= '1' && c <= '9' && line.len > 2 && line.str[1] == '.' && line.str[2] == ' ') {
+        } else if (c >= '1' && c <= '9' && line.len > 2 && line.str[1] == '.' && line.str[2] == ' ') {
             BREAK_BLOCK_IF_NOT(Block::ORD_LIST);
-            /* TODO: lists */
-        }
-        else if (c == '-' && line.str[1] == ' ') {
+            next.type = Block::ORD_LIST;
+            end->type = Text::LIST_ITEM;
+            end->next = Arena_take_struct_zero(arena, Text);
+            end = end->next;
+            PUSH_STR(str8_skip(line, 2));
+            end->type = Text::LIST_ITEM;
+            end->next = Arena_take_struct_zero(arena, Text);
+            end->end = true;
+            end = end->next;
+        } else if ((c == '*' || c == '-') && (line.len > 1) && (line.str[1] == ' ')) {
             BREAK_BLOCK_IF_NOT(Block::UN_LIST);
-            /* TODO: lists */
-        }
-        else if (c == '-' && line.len > 2 && line.str[1] == '-' && line.str[2] == '-') {
+            next.type = Block::UN_LIST;
+            end->type = Text::LIST_ITEM;
+            end->next = Arena_take_struct_zero(arena, Text);
+            end = end->next;
+            PUSH_STR(str8_skip(line, 2));
+            end->type = Text::LIST_ITEM;
+            end->next = Arena_take_struct_zero(arena, Text);
+            end->end = true;
+            end = end->next;
+        } else if (c == '-' && line.len > 2 && line.str[1] == '-' && line.str[2] == '-') {
             PUSH_BLOCK();
             /* rule */
             next.type = Block::RULE;
@@ -272,7 +292,15 @@ Str8List render_text(Arena* arena, Text* root) {
             Str8List_add(arena, &out, str8_lit("'>"));
         } break;
         case Text::BREAK: {
-            Str8List_add(arena, &out, str8_lit("<br>\n"));
+            Str8List_add(arena, &out, str8_lit("<br>"));
+            Str8List_add(arena, &out, t->text);
+        } break;
+        case Text::LIST_ITEM: {
+            str8 s[2] = {
+                str8_lit("<li>"),
+                str8_lit("</li>\n")
+            };
+            Str8List_add(arena, &out, s[t->end]);
             Str8List_add(arena, &out, t->text);
         } break;
         case Text::TEXT: {
@@ -327,9 +355,16 @@ Str8List render(Arena* arena, Block* root) {
             Str8List_append(&out, render_text(arena, b->text));
             Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
         } break;
-        case Block::ORD_LIST: { NOTIMPLEMENTED() } break;
-        case Block::UN_LIST: { NOTIMPLEMENTED() } break;
-        case Block::LIST_ITEM: { NOTIMPLEMENTED() } break;
+        case Block::ORD_LIST: {
+            Str8List_add(arena, &out, str8_lit("<ol>\n"));
+            Str8List_append(&out, render_text(arena, b->text));
+            Str8List_add(arena, &out, str8_lit("\n</ol>\n"));
+        } break;
+        case Block::UN_LIST: {
+            Str8List_add(arena, &out, str8_lit("<ul>\n"));
+            Str8List_append(&out, render_text(arena, b->text));
+            Str8List_add(arena, &out, str8_lit("\n</ul>\n"));
+        } break;
         case Block::CODE:  {
             Str8List_add(arena, &out, str8_lit("<pre><code>"));
             Str8List_append(&out, render_text(arena, b->text));            
@@ -349,7 +384,6 @@ Str8List render(Arena* arena, Block* root) {
         }
     }
     return out;
-    // return Str8List_join(arena, out, str8_lit(""), str8_lit(""), str8_lit(""));
 }
 
 Str8List md_to_html(Arena *arena, str8 md) {

@@ -68,10 +68,15 @@ int main() {
         Str8List_add(a, &html, str8_lit("LCF/DD: "));
         Str8List_add(a, &html, filename);
         Str8List_add(a, &html, str8_lit("</title>"));
-        Str8List md = md_to_html(a, contents);
-        Str8List_append(&html, md);
-        Str8List_add(a, &html, FOOTER);
 
+        // if (str8_eq(filename, "projects.html")) {
+            // str8
+        // } else {
+            Str8List md = md_to_html(a, contents);
+            Str8List_append(&html, md);
+        // }
+        
+        Str8List_add(a, &html, FOOTER);
         PathRenameExtension(ffd.cFileName, ".html");
         HANDLE file = CreateFileA(ffd.cFileName, FILE_APPEND_DATA | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
 

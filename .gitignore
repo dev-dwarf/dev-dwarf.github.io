@@ -3,3 +3,4 @@
 *.ilk
 todo
 .vs/*
+*.exe

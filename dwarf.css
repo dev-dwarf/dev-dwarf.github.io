@@ -11,12 +11,23 @@
     --bone:     #EFEFE0;
 }
 
+::-moz-selection { /* Code for Firefox */
+    color: var(--black);
+    background:  var(--blue);
+}
+
+::selection {
+    color: var(--black);
+    background:  var(--blue);
+}
+
 html {
     --bg: var(--white);
     --text: var(--black);
     --highlight: var(--yellow);
+    --link: var(--blue);
     --mark: var(--red);
-    --lowlight: var(--grey);
+    --lowlight: var(--bone);
 }
 
 .articles ul {
@@ -34,15 +45,43 @@ img {
     margin-right: auto;
 }
 
+.project img {
+    border-color: var(--text);
+    border-width: 2px;
+    float: right;
+    width: 48%;
+    margin-left: 0px;
+    margin-right: 0px;
+
+}
+
 h1, h2, h3, h4, h5, h6 {
     /* center */
     width:100%;
-    text-align:center;
     /* style */
     color: var(--text);
     text-decoration: underline;
     text-decoration-color: var(--highlight);
-    font-family: "Georgia", Georgia, sans-serif;
+    font-family: "Times New Roman", serif;
+    font-weight: bold;
+}
+
+.project-text {
+    width: 48%;
+    float: left;
+    margin: 0.5em;
+}
+
+.project-image {
+    width: 50%
+    float: right;
+    margin: 0.5em;
+}
+
+.project:after {
+    content: "";
+    display: table;
+    clear: both;
 }
 
 li {
@@ -52,32 +91,44 @@ li {
 body {
     color: var(--text);
     background-color: var(--bg);
-    width: 50% !important;
+    width: 66% !important;
     margin: auto !important;
-    font-family: "Times New Roman", Times, serif;
-    font-size: 1.25rem;
+    font-family: "Consola", sans-serif;
+    line-height:1.25rem;
+}
+
+blockquote {
+    border-left: 0.5em solid var(--bone);
+    margin: 1em 1em;
+    padding: 1em 1em;
+    padding-right: 2em;
+}
+
+pre {
+    border-left: 0.5em solid var(--blue);
+    margin: 1em 1em;
+    padding: 0px 1em;
+}
+code {
+    font-family: 'Inconsolata', monospace;
+    font-weight: bold;
 }
 
 a {
     color: var(--text);
     text-align: center;
-    color: var(--text);
-    text-decoration:none;
-    text-decoration-color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--link);
 }
-
 a:visited {
-    color: var(--lowlight);
+    text-decoration-color: var(--lowlight);
 }
-
 a.current {
     color: var(--text) !important;
-    text-decoration: underline;
     text-decoration-color: var(--highlight);
 }
-
 a:hover {
-    color: var(--mark);
+    color: var(--link);
 }
 
 hr {
@@ -92,10 +143,15 @@ hr {
 }
 
 /* nav bar sections */
+.nav {
+    /* width: 50% !important;     */
+    /* position: fixed; */
+    /* bottom: 0; */
+}
 nav {
     display: block;
     width: 100%;
-    padding-bottom: 2em;
+    padding-bottom: 1em;
 }
 .nav-left {
     float:left;
@@ -110,7 +166,7 @@ nav {
 }
 
 /* mobile overrides */
-@media only screen and (max-width: 900px) {
+@media only screen and (max-width: 1000px) {
     body {
         width: 90% !important;
     }

@@ -86,7 +86,7 @@ int main() {
         u32 bytesWrittenTotal = 0;
         Str8Node* n = html.first;
         for (u64 i = 0; i < html.count; i++, n = n->next) {
-            toWrite = n->str.len;
+            toWrite = (u32) n->str.len;
             written = 0;
 
             while (written != toWrite) {

@@ -166,7 +166,7 @@ Block* parse(Arena *arena, str8 str) {
             BREAK_BLOCK_IF_NOT(Block::HEADING);
             
             /* heading */
-            u64 n = 1;
+            u32 n = 1;
             for (; n < line.len && line.str[n] == '#'; n++)
                 ;
             next.type = Block::HEADING;
@@ -329,7 +329,7 @@ Str8List render(Arena* arena, Block* root) {
         case Block::HEADING: {
             str8 h = str8_create_size(arena, 2);
             h.str[0] = 'h';
-            h.str[1] = '0' + b->num;
+            h.str[1] = '0' + (u8) b->num;
             Str8List_add(arena, &out, str8_lit("<"));
             Str8List_add(arena, &out, h);
             if (b->id.len > 0) {

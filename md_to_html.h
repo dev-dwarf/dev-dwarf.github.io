@@ -28,12 +28,12 @@ struct Block {
 
     enum { /* Most nodes can contain any (inner) structure of text nodes. Some need more: */
         NIL = 0,
-        
+
         HEADING, /* (num, inner, id) */
         QUOTE,
-        ORD_LIST, /* ([(num, inner), ...]) */
-        UN_LIST, /* ([(inner), ...]) */
-        LIST_ITEM,
+        ORD_LIST, /* (child[(num, inner), ...]) */
+        UN_LIST, /* (child[(inner), ...]) */
+        LIST_ITEM, /* (num, inner) */
         CODE, /* (text) */
         RULE, /* () */
         PARAGRAPH,

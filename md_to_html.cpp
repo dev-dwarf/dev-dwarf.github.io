@@ -1,6 +1,4 @@
 #include "../lcf/lcf.h"
-#include "../lcf/lcf.c"
-
 #include "md_to_html.h"
 
 /* Take list of Text nodes with undecided type, parse and return typed list */
@@ -43,28 +41,23 @@ Text* parse_text(Arena* arena, Text* text) {
             if (ignore_next) {
                 ignore_next = false;
                 continue;
-            }
-            else if (s.str[i] == '*' && s.len > i+1 && s.str[i+1] == '*') {
+            } else if (s.str[i] == '*' && s.len > i+1 && s.str[i+1] == '*') {
                 /* bold */
                 PUSH_TEXT(Text::BOLD, i, 2);
                 break;
-            }
-            else if (s.str[i] == '*') {
+            } else if (s.str[i] == '*') {
                 /* italic */
                 PUSH_TEXT(Text::ITALIC, i, 1);
                 break;
-            }
-            else if (s.str[i] == '~') {
+            } else if (s.str[i] == '~') {
                 /* strike */
                 PUSH_TEXT(Text::STRUCK, i, 1);
                 break;
-            }
-            else if (s.str[i] == '`') {
+            } else if (s.str[i] == '`') {
                 /* code */
                 PUSH_TEXT(Text::CODE_INLINE, i, 1);
                 break;
-            }
-            else if (s.str[i] == '@' && i+1 < s.len && s.str[i+1] == '(') {
+            } else if (s.str[i] == '@' && i+1 < s.len && s.str[i+1] == '(') {
                 /* link */
                 PUSH_TEXT(Text::LINK, i, 2);
                 curr = curr->next;
@@ -73,23 +66,26 @@ Text* parse_text(Arena* arena, Text* text) {
                 PUSH_TEXT(Text::TEXT, next_space, 1);
                 break;
             } else if (s.str[i] == '!' && i+1 < s.len && s.str[i+1] == '(') {
-                /* TODO handle image url and such */
+                /* image */
+                PUSH_TEXT(Text::IMAGE, i, 2);
+                curr = curr->next;
+                u64 next_space = str8_char_location(curr->text, ')');
+                ASSERT(next_space != LCF_STRING_NO_MATCH);
+                PUSH_TEXT(Text::TEXT, next_space, 1);
+                break;
             }
             else if (s.str[i] == ')') {
                 if (TEST_FLAG(inside, TO_FLAG(Text::LINK))) {
                     PUSH_TEXT(Text::LINK, i, 1);
                 }
-            }
-            else if (s.str[i] == '\\') {
+            } else if (s.str[i] == '\\') {
                 ignore_next = true;
             }
         } /* end str8_iter */
-        if (s.len == 0) {
-            if (curr->next) {
+        if (s.len == 0 || s.len == 1 && s.str[0] == '\r') {
+            if (curr->next && curr->type == Text::NIL) {
                 curr->type = Text::BREAK;
-            } else {
-                curr->type = Text::NIL;
-            }
+            } 
         } else if (curr->type == Text::NIL) {
             curr->type = Text::TEXT;
         }
@@ -139,7 +135,7 @@ Block* parse(Arena *arena, str8 str) {
     
     str8_iter_pop_line(str) {
         if (line.len == 0) {
-            if (next.type == Block::CODE) {
+            if (next.type == Block::CODE || next.type == Block::PARAGRAPH) {
                 PUSH_STR(line);
             } else {
                 BREAK_BLOCK_IF_NOT(Block::CODE);
@@ -270,10 +266,14 @@ Str8List render_text(Arena* arena, Text* root) {
             }
         } break;
         case Text::IMAGE: {
-            NOTIMPLEMENTED();
+            /* TODO alt text, styles, etc */
+            Str8List_add(arena, &out, str8_lit("<img src='"));
+            Str8List_add(arena, &out, t->text);
+            Str8List_add(arena, &out, str8_lit("'>"));
         } break;
         case Text::BREAK: {
             Str8List_add(arena, &out, str8_lit("<br>\n"));
+            Str8List_add(arena, &out, t->text);
         } break;
         case Text::TEXT: {
             Str8List_add(arena, &out, t->text);
@@ -288,8 +288,8 @@ Str8List render_text(Arena* arena, Text* root) {
     return out;
 }
 
-/* take fully parsed markdown and render as html tags, returning a string */
-str8 render(Arena* arena, Block* root) {
+/* take fully parsed markdown blocks and render as html tags */
+Str8List render(Arena* arena, Block* root) {
     Str8List out = {0};
     for (Block* b = root; b->type != Block::NIL; b = b->next) {
         /* TODO: add to out by going through blocks.
@@ -348,54 +348,10 @@ str8 render(Arena* arena, Block* root) {
             break;
         }
     }
-    return Str8List_join(arena, out, str8_lit(""), str8_lit(""), str8_lit(""));
+    return out;
+    // return Str8List_join(arena, out, str8_lit(""), str8_lit(""), str8_lit(""));
 }
 
-int main() {
-    Arena *a = Arena_create_default();
-
-    str8 md = str8_lit(
-        "###hello-world **Hello World**\n"
-        R"(# Nec regina dixi claustraque fragore naturaeque
-
-##center Numerum custodia nunc
-
-Lorem markdownum et ultra Harpalos fuit, est et blanda, enixa. Cara sive
-liquidas, facta causa ut *nescia* pontus, in? Meos funeribus? Cycno est coniuge 
-**mihi palmas festum** in nec.
-
-## Lapitheia missi populante et caede tale illo
-
-Propiore blandarum litore: occupat malo adunci captantia, domos, hostem neve
-amat, est quid tempora sacra. ~Altera enim, lacrimis floresque~ nostra fugiunt ore
-alios deque abiit suo: Cytoriaco submovit Arethusa caecisque. Quae freta colatur
-quemque iniqui, pallentemque tantum fuga tinguitur placet gravis, cum inminet
-meo troades? Una Achille? Paene egit non ramis victima etiamnum ponite aper
-fuere postquam mihi malo candore amoris: posse dabit facientia coniuge palmae.
-
-```
-b32 str8_has_prefix(str8 s, str8 prefix);
-b32 str8_has_postfix(str8 s, str8 postfix);
-b32 chr8_is_whitespace(chr8 c);
-b32 str8_contains_char(str8 s, chr8 c);
-b32 str8_contains_substring(str8 s, str8 sub);
-b32 str8_contains_delimiter(str8 s, str8 delims);
-#define LCF_STRING_NO_MATCH 0x8000000000000000
-u64 str8_char_location(str8 s, chr8 c);
-u64 str8_substring_location(str8 s, str8 sub);
-```
-
-##right Est fata Cinyran
-
-Vidit inachus, `cultros` et novem ad adsuetudine credas parentis mansit
-Mithridateisque annisque is pluma. Fulva famem enim Helopsque cornua fecit,
-redditus ire; adgrediar habet terribili dixit et humum.
-@(#hello-world ***back to top***) enjoy :)\n
-
-)"
-        );
-
-    Block* parsed = parse(a, md);
-    str8 html = render(a, parsed);
+Str8List md_to_html(Arena *arena, str8 md) {
+    return render(arena, parse(arena, md));
 }
-

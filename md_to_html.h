@@ -3,7 +3,7 @@
 struct Text {
     Text *next;
     
-    enum { 
+    enum Types { 
         NIL = 0,
         
         BOLD,
@@ -15,6 +15,7 @@ struct Text {
         IMAGE,
         BREAK,    
         LIST_ITEM,
+        EXPLAIN,
         TEXT,
     } type;
     b32 end;
@@ -35,11 +36,6 @@ struct Block {
         UN_LIST,
         CODE, 
         RULE,
-        /* TODO: something that provides additional info on
-           hover using a <span title='additional info'>content</span> tag
-
-           could look like ?('additional info' content)
-        */
         PARAGRAPH,
     } type;
 

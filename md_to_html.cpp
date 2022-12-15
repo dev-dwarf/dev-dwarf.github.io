@@ -10,15 +10,18 @@ Text* parse_text(Arena* arena, Text* text) {
     Text *pre = &pre_filler;
     b32 inside = 0;
 
+    Text::Types stack[32];
+    u32 stacki = 0;
+
     u32 sz1 = sizeof(Text);
 
 #define PUSH_TEXT(TYPE, END, SKIP) {                                    \
-        if (END == 0 &&                        \
-            curr->type == Text::TEXT) {    \
+        if (END == 0 &&                                                 \
+            curr->type == Text::TEXT) {                                 \
             curr->type = TYPE;                                          \
             curr->text = str8_skip(curr->text, (SKIP));                 \
             curr = pre; /* overwrite current node */                    \
-        } else { \
+        } else {                                                        \
             Text* temp = curr->next;                                    \
             curr->next = Arena_take_struct_zero(arena, Text);           \
             curr->next->type = TYPE;                                    \
@@ -31,7 +34,7 @@ Text* parse_text(Arena* arena, Text* text) {
         }                                                               \
         TOGGLE_FLAG(inside, TO_FLAG(TYPE));                             \
         REM_FLAG(inside, TO_FLAG(Text::TEXT));                          \
-        REM_FLAG(inside, TO_FLAG(Text::BREAK));                          \
+        REM_FLAG(inside, TO_FLAG(Text::BREAK));                         \
     }
 
     for (; curr->next != 0; pre = curr, curr = curr->next) {
@@ -51,50 +54,58 @@ Text* parse_text(Arena* arena, Text* text) {
             }
             continue;
         }
-       
+        chr8 w[3];
+        w[1] = s.str[0];
+        w[2] = (s.len > 1)? s.str[1] : 0;
         str8_iter(s) {
+            w[0] = w[1];
+            w[1] = w[2];
+            w[2] = (s.len > i+2)? s.str[i+2] : 0;
             if (ignore_next) {
                 PUSH_TEXT(Text::TEXT, i-1, 1);
                 ignore_next = false;
-            } else if (s.str[i] == '*' && s.len > i+1 && s.str[i+1] == '*') {
-                /* bold */
+            } else if (w[0] == '*' && w[1] == '*') {
                 PUSH_TEXT(Text::BOLD, i, 2);
                 break;
-            } else if (s.str[i] == '*') {
-                /* italic */
+            } else if (w[0] == '*') {
                 PUSH_TEXT(Text::ITALIC, i, 1);
                 break;
-            } else if (s.str[i] == '~') {
-                /* strike */
+            } else if (w[0] == '~') {
                 PUSH_TEXT(Text::STRUCK, i, 1);
                 break;
-            } else if (s.str[i] == '`') {
-                /* code */
+            } else if (w[0] == '`') {
                 PUSH_TEXT(Text::CODE_INLINE, i, 1);
                 break;
-            } else if (s.str[i] == '@' && i+1 < s.len && s.str[i+1] == '(') {
-                /* link */
+            } else if (w[0] == '@' && w[1] == '(') {
                 PUSH_TEXT(Text::LINK, i, 2);
                 curr = curr->next;
-                u64 next_space = str8_char_location(curr->text, ' ');
-                ASSERT(next_space != LCF_STRING_NO_MATCH);
-                PUSH_TEXT(Text::TEXT, next_space, 1);
+                u64 sentinel = str8_char_location(curr->text, ' ');
+                ASSERT(sentinel != LCF_STRING_NO_MATCH);
+                PUSH_TEXT(Text::TEXT, sentinel, 1);
+                stack[stacki++] = Text::LINK;
                 break;
-            } else if (s.str[i] == '!' && i+1 < s.len && s.str[i+1] == '(') {
-                /* image */
+            } else if (w[0] == '!' && w[1] == '(') {
                 PUSH_TEXT(Text::IMAGE, i, 2);
                 curr = curr->next;
-                u64 next_space = str8_char_location(curr->text, ')');
-                ASSERT(next_space != LCF_STRING_NO_MATCH);
-                PUSH_TEXT(Text::TEXT, next_space, 1);
+                u64 sentinel = str8_char_location(curr->text, ')');
+                ASSERT(sentinel != LCF_STRING_NO_MATCH);
+                PUSH_TEXT(Text::TEXT, sentinel, 1);
                 break;
-            }
-            else if (s.str[i] == ')') {
-                if (TEST_FLAG(inside, TO_FLAG(Text::LINK))) {
-                    PUSH_TEXT(Text::LINK, i, 1);
+            } else if (w[0] == '?' && w[1] == '(') {
+                PUSH_TEXT(Text::EXPLAIN, i, 2);
+                curr = curr->next;
+                u64 sentinel = str8_char_location(curr->text, ',');
+                ASSERT(sentinel != LCF_STRING_NO_MATCH);
+                PUSH_TEXT(Text::TEXT, sentinel, 2);
+                stack[stacki++] = Text::EXPLAIN;
+                break;
+            } else if (w[0] == ')') {
+                if (stacki > 0) {
+                    Text::Types t = stack[--stacki];
+                    PUSH_TEXT(t, i, 1);
                 }
                 break;
-            } else if (s.str[i] == '\\') {
+            } else if (w[0] == '\\') {
                 ignore_next = true;
             }
         } /* end str8_iter */
@@ -281,13 +292,23 @@ Str8List render_text(Arena* arena, Text* root) {
             Str8List_add(arena, &out, str8_NEWLINE);
         } break;
         case Text::LINK: {
-            if (t->end) {
-                Str8List_add(arena, &out, str8_lit("</a>"));
-                Str8List_add(arena, &out, t->text);
-            } else {
+            if (!t->end) {
                 Str8List_add(arena, &out, str8_lit("<a href='"));
                 Str8List_add(arena, &out, t->text);
                 Str8List_add(arena, &out, str8_lit("'>"));
+            } else {
+                Str8List_add(arena, &out, str8_lit("</a>"));
+                Str8List_add(arena, &out, t->text);
+            }
+        } break;
+        case Text::EXPLAIN: {
+            if (!t->end) {
+                Str8List_add(arena, &out, str8_lit("<abbr title='"));
+                Str8List_add(arena, &out, t->text);
+                Str8List_add(arena, &out, str8_lit("'>"));
+            } else {
+                Str8List_add(arena, &out, str8_lit("</abbr>"));
+                Str8List_add(arena, &out, t->text);
             }
         } break;
         case Text::IMAGE: {
@@ -314,6 +335,8 @@ Str8List render_text(Arena* arena, Text* root) {
                 Str8List_add(arena, &out, str8_NEWLINE);
             }
         } break;
+        default:
+            ASSERTM(0,"Forgot to add a case in render_text!");
         }
     }
     return out;

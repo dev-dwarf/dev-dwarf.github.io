@@ -307,8 +307,6 @@ Str8List render_text(Arena* arena, Text* root) {
             Str8List_add(arena, &out, t->text);
             if (prev->type == Text::TEXT) {
                 Str8List_add(arena, &out, str8_NEWLINE);
-            } else {
-                Str8List_add(arena, &out, str8_lit(" "));
             }
         } break;
         }

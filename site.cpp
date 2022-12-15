@@ -24,7 +24,7 @@ R"(
     <meta property="twitter:title" content="Stuffed Wombat" />
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://lcfd.dev/"}</script>
-    <link rel="stylesheet" href="dwarf.css">
+    <link rel="stylesheet" href="./dwarf.css">
     </head>
     <body>
     <div class="wrapper">
@@ -39,16 +39,18 @@ str8 FOOTER = str8_lit(R"(
     <div class="nav">
     <hr>
     <div class="nav-left">
-    <a class="nav-link-l" href="https://github.com/dev-dwarf">github</a>
-    <a class="nav-link-l" href="https://twitter.com/dev_dwarf">twitter</a>
-    <a class="nav-link-l" href="https://dev-dwarf.itch.io">games</a>
+    <nav id="nav-links">
+    <a class="nav-link-l" href="/index.html">home</a>
+    <a class="nav-link-l" href="/projects.html">projects</a>
+    <a class="nav-link-l" href="/writing.html">writing</a>
+    <a class="nav-link-l" href="/contact.html">contact</a>
+    </nav>
     </div>
     <div class="nav-right">
-    <nav id="nav-links">
-    <a class="nav-link-r" href="index.html">home</a>
-    <a class="nav-link-r" href="projects.html">projects</a>
-    <a class="nav-link-r" href="writing.html">writing</a>
-    <a class="nav-link-r" href="contact.html">contact</a>
+    <a class="nav-link-r" href="https://github.com/dev-dwarf">github</a>
+    <a class="nav-link-r" href="https://twitter.com/dev_dwarf">twitter</a>
+    <a class="nav-link-r" href="https://dev-dwarf.itch.io">games</a>
+    </div>
     <script>
 window.onload = function() { 
     var all_links = document.getElementById("nav-links").getElementsByTagName("a"),
@@ -61,8 +63,6 @@ window.onload = function() {
     }
 }    
     </script>
-    </nav>
-    <div/>
     </div>
     </html>)");
 
@@ -107,6 +107,9 @@ void add_header(Arena *a, Str8List *html, str8 filename) {
     Str8List_add(a, html, str8_lit("</title>"));
 }
 
+void add_back_button(Arena *a, Str8List *html) {
+}
+
 void add_md(Arena *a, Str8List *html, str8 filedata) {
     Str8List md = md_to_html(a, filedata);
     Str8List_append(html, md);
@@ -117,15 +120,10 @@ void add_title_list(Arena *a, Str8List *html, str8 search_dir) {
     str8 search_command = str8_concat(a, search_dir, str8_lit("*.md"));
     search_command = str8_concat(a, search_command, str8_lit("\0"));
     
-    WIN32_FIND_DATA ffd;                       
-    HANDLE find = INVALID_HANDLE_VALUE;        
-    find = FindFirstFile(search_command.str, &ffd);        
-    ASSERT(find != INVALID_HANDLE_VALUE);
-    do {                                       
+    FIND_ALL_FILES(search_command.str, {
         str8 filename = str8_from_cstring(ffd.cFileName);
         str8 filepath = str8_concat(a, search_dir, filename);
         str8 filedata = win32_load_entire_file(a, filepath);
-        ASSERT(filedata.str != 0);
         str8 line = str8_pop_at_first_delimiter(&filedata, str8_NEWLINE);
         line = str8_skip(line, 3);
         PathRenameExtension(ffd.cFileName, ".html");
@@ -140,37 +138,26 @@ void add_title_list(Arena *a, Str8List *html, str8 search_dir) {
         printf("\t");
         printf(ffd.cFileName);
         printf("\n");                                   
-    } while (FindNextFile(find, &ffd) != 0);    
-    FindClose(find); 
-    // FIND_ALL_FILES(search_dir, {
-    //         str8 filename = str8_from_cstring(ffd.cFileName);
-    //         str8 filedata = win32_load_entire_file(a, filename);
-    //         str8 line = str8_pop_at_first_delimiter(&filedata, str8_NEWLINE);
-    //         line = str8_skip(line, 3);
-    //         PathRenameExtension(ffd.cFileName, ".html");
-    //         filename.len += 2;
-    //         Str8List_add(a, html, str8_lit("<li><a href='"));
-    //         Str8List_add(a, html, filename);
-    //         Str8List_add(a, html, str8_lit(">"));
-    //         Str8List_add(a, html, line);
-    //         Str8List_add(a, html, str8_lit("</a></li>"));
-
-    //         printf("\t");
-    //         printf(ffd.cFileName);
-    //         printf("\n");
-    //     })
+        })
         Str8List_add(a, html, str8_lit("</ul>"));
 }
 
 int main() {
     Arena *a = Arena_create_default();
 
+    /* TODO: I realized links were messed up when deployed. Fixed, but now broken locally.
+       Seems like the only way to do it properly is local webserver. is their a good option?
+       can I make my own? God the web sucks.
+    */
+
     FIND_ALL_FILES(".\\*.md", {
             str8 filename = str8_from_cstring(ffd.cFileName);
             str8 filedata = win32_load_entire_file(a, filename);
-            // ASSERT(filedata.str != 0);
             PathRenameExtension(ffd.cFileName, ".html");
             filename.len += 2;
+
+            printf(ffd.cFileName);
+            printf("\n");
             
             Str8List html = {0};
             
@@ -188,12 +175,32 @@ int main() {
             
             win32_write_file(ffd.cFileName, html);
         
-            printf(ffd.cFileName);
-            printf("\n");
 
             Arena_reset_all(a);
         });
 
-    /* TODO: different loop for making the technical articles */
+    SetCurrentDirectory(".\\technical\\");
+    /* TODO: I hate everything about the filename/path handling in this code */
+        FIND_ALL_FILES(".\\*.md", {
+            str8 filename = str8_from_cstring(ffd.cFileName);
+            str8 filedata = win32_load_entire_file(a, filename);
+            PathRenameExtension(ffd.cFileName, ".html");
+            filename.len += 2;
+            
+            Str8List html = {0};
+            
+            add_header(a, &html, filename);
+            Str8List_add(a, &html, str8_lit("<br><a href='/writing.html'>back</a><hr>"));
+            add_md(a, &html, filedata);
+            Str8List_add(a, &html, str8_lit("<a href='/writing.html'>back</a>"));
+            Str8List_add(a, &html, FOOTER);
+
+            win32_write_file(filename.str, html);
+        
+            printf("%.*s", str8_PRINTF_ARGS(filename));
+            printf("\n");
+
+            Arena_reset_all(a);
+        });
 }
 

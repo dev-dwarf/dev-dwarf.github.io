@@ -1,5 +1,5 @@
 ##center Writing
 
-<!-- Subscribe to **@(/feed.xml RSS)**. -->
+Subscribe to **@(./feed.xml RSS)**.
 
 ### Technical Articles: 

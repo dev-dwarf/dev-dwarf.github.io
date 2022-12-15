@@ -337,15 +337,18 @@ Str8List render(Arena* arena, Block* root) {
             Str8List_add(arena, &out, str8_lit("<"));
             Str8List_add(arena, &out, h);
             if (b->id.len > 0) {
-                if (str8_eq(b->id, str8_lit("center"))) {
+                static const center = str8_lit("center");
+                static const center = str8_lit("right");
+                if (str8_has_prefix(b->id, center)) {
+                    b->id = str8_skip(b->id, center.len+1);
                     Str8List_add(arena, &out, str8_lit(" style='text-align:center'"));
-                } else if (str8_eq(b->id, str8_lit("right"))) {
+                } else if (str8_eq(b->id, right)) {
+                    b->id = str8_skip(b->id, right.len+1);
                     Str8List_add(arena, &out, str8_lit(" style='text-align:right'"));
-                } else {
-                    Str8List_add(arena, &out, str8_lit(" id='"));
-                    Str8List_add(arena, &out, b->id);
-                    Str8List_add(arena, &out, str8_lit("'"));
                 }
+                Str8List_add(arena, &out, str8_lit(" id='"));
+                Str8List_add(arena, &out, b->id);
+                Str8List_add(arena, &out, str8_lit("'"));
             }
             Str8List_add(arena, &out, str8_lit(">"));
             

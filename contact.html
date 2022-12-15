@@ -21,7 +21,7 @@
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 
-<title>LCF/DD: contact.ht</title><p>
+<title>LCF/DD: contact.html</title><p>
 <img src='dd.png'><br><br></p>
 <h2 style='text-align:center'>Contact Me </h2><p>
 Thanks for wanting to reach out! Here are the best ways to reach me in order of how often I check them: </p>
@@ -37,12 +37,29 @@ Thanks for wanting to reach out! Here are the best ways to reach me in order of 
     </body>
     <div class="nav">
     <hr>
+    <div class="nav-left">
+    <a class="nav-link-l" href="https://github.com/dev-dwarf">github</a>
+    <a class="nav-link-l" href="https://twitter.com/dev_dwarf">twitter</a>
+    <a class="nav-link-l" href="https://dev-dwarf.itch.io">games</a>
+    </div>
     <div class="nav-right">
-    <nav>
-    <a class="nav-link" href="index.html">home</a>
-    <a class="nav-link current" href="projects.html">projects</a>
-    <a class="nav-link" href="writing.html">writing</a>
-    <a class="nav-link" href="contact.html">contact</a>
+    <nav id="nav-links">
+    <a class="nav-link-r" href="index.html">home</a>
+    <a class="nav-link-r" href="projects.html">projects</a>
+    <a class="nav-link-r" href="writing.html">writing</a>
+    <a class="nav-link-r" href="contact.html">contact</a>
+    <script>
+window.onload = function() { 
+    var all_links = document.getElementById("nav-links").getElementsByTagName("a"),
+        i=0, len=all_links.length,
+        full_path = location.href.split('#')[0]; //Ignore hashes?
+    for(; i<len; i++) {
+        if(all_links[i].href.split("#")[0] == full_path) {
+            all_links[i].className += " current";
+        }
+    }
+}    
+    </script>
     </nav>
     <div/>
     </div>

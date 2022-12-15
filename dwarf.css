@@ -152,13 +152,19 @@ nav {
     padding-bottom: 1em;
 }
 .nav-left {
+    display: inline-block;
     float:left;
 }
+.nav-link-l {
+    text-align: left;
+    padding-right: 0.5em;
+}
+
 .nav-right {
     display: inline-block;
     float:right;
 }
-.nav-link {
+.nav-link-r {
     text-align: right;
     padding-left: 0.5em;
 }

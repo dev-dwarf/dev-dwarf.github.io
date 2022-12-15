@@ -2,7 +2,6 @@
 #include "../lcf/lcf.c"
 #include "md_to_html.cpp"
 
-
 #include <shlwapi.h>
 #pragma comment(lib, "Shlwapi")
 
@@ -190,9 +189,9 @@ int main() {
             Str8List html = {0};
             
             add_header(a, &html, filename);
-            Str8List_add(a, &html, str8_lit("<br><a href='/writing.html'>back</a><hr>"));
+            Str8List_add(a, &html, str8_lit("<br><a href='/writing.html#technical'>back</a><hr>"));
             add_md(a, &html, filedata);
-            Str8List_add(a, &html, str8_lit("<a href='/writing.html'>back</a>"));
+            Str8List_add(a, &html, str8_lit("<a href='/writing.html#technical'>back</a>"));
             Str8List_add(a, &html, FOOTER);
 
             win32_write_file(filename.str, html);

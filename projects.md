@@ -2,7 +2,7 @@
 
 <div class="project">
 <div class="project-image">
-@(https://dev-dwarf.itch.io/lianthus !(../dwarfdev/imgs/Lianthus.png))
+@(https://dev-dwarf.itch.io/lianthus !(/assets/Lianthus.png))
 </div>
 <div class="project-text">
 ### @(https://dev-dwarf.itch.io/lianthus Lianthus) (Sept. 2020)

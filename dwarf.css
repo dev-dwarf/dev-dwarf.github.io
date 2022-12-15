@@ -47,6 +47,7 @@ img {
 
 .project img {
     border: .25em solid var(--text);
+    border-radius: 25px;
     float: right;
     width: 48%;
     margin-left: 0px;

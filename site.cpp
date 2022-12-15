@@ -69,12 +69,8 @@ int main() {
         Str8List_add(a, &html, filename);
         Str8List_add(a, &html, str8_lit("</title>"));
 
-        // if (str8_eq(filename, "projects.html")) {
-            // str8
-        // } else {
-            Str8List md = md_to_html(a, contents);
-            Str8List_append(&html, md);
-        // }
+        Str8List md = md_to_html(a, contents);
+        Str8List_append(&html, md);
         
         Str8List_add(a, &html, FOOTER);
         PathRenameExtension(ffd.cFileName, ".html");
@@ -96,6 +92,10 @@ int main() {
             bytesWrittenTotal += written;
         }
         ASSERT(bytesWrittenTotal == html.total_len);
+
+        Arena_reset_all(a);
     } while (FindNextFile(find, &ffd) != 0);
+
+    FindClose(find);
 }
 

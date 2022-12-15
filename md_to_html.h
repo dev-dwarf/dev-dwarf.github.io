@@ -34,7 +34,12 @@ struct Block {
         ORD_LIST,
         UN_LIST,
         CODE, 
-        RULE, 
+        RULE,
+        /* TODO: something that provides additional info on
+           hover using a <span title='additional info'>content</span> tag
+
+           could look like ?('additional info' content)
+        */
         PARAGRAPH,
     } type;
 

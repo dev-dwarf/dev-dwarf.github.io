@@ -13,7 +13,7 @@ Text* parse_text(Arena* arena, Text* text) {
     u32 sz1 = sizeof(Text);
 
 #define PUSH_TEXT(TYPE, END, SKIP) {                                    \
-        if (END == 0 &&                                                 \
+        if (END == 0 &&                        \
             (curr->type == Text::TEXT || curr->type == Text::NIL)) {    \
             curr->type = TYPE;                                          \
             curr->text = str8_skip(curr->text, (SKIP));                 \
@@ -40,7 +40,8 @@ Text* parse_text(Arena* arena, Text* text) {
         if (curr->type == Text::NIL) {
             curr->type = Text::TEXT;
         }
-        if (curr->type == Text::LIST_ITEM) {
+        if ((curr->type == Text::LIST_ITEM)
+            || (curr->type == Text::BREAK)) {
             continue;
         }
         str8_iter(s) {
@@ -89,10 +90,6 @@ Text* parse_text(Arena* arena, Text* text) {
                 ignore_next = true;
             }
         } /* end str8_iter */
-        if ((s.str != 0 && s.len == 0) || (s.len == 1 && s.str[0] == '\r')) {
-            PUSH_TEXT(Text::BREAK, i-s.len, s.len);
-            curr = curr->next;
-        }
         ASSERT(curr->type != Text::NIL);
         ASSERT(pre == &pre_filler || pre->type != Text::NIL);
     }
@@ -121,10 +118,15 @@ Block* parse(Arena *arena, str8 str) {
 
     b32 in_un_list = false;
 
-#define PUSH_STR(str) { \
-    end->text = str; \
-    end->next = Arena_take_struct_zero(arena, Text);    \
-    end = end->next;                                    \
+#define PUSH_STR(str) {                                     \
+        end->text = str;                                    \
+        end->next = Arena_take_struct_zero(arena, Text);    \
+        end = end->next;                                    \
+}
+
+#define PUSH_BREAK() {            \
+        end->type = Text::BREAK; \
+        PUSH_STR(str8_EMPTY);    \
 }
 
 #define PUSH_BLOCK() if (next.type != Block::NIL) {     \
@@ -139,14 +141,18 @@ Block* parse(Arena *arena, str8 str) {
 #define BREAK_BLOCK_IF_NOT(TYPE) {                      \
     if (next.type != TYPE) {                            \
         PUSH_BLOCK();                                   \
-    }}
+    } \
+}
+
     
     str8_iter_pop_line(str) {
+        /* Remove windows newline encoding (\r\n) */
+        line = str8_trim_postfix(line, str8_lit("\r"));
         if (line.len == 0) {
             if (next.type == Block::CODE || next.type == Block::PARAGRAPH) {
-                PUSH_STR(line);
+                PUSH_BREAK();
             } else {
-                BREAK_BLOCK_IF_NOT(Block::CODE);
+                PUSH_BLOCK();
             }
             continue;
         }

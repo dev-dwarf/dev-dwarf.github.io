@@ -30,6 +30,10 @@ html {
     --lowlight: var(--bone);
 }
 
+p {
+    padding-bottom: 0px;
+}
+
 .articles ul {
     /* remove bullet points */
     list-style: none;
@@ -37,8 +41,8 @@ html {
 
 img {
     /* smaller */
-    width: 50%;
-    height:50%;
+    /* width: 50%; */
+    /* height:50%; */
     /* center */
     display: block;
     margin-left: auto;
@@ -46,20 +50,20 @@ img {
 }
 
 .project img {
+    width: 100%;
     border: .25em solid var(--text);
-    border-radius: 25px;
+    border-radius: .15em;
     float: right;
-    width: 48%;
-    margin-left: 0px;
-    margin-right: 0px;
 }
+
 
 h1, h2, h3, h4, h5, h6 {
     /* center */
     width:100%;
     /* style */
     color: var(--text);
-    text-decoration: underline;
+    text-decoration: underline 0.2em;
+    text-underline-offset: 0.3em;
     text-decoration-color: var(--highlight);
     font-family: "Times New Roman", serif;
     font-weight: bold;
@@ -72,9 +76,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .project-image {
-    width: 47%
+    width: 47%;
     float: right;
-    margin: 1%;
+    margin: 1% auto;
 }
 
 .project:after {
@@ -116,18 +120,31 @@ code {
 a {
     color: var(--text);
     text-align: center;
-    text-decoration: underline;
-    text-decoration-color: var(--link);
+    text-decoration: underline 0.2em;
+    text-decoration-color: var(--link) !important;
+    text-underline-offset: 0.3em;
 }
 a:visited {
-    text-decoration-color: var(--lowlight);
+    text-decoration-color: var(--lowlight) !important;
 }
 a.current {
     color: var(--text) !important;
-    text-decoration-color: var(--highlight);
+    text-decoration-color: var(--highlight) !important;
 }
 a:hover {
-    color: var(--link);
+    color: var(--link) !important;
+    text-decoration-color: var(--link) !important;
+}
+a img {
+    border-color: var(--text) !important;
+    border-bottom-color: var(--link) !important;
+}
+a:visited img {
+    border-color: var(--text) !important;
+    border-bottom-color: var(--lowlight) !important;
+}
+a:hover img {
+    border-color: var(--link) !important;
 }
 
 hr {
@@ -182,7 +199,7 @@ nav {
 
     .project img {
         float: left;
-        width: 60%;
+        width: 100%;
     }
     
     body {

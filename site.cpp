@@ -130,6 +130,8 @@ void add_title_list(Arena *a, Str8List *html, str8 search_dir) {
         Str8List_add(a, html, str8_lit("<li><a href='"));
         Str8List_add(a, html, str8_copy(a, search_dir));
         Str8List_add(a, html, str8_copy(a, filename));
+        Str8List_add(a, html, str8_lit("' id='"));
+        Str8List_add(a, html, str8_copy(a, filename));
         Str8List_add(a, html, str8_lit("'>"));
         Str8List_add(a, html, line);
         Str8List_add(a, html, str8_lit("</a></li>"));
@@ -143,6 +145,10 @@ void add_title_list(Arena *a, Str8List *html, str8 search_dir) {
 
 int main() {
     Arena *a = Arena_create_default();
+
+    /* TODO: leave this running, whenever any of the files change update them automatically */
+
+    /* TODO: organize project folder a bit better. */
 
     /* TODO: I realized links were messed up when deployed. Fixed, but now broken locally.
        Seems like the only way to do it properly is local webserver. is their a good option?

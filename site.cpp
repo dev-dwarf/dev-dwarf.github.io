@@ -150,11 +150,6 @@ int main() {
 
     /* TODO: organize project folder a bit better. */
 
-    /* TODO: I realized links were messed up when deployed. Fixed, but now broken locally.
-       Seems like the only way to do it properly is local webserver. is their a good option?
-       can I make my own? God the web sucks.
-    */
-
     FIND_ALL_FILES(".\\*.md", {
             str8 filename = str8_from_cstring(ffd.cFileName);
             str8 filedata = win32_load_entire_file(a, filename);

@@ -14,11 +14,11 @@ Text* parse_text(Arena* arena, Text* text) {
 
 #define PUSH_TEXT(TYPE, END, SKIP) {                                    \
         if (END == 0 &&                        \
-            (curr->type == Text::TEXT || curr->type == Text::NIL)) {    \
+            curr->type == Text::TEXT) {    \
             curr->type = TYPE;                                          \
             curr->text = str8_skip(curr->text, (SKIP));                 \
             curr = pre; /* overwrite current node */                    \
-        } else {                                                        \
+        } else { \
             Text* temp = curr->next;                                    \
             curr->next = Arena_take_struct_zero(arena, Text);           \
             curr->next->type = TYPE;                                    \
@@ -30,20 +30,28 @@ Text* parse_text(Arena* arena, Text* text) {
             curr->next->end = true;                                     \
         }                                                               \
         TOGGLE_FLAG(inside, TO_FLAG(TYPE));                             \
-        if (TYPE != Text::TEXT) {                                       \
-            REM_FLAG(inside, TO_FLAG(Text::TEXT));                      \
-        }                                                               \
+        REM_FLAG(inside, TO_FLAG(Text::TEXT));                          \
+        REM_FLAG(inside, TO_FLAG(Text::BREAK));                          \
     }
 
     for (; curr->next != 0; pre = curr, curr = curr->next) {
         str8 s = curr->text;
+        if ((curr->type == Text::LIST_ITEM)
+             || (curr->type == Text::BREAK)) {
+            continue;
+        }
         if (curr->type == Text::NIL) {
             curr->type = Text::TEXT;
         }
-        if ((curr->type == Text::LIST_ITEM)
-            || (curr->type == Text::BREAK)) {
+        if (s.len == 0) {
+            if (curr->type == Text::TEXT) {
+                curr->type = Text::BREAK;
+            } else {
+                PUSH_TEXT(Text::BREAK, 0, 1);
+            }
             continue;
         }
+       
         str8_iter(s) {
             if (ignore_next) {
                 PUSH_TEXT(Text::TEXT, i-1, 1);
@@ -124,11 +132,6 @@ Block* parse(Arena *arena, str8 str) {
         end = end->next;                                    \
 }
 
-#define PUSH_BREAK() {            \
-        end->type = Text::BREAK; \
-        PUSH_STR(str8_EMPTY);    \
-}
-
 #define PUSH_BLOCK() if (next.type != Block::NIL) {     \
     *curr = next;                                       \
     curr->next = Arena_take_struct_zero(arena, Block);  \
@@ -149,9 +152,8 @@ Block* parse(Arena *arena, str8 str) {
         /* Remove windows newline encoding (\r\n) */
         line = str8_trim_postfix(line, str8_lit("\r"));
         if (line.len == 0) {
-            if (next.type == Block::CODE || next.type == Block::PARAGRAPH) {
-                PUSH_BREAK();
-            } else {
+            PUSH_STR(line);
+            if (!(next.type == Block::CODE || next.type == Block::PARAGRAPH)) {
                 PUSH_BLOCK();
             }
             continue;
@@ -171,7 +173,6 @@ Block* parse(Arena *arena, str8 str) {
         } else if (c == '#') {
             BREAK_BLOCK_IF_NOT(Block::HEADING);
             
-            /* heading */
             u32 n = 1;
             for (; n < line.len && line.str[n] == '#'; n++)
                 ;
@@ -211,11 +212,9 @@ Block* parse(Arena *arena, str8 str) {
             end = end->next;
         } else if (c == '-' && line.len > 2 && line.str[1] == '-' && line.str[2] == '-') {
             PUSH_BLOCK();
-            /* rule */
             next.type = Block::RULE;
             PUSH_BLOCK();
         } else {
-            /* add text */
             if (next.type != Block::PARAGRAPH && next.type != Block::CODE) {
                 PUSH_BLOCK();
                 next.type = Block::PARAGRAPH;
@@ -324,11 +323,6 @@ Str8List render_text(Arena* arena, Text* root) {
 Str8List render(Arena* arena, Block* root) {
     Str8List out = {0};
     for (Block* b = root; b->type != Block::NIL; b = b->next) {
-        /* TODO: add to out by going through blocks.
-           might need a render_text proc as well.
-           should be able to just put some html tags, and then also paste in whatever
-           text has already been parsed. */
-
         switch (b->type) {
         case Block::HEADING: {
             str8 h = str8_create_size(arena, 2);
@@ -337,8 +331,8 @@ Str8List render(Arena* arena, Block* root) {
             Str8List_add(arena, &out, str8_lit("<"));
             Str8List_add(arena, &out, h);
             if (b->id.len > 0) {
-                static const center = str8_lit("center");
-                static const center = str8_lit("right");
+                static const str8 center = str8_lit("center");
+                static const str8 right = str8_lit("right");
                 if (str8_has_prefix(b->id, center)) {
                     b->id = str8_skip(b->id, center.len+1);
                     Str8List_add(arena, &out, str8_lit(" style='text-align:center'"));

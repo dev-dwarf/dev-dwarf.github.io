@@ -1,5 +1,5 @@
-#include "../lcf/lcf.h"
-#include "../lcf/lcf.c"
+#include "../../lcf/lcf.h"
+#include "../../lcf/lcf.c"
 #include "md_to_html.cpp"
 
 #include <shlwapi.h>
@@ -146,15 +146,22 @@ void add_title_list(Arena *a, Str8List *html, str8 search_dir) {
 int main() {
     Arena *a = Arena_create_default();
 
+    SetCurrentDirectory(".\\deploy\\");
+    str8 output_dir;
+    chr8 output_dir_str[256];
+    output_dir.str = output_dir_str;
+    output_dir.len = GetCurrentDirectory(256, output_dir_str);
+    output_dir.str[output_dir.len++] = '\\';
+    SetCurrentDirectory("..");
     /* TODO: leave this running, whenever any of the files change update them automatically */
-
+    /* TODO: I hate everything about the filename/path handling in this code */
     /* TODO: organize project folder a bit better. */
-
+    SetCurrentDirectory(".\\src\\");
     FIND_ALL_FILES(".\\*.md", {
             str8 filename = str8_from_cstring(ffd.cFileName);
             str8 filedata = win32_load_entire_file(a, filename);
             PathRenameExtension(ffd.cFileName, ".html");
-            filename.len += 2;
+            filename.len += 3;
 
             printf(ffd.cFileName);
             printf("\n");
@@ -167,25 +174,25 @@ int main() {
 
             /* TODO: remove this somehow if possible, would like to specify this
                from writing.md not here */
-            if (str8_eq(filename, str8_lit("writing.html"))) {
+            if (str8_eq(filename, str8_lit("writing.html\0"))) {
                 add_title_list(a, &html, str8_lit(".\\technical\\"));
             }
             
             Str8List_add(a, &html, FOOTER);
-            
-            win32_write_file(ffd.cFileName, html);
-        
+
+            str8 output_filename = str8_concat(a, output_dir, filename);
+            output_filename = str8_concat(a, output_filename, str8_lit("\0"));
+            win32_write_file(output_filename.str, html);
 
             Arena_reset_all(a);
         });
 
     SetCurrentDirectory(".\\technical\\");
-    /* TODO: I hate everything about the filename/path handling in this code */
         FIND_ALL_FILES(".\\*.md", {
             str8 filename = str8_from_cstring(ffd.cFileName);
             str8 filedata = win32_load_entire_file(a, filename);
             PathRenameExtension(ffd.cFileName, ".html");
-            filename.len += 2;
+            filename.len += 3;
             
             Str8List html = {0};
             
@@ -195,7 +202,10 @@ int main() {
             Str8List_add(a, &html, str8_lit("<a href='/writing.html#technical'>back</a>"));
             Str8List_add(a, &html, FOOTER);
 
-            win32_write_file(filename.str, html);
+            str8 output_filename = str8_concat(a, output_dir, str8_lit("technical\\"));
+            output_filename = str8_concat(a, output_filename, filename);
+            output_filename = str8_concat(a, output_filename, str8_lit("\0"));
+            win32_write_file(output_filename.str, html);
         
             printf("%.*s", str8_PRINTF_ARGS(filename));
             printf("\n");

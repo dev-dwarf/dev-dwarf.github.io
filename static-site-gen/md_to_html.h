@@ -1,4 +1,4 @@
-#include "../lcf/lcf.h"
+#include "../../lcf/lcf.h"
 
 struct Text {
     Text *next;

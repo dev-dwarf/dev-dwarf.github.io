@@ -1,4 +1,4 @@
-!(dd.png)
+!(/assets/dd.png)
 
 ##center Logan Forman @(https://www.twitter.com/dev_dwarf @dev dwarf)
 

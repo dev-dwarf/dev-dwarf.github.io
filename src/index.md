@@ -1,7 +1,6 @@
 !(/assets/dd.png)
 
 ##center Logan Forman @(https://www.twitter.com/dev_dwarf @dev dwarf)
-
 Welcome to my portfolio site! You can find my 
 @(assets/resume.pdf general resume), 
 @(projects.html project portfolio), and some 

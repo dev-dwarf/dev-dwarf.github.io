@@ -30,10 +30,6 @@ html {
     --lowlight: var(--bone);
 }
 
-p {
-    padding-bottom: 0px;
-}
-
 .articles ul {
     /* remove bullet points */
     list-style: none;
@@ -58,8 +54,8 @@ img {
 
 
 h1, h2, h3, h4, h5, h6 {
-    /* center */
     width:100%;
+    line-height: 2.0rem;
     /* style */
     color: var(--text);
     text-decoration: underline 0.2em;

@@ -1,5 +1,6 @@
 #include "../../lcf/lcf.h"
 #include "../../lcf/lcf.c"
+#include "site.h"
 #include "md_to_html.cpp"
 
 #define MAX_FILEPATH 512
@@ -10,8 +11,8 @@ global Str8Node src = {0, str8_lit("src")};
 global Str8Node deploy = {0, str8_lit("deploy")};
 global Str8Node technical = {0, str8_lit("technical")};
 global Str8Node wildcard = {0, str8_lit("*.md")};
-global str8 filename_storage;
 global Str8Node filename;
+global PageList allPages = {0};
 
 str8 HEADER = str8_lit(
 R"(
@@ -95,16 +96,6 @@ void win32_write_file(chr8* filepath, Str8List html) {
     CloseHandle(file);
 }
 
-void fileext_md_to_html(str8 *filepath) {
-    s64 len_start = filepath->len;
-    *filepath = str8_cut(*filepath, 2);
-    str8 html = str8_lit("html");
-    memcpy(filepath->str+filepath->len-1, html.str, html.len);
-    filepath->len += html.len;
-    dir.total_len += filepath->len - len_start;
-    ASSERT(filepath->len < MAX_FILEPATH);
-}
-
 void switch_to(Str8Node *new_folder_node) {
     Str8Node *cur_folder_node = dir.first->next;
     if (cur_folder_node != new_folder_node) {
@@ -119,127 +110,159 @@ void switch_to(Str8Node *new_folder_node) {
     }
 }
 
-void check_dir_length() {
-    u64 actual_len = 0;
-    for (Str8Node *n = dir.first; n != 0; n = n->next) {
-        actual_len += n->str.len;
+str8 build_dir(Arena *arena) {
+    return Str8List_join(arena, dir, str8_lit(""), str8_lit("\\"), str8_lit("\0"));
+}
+
+PageList get_pages_in_dir(Arena *arena, Page::Types type) {
+    PageList dirPages = {0};
+    
+    union {
+        FILETIME ft;
+        u64 u;
+    } giveMeTheBits;
+
+    HANDLE find = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATA ffd = {0};
+    ARENA_SESSION(arena) { /* Compose search string */
+        switch_to(&src);
+        Str8List_add_node(&dir, &wildcard);
+        str8 search = build_dir(arena);
+        find = FindFirstFile(search.str, &ffd);
+        ASSERT(find != INVALID_HANDLE_VALUE);
+        Str8List_pop_node(&dir);
     }
-    ASSERT(actual_len == dir.total_len);
-}
 
-void add_header(Arena *a, Str8List *html, str8 filepath) {
-    Str8List_add(a, html, HEADER);
-    Str8List_add(a, html, str8_lit("<title>"));
-    Str8List_add(a, html, str8_lit("LCF/DD: "));
-    Str8List_add(a, html, filepath);
-    Str8List_add(a, html, str8_lit("</title>"));
-}
-
-void add_md(Arena *a, Str8List *html, str8 filedata) {
-    Str8List md = md_to_html(a, filedata);
-    Str8List_append(html, md);
-}
-
-str8 build_dir(Arena *a) {
-    return Str8List_join(a, dir, str8_lit(""), str8_lit("\\"), str8_lit("\0"));
-}
-
-void add_title_list(Arena *a, Str8List *html) {
-    Str8List_add(a, html, str8_lit("<ul>"));
-        {
-        HANDLE find = INVALID_HANDLE_VALUE;
-        WIN32_FIND_DATA ffd = {0};
-        ARENA_SESSION(a) { /* Compose search string */
-            Str8List_add_node(&dir, &wildcard);
-            check_dir_length();
-            str8 search = build_dir(a);
-            find = FindFirstFile(search.str, &ffd);
-            ASSERT(find != INVALID_HANDLE_VALUE);
-            Str8List_pop_node(&dir);
-            check_dir_length();
+    str8 base_href;
+    {
+        Str8List href = dir;
+        href.count -= 2;
+        href.total_len -= href.first->str.len;
+        href.first = href.first->next;
+        href.total_len -= href.first->str.len;
+        href.first = href.first->next;
+        if (href.total_len == 0) {
+            base_href = str8_lit("/");
+        } else {
+            base_href = Str8List_join(arena, href, str8_lit("/"), str8_lit("/"), str8_lit("/"));
         }
-        do {
-            MemoryZero(filename.str.str, filename.str.len);
-            filename.str = str8_from_cstring_custom(filename_storage, ffd.cFileName);
-            Str8List_add_node(&dir, &filename);
-            check_dir_length();
-            printf("\n\t%.*s ", str8_PRINTF_ARGS(filename.str));
-            switch_to(&src);
-            check_dir_length();
-            str8 input_path = build_dir(a);
-            str8 filedata = win32_load_entire_file(a, input_path);
-            fileext_md_to_html(&filename.str);
-
-            str8 line = str8_pop_at_first_delimiter(&filedata, str8_NEWLINE);
-            line = str8_skip(line, 3);
-
-            switch_to(&deploy);
-            check_dir_length();
-            Str8List end = dir;
-            end.count -= 2;
-            end.total_len -= end.first->str.len;
-            end.first = end.first->next;
-            end.total_len -= end.first->str.len;
-            end.first = end.first->next;
-            str8 output_href = Str8List_join(a, end, str8_lit("/"), str8_lit("/"), str8_lit(""));
-            Str8List_add(a, html, str8_lit("<li><a href='"));
-            Str8List_add(a, html, str8_cut(output_href, 1));
-            Str8List_add(a, html, str8_lit("' id='"));
-            Str8List_add(a, html, str8_copy(a, filename.str));
-            Str8List_add(a, html, str8_lit("'>"));
-            Str8List_add(a, html, line);
-            Str8List_add(a, html, str8_lit("</a></li>"));
-            
-            Str8List_pop_node(&dir); /* pop filename */
-            check_dir_length();
-        } while(FindNextFile(find, &ffd) != 0);
-        FindClose(find);
     }
-    Str8List_add(a, html, str8_lit("</ul>"));
+    
+    do {
+        Page *next = Arena_take_struct_zero(arena, Page);
+        next->filename = str8_copy_cstring(arena, ffd.cFileName);
+        next->base_href = base_href;
+        giveMeTheBits.ft = ffd.ftCreationTime;
+        next->created_time = giveMeTheBits.u;
+        giveMeTheBits.ft = ffd.ftLastWriteTime;
+        next->modified_time = giveMeTheBits.u;
+        next->type = type;
 
+        Page *curr = dirPages.first, *pre = curr;
+        if (curr == 0) {
+            dirPages.first = next;
+            dirPages.last = next;
+        } else {
+            for (; curr != 0; pre = curr, curr = curr->next) {
+                if (next->created_time > curr->created_time) {
+                    if (pre == curr) {
+                        dirPages.first = next;
+                    } else {
+                        pre->next = next;
+                    }
+                    next->next = curr;
+                    break;
+                }
+            }
+            if (curr == 0) {
+                ASSERT(pre == dirPages.last);
+                pre->next = next;
+                dirPages.last = next;
+            }
+        }
+        dirPages.count++;
+    } while(FindNextFile(find, &ffd) != 0);
+    FindClose(find);
+    
+    return dirPages;
 }
 
-#define BUILD_HTML_FUNCTION(name) Str8List name(Arena *a, str8 filedata)
-
-BUILD_HTML_FUNCTION(build_html_standard) {
-    Str8List html = {0};
-    add_header(a, &html, str8_cut(filename.str, 5)); /* cut ".html" */
-    add_md(a, &html, filedata);
-
-    /* TODO: remove this somehow if possible, would like to specify this
-       from writing.md not here */
-    if (str8_has_prefix(filename.str, str8_lit("writing.html"))) {
-        check_dir_length();
-        str8 filename_copy = str8_copy(a, filename.str);
-        ASSERT(dir.last == &filename);
-        Str8List_pop_node(&dir);
+void update_page(Arena *longa, Arena *tempa, Page *page) {
+    if (page->type == Page::ARTICLE) {
         Str8List_add_node(&dir, &technical);
-        add_title_list(a, &html);
-        Str8List_pop_node(&dir);
-        MemoryZero(filename.str.str, filename.str.len);
-        str8_copy_custom(filename.str.str, filename_copy);
-        Str8List_add_node(&dir, &filename);
-        check_dir_length();
     }
-            
-    Str8List_add(a, &html, FOOTER);
-    return html;
-}
+        
+    filename.str = page->filename;
+    Str8List_add_node(&dir, &filename);
+    switch_to(&src);
+    page->content = win32_load_entire_file(tempa, build_dir(tempa));
+        
+    if (page->type == Page::ARTICLE) {
+        str8 dummy = page->content;
+        str8 first_line = str8_pop_at_first_delimiter(&dummy, str8_NEWLINE);
+        page->title = str8_copy(longa, str8_cut(str8_skip(first_line, 3), 1));
+    }  else {
+        page->title = str8_cut(page->filename, 4);
+    }
+        
+    printf("%.*s \"%.*s\" ", str8_PRINTF_ARGS(filename.str), str8_PRINTF_ARGS(page->title));
 
-BUILD_HTML_FUNCTION(build_html_article) {
+    Str8List_pop_node(&dir);
+
+    filename.str = str8_concat(tempa, str8_cut(page->filename, 3), str8_lit("html\0"));
+    Str8List_add_node(&dir, &filename);
+
     Str8List html = {0};
-    add_header(a, &html, str8_cut(filename.str, 5)); /* cut ".html" */
+    Str8List_add(tempa, &html, HEADER);
+    Str8List_add(tempa, &html, str8_lit("<title>"));
+    Str8List_add(tempa, &html, str8_lit("LCF/DD: "));
+    Str8List_add(tempa, &html, page->title);
+    Str8List_add(tempa, &html, str8_lit("</title>"));
 
-    Str8List_add(a, &html, str8_lit("<br><a href='/writing.html#technical'>back</a><hr>"));
-    add_md(a, &html, filedata);
-    Str8List_add(a, &html, str8_lit("<a href='/writing.html#technical'>back</a>"));
-    Str8List_add(a, &html, FOOTER);
+    if (page->type == Page::ARTICLE) {
+        Str8List_add(tempa, &html, str8_lit("<br><a href='/writing.html#technical'>back</a><hr>"));
+    }
 
-    return html;
+    Str8List md = md_to_html(tempa, page->content);
+    Str8List_append(&html, md);
+        
+    if (page->type == Page::ARTICLE) {
+        Str8List_add(tempa, &html, str8_lit("<a href='/writing.html#technical'>back</a>"));
+    }
+
+    if (page->type == Page::INDEX) {
+        Str8List_add(tempa, &html, str8_lit("<ul>"));
+        for (Page *link = allPages.first; link != 0; link = link->next) {
+            if (link->type == Page::ARTICLE) {
+                Str8List_add(tempa, &html, str8_lit("<li><a href='"));
+                Str8List_add(tempa, &html, link->base_href);
+                Str8List_add(tempa, &html, str8_cut(link->filename,3));
+                Str8List_add(tempa, &html, str8_lit("html' id='"));
+                Str8List_add(tempa, &html, link->filename);
+                Str8List_add(tempa, &html, str8_lit("'>"));
+                Str8List_add(tempa, &html, link->title);
+                Str8List_add(tempa, &html, str8_lit("</a></li>"));
+            }
+        }
+        Str8List_add(tempa, &html, str8_lit("</ul>"));
+    }
+
+    Str8List_add(tempa, &html, FOOTER);
+
+    switch_to(&deploy);
+    win32_write_file(build_dir(tempa).str, html);
+
+    printf("> %.*s%.*s\n", str8_PRINTF_ARGS(page->base_href), str8_PRINTF_ARGS(page->filename));
+        
+    Str8List_pop_node(&dir);
+    if (page->type == Page::ARTICLE) {
+        Str8List_pop_node(&dir);
+    }
 }
 
 int main() {
-    Arena *a = Arena_create_default();
+    Arena *longa = Arena_create_default();
+    Arena *tempa = Arena_create_default();
 
     dir = {0};
     chr8 root_path_buffer[MAX_FILEPATH];
@@ -247,95 +270,36 @@ int main() {
     root.str.len = GetCurrentDirectory(MAX_FILEPATH, root.str.str);
     Str8List_add_node(&dir, &root);
 
-    filename_storage = str8_create_size(a, MAX_FILEPATH);
-    filename = {0, filename_storage};
+    filename = {0};
     Str8List_add_node(&dir, &src);
     
     /* TODO: loop this, whenever any of the files change update them automatically
          in order to do this, would need to pull out compilation process as a function
-        that can be easily read on a given file. */
-    /* TODO: better api for Str8List_join. also str8_trim_suffix might not work, check */
-    /* TODO: instead of needing special case in build_html_standard, it would be better to
-       compile articles first, building a hashmap that can then be printed by writing.html */
-    {
-        HANDLE find = INVALID_HANDLE_VALUE;
-        WIN32_FIND_DATA ffd = {0};
-        ARENA_SESSION(a) { /* Compose search string */
-            switch_to(&src);
-            check_dir_length();
-            Str8List_add_node(&dir, &wildcard);
-            str8 search = build_dir(a);
-            find = FindFirstFile(search.str, &ffd);
-            ASSERT(find != INVALID_HANDLE_VALUE);
-            Str8List_pop_node(&dir);
-            check_dir_length();
-        }
-        do {
-            MemoryZero(filename.str.str, filename.str.len);
-            filename.str = str8_from_cstring_custom(filename_storage, ffd.cFileName);
-            Str8List_add_node(&dir, &filename);
-            ARENA_SESSION(a) {
-                printf("%.*s ", str8_PRINTF_ARGS(filename.str));
-                switch_to(&src);
-                check_dir_length();
-                str8 input_path = build_dir(a);
-                str8 filedata = win32_load_entire_file(a, input_path);
-                fileext_md_to_html(&filename.str);
-
-                Str8List html = build_html_standard(a, filedata);
-                
-                switch_to(&deploy);
-                check_dir_length();
-                str8 output_path = build_dir(a);
-                win32_write_file(output_path.str, html);
-                printf("> %.*s\n", str8_PRINTF_ARGS(filename.str));
-            }
-            Str8List_pop_node(&dir); /* pop filename */
-            check_dir_length();
-        } while(FindNextFile(find, &ffd) != 0);
-        FindClose(find);
-    }
-
+        that can be easily read on a given file.
+        REF: https://learn.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
+    */
+    /* TODO: str8_trim_suffix might not work, check */
+    /* TODO: generate RSS feed from 10 recent posts */
+    PageList topPages = get_pages_in_dir(longa, Page::DEFAULT);
     Str8List_add_node(&dir, &technical);
-    {
-        HANDLE find = INVALID_HANDLE_VALUE;
-        WIN32_FIND_DATA ffd = {0};
-        ARENA_SESSION(a) { /* Compose search string */
-            switch_to(&src);
-            check_dir_length();
-            Str8List_add_node(&dir, &wildcard);
-            str8 search = build_dir(a);
-            find = FindFirstFile(search.str, &ffd);
-            ASSERT(find != INVALID_HANDLE_VALUE);
-            Str8List_pop_node(&dir);
-            check_dir_length();
-        }
-        do {
-            MemoryZero(filename.str.str, filename.str.len);
-            filename.str = str8_from_cstring_custom(filename_storage, ffd.cFileName);
-            Str8List_add_node(&dir, &filename);
-            ARENA_SESSION(a) {
-                printf("%.*s ", str8_PRINTF_ARGS(filename.str));
-                switch_to(&src);
-                check_dir_length();
-                str8 input_path = build_dir(a);
-                str8 filedata = win32_load_entire_file(a, input_path);
-                fileext_md_to_html(&filename.str);
-
-                Str8List html = build_html_article(a, filedata);
-                
-                switch_to(&deploy);
-                check_dir_length();
-                str8 output_path = build_dir(a);
-                win32_write_file(output_path.str, html);
-                
-                printf("> %.*s\n", str8_PRINTF_ARGS(filename.str));
-            }
-            Str8List_pop_node(&dir); /* pop filename */
-            check_dir_length();
-        } while(FindNextFile(find, &ffd) != 0);
-        FindClose(find);        
-    }
+    PageList technicalPages = get_pages_in_dir(longa, Page::ARTICLE);
     Str8List_pop_node(&dir);
+    allPages = technicalPages;
+    allPages.count += topPages.count;
+    allPages.last->next = topPages.first;
+    allPages.last = topPages.last;
+
+    /* TODO: Special Case for just writing for now */
+    for (Page *n = allPages.first; n != 0; n = n->next) {
+        if (str8_has_prefix(n->filename, str8_lit("writing.md"))) {
+            n->type = Page::INDEX;
+            break;
+        }
+    }
+    
+    for (Page *n = allPages.first; n != 0; n = n->next) {
+        update_page(longa, tempa, n);
+        Arena_reset_all(tempa);
+    }
 }
 

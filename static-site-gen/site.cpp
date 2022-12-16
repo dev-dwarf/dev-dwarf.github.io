@@ -23,7 +23,7 @@ R"(
     <meta property="twitter:title" content="Stuffed Wombat" />
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://lcfd.dev/"}</script>
-    <link rel="stylesheet" href="./dwarf.css">
+    <link rel="stylesheet" href="/dwarf.css">
     </head>
     <body>
     <div class="wrapper">

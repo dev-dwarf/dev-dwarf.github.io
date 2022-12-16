@@ -153,9 +153,9 @@ int main() {
     output_dir.len = GetCurrentDirectory(256, output_dir_str);
     output_dir.str[output_dir.len++] = '\\';
     SetCurrentDirectory("..");
-    /* TODO: leave this running, whenever any of the files change update them automatically */
+    
+    /* TODO: loop this, whenever any of the files change update them automatically */
     /* TODO: I hate everything about the filename/path handling in this code */
-    /* TODO: organize project folder a bit better. */
     SetCurrentDirectory(".\\src\\");
     FIND_ALL_FILES(".\\*.md", {
             str8 filename = str8_from_cstring(ffd.cFileName);
@@ -167,7 +167,6 @@ int main() {
             printf("\n");
             
             Str8List html = {0};
-            
             
             add_header(a, &html, filename);
             add_md(a, &html, filedata);

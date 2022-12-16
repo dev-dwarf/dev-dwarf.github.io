@@ -7,7 +7,7 @@ Custom game engine codebase built in C++ with minimal libraries.
 Not much to say about this yet except that I have been deep-diving into Platform APIs for Windowing, Input, Rendering, Sound, and seemingly endless other topics. Once I duct-tape some games together with this I'll have more to say!
 
 ## Static Site Generator (WIP)
-Static Site Generator used to make this website, made in (C-like) C++. 
+A Static Site Generator used to make this website, made in (C-like) C++. 
 Features:
 * Compile a Markdown-like language to html.
 * Add html boilerplate for each page automatically.

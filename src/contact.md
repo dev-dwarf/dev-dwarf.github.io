@@ -1,4 +1,4 @@
-!(dd.png)
+!(/assets/dd.png)
 
 ##center Contact Me
 Thanks for wanting to reach out! Here are the best ways to reach me in order of how often I check them:

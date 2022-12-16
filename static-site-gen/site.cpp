@@ -146,7 +146,7 @@ void add_title_list(Arena *a, Str8List *html, str8 search_dir) {
 int main() {
     Arena *a = Arena_create_default();
 
-    SetCurrentDirectory(".\\deploy\\");
+    SetCurrentDirectory(".\\docs\\");
     str8 output_dir;
     chr8 output_dir_str[256];
     output_dir.str = output_dir_str;

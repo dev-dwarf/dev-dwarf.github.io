@@ -160,7 +160,7 @@ Block* parse(Arena *arena, str8 str) {
     
     str8_iter_pop_line(str) {
         /* Remove windows newline encoding (\r\n) */
-        line = str8_trim_postfix(line, str8_lit("\r"));
+        line = str8_trim_suffix(line, str8_lit("\r"));
         if (line.len == 0) {
             PUSH_STR(line);
             if (!(next.type == Block::CODE || next.type == Block::PARAGRAPH)) {

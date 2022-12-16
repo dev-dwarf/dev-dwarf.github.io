@@ -9,7 +9,6 @@ global Str8List dir = {0};
 global Str8Node root = {0};
 global Str8Node src = {0, str8_lit("src")};
 global Str8Node deploy = {0, str8_lit("deploy")};
-global Str8Node technical = {0, str8_lit("technical")};
 global Str8Node wildcard = {0, str8_lit("*.md")};
 global Str8Node filename;
 global PageList allPages = {0};
@@ -134,17 +133,16 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
     }
 
     str8 base_href;
+    Str8List base_dir;
     {
         Str8List href = dir;
-        href.count -= 2;
-        href.total_len -= href.first->str.len;
-        href.first = href.first->next;
-        href.total_len -= href.first->str.len;
-        href.first = href.first->next;
+        Str8List_skip(&href, 2);
         if (href.total_len == 0) {
             base_href = str8_lit("/");
+            base_dir = {0};
         } else {
             base_href = Str8List_join(arena, href, str8_lit("/"), str8_lit("/"), str8_lit("/"));
+            base_dir = Str8List_copy(arena, href);
         }
     }
     
@@ -152,6 +150,7 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
         Page *next = Arena_take_struct_zero(arena, Page);
         next->filename = str8_copy_cstring(arena, ffd.cFileName);
         next->base_href = base_href;
+        next->base_dir = base_dir;
         giveMeTheBits.ft = ffd.ftCreationTime;
         next->created_time = giveMeTheBits.u;
         giveMeTheBits.ft = ffd.ftLastWriteTime;
@@ -188,9 +187,7 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
 }
 
 void update_page(Arena *longa, Arena *tempa, Page *page) {
-    if (page->type == Page::ARTICLE) {
-        Str8List_add_node(&dir, &technical);
-    }
+    Str8List_append(&dir, page->base_dir);
         
     filename.str = page->filename;
     Str8List_add_node(&dir, &filename);
@@ -214,20 +211,25 @@ void update_page(Arena *longa, Arena *tempa, Page *page) {
 
     Str8List html = {0};
     Str8List_add(tempa, &html, HEADER);
-    Str8List_add(tempa, &html, str8_lit("<title>"));
-    Str8List_add(tempa, &html, str8_lit("LCF/DD: "));
+    Str8List_add(tempa, &html, str8_lit("\t<title>LCF/DD:"));
     Str8List_add(tempa, &html, page->title);
-    Str8List_add(tempa, &html, str8_lit("</title>"));
+    Str8List_add(tempa, &html, str8_lit("</title>\n"));
 
     if (page->type == Page::ARTICLE) {
-        Str8List_add(tempa, &html, str8_lit("<br><a href='/writing.html#technical'>back</a><hr>"));
+        Str8List_add(tempa, &html, str8_lit("<br><a href='/writing.html#"));
+        str8 link_ref = Str8List_join(tempa, page->base_dir, str8_lit(""), str8_lit("/"), str8_lit(""));
+        Str8List_add(tempa, &html, link_ref);
+        Str8List_add(tempa, &html, str8_lit("'>back</a>"));
     }
 
     Str8List md = md_to_html(tempa, page->content);
     Str8List_append(&html, md);
         
     if (page->type == Page::ARTICLE) {
-        Str8List_add(tempa, &html, str8_lit("<a href='/writing.html#technical'>back</a>"));
+        str8 link_ref = Str8List_join(tempa, page->base_dir, str8_lit(""), str8_lit("/  "), str8_lit(""));
+        Str8List_add(tempa, &html, str8_lit("<br><a href='/writing.html#"));
+        Str8List_add(tempa, &html, link_ref);
+        Str8List_add(tempa, &html, str8_lit("'>back</a>"));
     }
 
     if (page->type == Page::INDEX) {
@@ -255,14 +257,16 @@ void update_page(Arena *longa, Arena *tempa, Page *page) {
     printf("> %.*s%.*s\n", str8_PRINTF_ARGS(page->base_href), str8_PRINTF_ARGS(page->filename));
         
     Str8List_pop_node(&dir);
-    if (page->type == Page::ARTICLE) {
-        Str8List_pop_node(&dir);
-    }
+    Str8List_pop(&dir, page->base_dir.count);
 }
 
 int main() {
     Arena *longa = Arena_create_default();
     Arena *tempa = Arena_create_default();
+
+    Str8Node technical = {0, str8_lit("technical")};
+    Str8List articleDirs = {0};
+    Str8List_add_node(&articleDirs, &technical);
 
     dir = {0};
     chr8 root_path_buffer[MAX_FILEPATH];
@@ -273,9 +277,7 @@ int main() {
     filename = {0};
     Str8List_add_node(&dir, &src);
     
-    /* TODO: loop this, whenever any of the files change update them automatically
-         in order to do this, would need to pull out compilation process as a function
-        that can be easily read on a given file.
+    /* TODO: loop this as a daemon, whenever any of the files change update them automatically
         REF: https://learn.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
     */
     /* TODO: str8_trim_suffix might not work, check */
@@ -289,7 +291,7 @@ int main() {
     allPages.last->next = topPages.first;
     allPages.last = topPages.last;
 
-    /* TODO: Special Case for just writing for now */
+    /* NOTE: Special case since writing is the only index page for now */
     for (Page *n = allPages.first; n != 0; n = n->next) {
         if (str8_has_prefix(n->filename, str8_lit("writing.md"))) {
             n->type = Page::INDEX;

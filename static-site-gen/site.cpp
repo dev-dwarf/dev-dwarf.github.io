@@ -154,7 +154,7 @@ void add_title_list(Arena *a, Str8List *html) {
             check_dir_length();
             str8 search = build_dir(a);
             find = FindFirstFile(search.str, &ffd);
-            ASSERT(find);
+            ASSERT(find != INVALID_HANDLE_VALUE);
             Str8List_pop_node(&dir);
             check_dir_length();
         }
@@ -251,8 +251,12 @@ int main() {
     filename = {0, filename_storage};
     Str8List_add_node(&dir, &src);
     
-    /* TODO: loop this, whenever any of the files change update them automatically */
+    /* TODO: loop this, whenever any of the files change update them automatically
+         in order to do this, would need to pull out compilation process as a function
+        that can be easily read on a given file. */
     /* TODO: better api for Str8List_join. also str8_trim_suffix might not work, check */
+    /* TODO: instead of needing special case in build_html_standard, it would be better to
+       compile articles first, building a hashmap that can then be printed by writing.html */
     {
         HANDLE find = INVALID_HANDLE_VALUE;
         WIN32_FIND_DATA ffd = {0};
@@ -262,7 +266,7 @@ int main() {
             Str8List_add_node(&dir, &wildcard);
             str8 search = build_dir(a);
             find = FindFirstFile(search.str, &ffd);
-            ASSERT(find);
+            ASSERT(find != INVALID_HANDLE_VALUE);
             Str8List_pop_node(&dir);
             check_dir_length();
         }
@@ -300,9 +304,9 @@ int main() {
             switch_to(&src);
             check_dir_length();
             Str8List_add_node(&dir, &wildcard);
-            str8 search = Str8List_join(a, dir, str8_lit(""), str8_lit(""), str8_lit("\0"));
+            str8 search = build_dir(a);
             find = FindFirstFile(search.str, &ffd);
-            ASSERT(find);
+            ASSERT(find != INVALID_HANDLE_VALUE);
             Str8List_pop_node(&dir);
             check_dir_length();
         }
@@ -314,7 +318,7 @@ int main() {
                 printf("%.*s ", str8_PRINTF_ARGS(filename.str));
                 switch_to(&src);
                 check_dir_length();
-                str8 input_path = Str8List_join(a, dir, str8_lit(""), str8_lit(""), str8_lit("\0"));
+                str8 input_path = build_dir(a);
                 str8 filedata = win32_load_entire_file(a, input_path);
                 fileext_md_to_html(&filename.str);
 
@@ -322,7 +326,7 @@ int main() {
                 
                 switch_to(&deploy);
                 check_dir_length();
-                str8 output_path = Str8List_join(a, dir, str8_lit(""), str8_lit(""), str8_lit("\0"));
+                str8 output_path = build_dir(a);
                 win32_write_file(output_path.str, html);
                 
                 printf("> %.*s\n", str8_PRINTF_ARGS(filename.str));

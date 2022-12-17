@@ -20,7 +20,7 @@ My personal @(http://nothings.org/stb.h stb.h) style standard libary for my C/C+
 * Shorter type names and macros for commonly used functionality.
 * Arena-oriented memory management library.
 * Length-based string library (composes with Arena library).
-Source is not available yet because I update this very frequently and don't want others to use it yet. It may seem unnecessary to do this to some but I've found that making my own standard library has given me deeper insight into how the available primitives in a language affect my programming style, as well as greatly increasing my comfort level in my C/C++ codebases (Also I can competently use strings in C programs now!)
+Source is not available yet because I update this very frequently and don't want others to use it yet. It may seem unnecessary to do this to some but I've found that making my own standard library has given me deeper insight into how the available primitives in a language affect my programming style, as well as greatly increasing my comfort level in my C/C++ codebases (Feels worth it just for string handling alone!)
 
 ##center Finished Games
 ---

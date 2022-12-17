@@ -222,7 +222,27 @@ void update_page(Arena *longa, Arena *tempa, Page *page) {
         Str8List_add(tempa, &html, str8_lit("'>back</a>"));
     }
 
-    Str8List md = md_to_html(tempa, page->content);
+    Block* blocks = parse(tempa, page->content);
+    Str8List md = render(tempa, blocks);
+
+    /* TODO: make this replace a designated block in the text */
+    /* Should have a SPECIAL block that we replace with arbitrary content */
+    // if (page->type == Page::ARTICLE) {
+    //     Str8List_add(tempa, &html, str8_lit("<ul>\n"));
+    //     for (Block* b = blocks; b != 0; b = b->next) {
+    //         if (b->type == Block::HEADING) {
+    //             if (str8_not_empty(b->id)) {
+    //                 Str8List_add(tempa, &html, str8_lit("<li><a href='#"));
+    //                 Str8List_add(tempa, &html, b->id);
+    //                 Str8List_add(tempa, &html, str8_lit("'>"));
+    //                 Str8List_append(&html, b->content);
+    //                 Str8List_add(tempa, &html, str8_lit("</a></li>\n"));
+    //             }
+    //         }
+    //     }
+    //     Str8List_add(tempa, &html, str8_lit("</ul>\n"));
+    // }
+    
     Str8List_append(&html, md);
         
     if (page->type == Page::ARTICLE) {
@@ -282,6 +302,9 @@ int main() {
     */
     /* TODO: str8_trim_suffix might not work, check */
     /* TODO: generate RSS feed from 10 recent posts */
+    /* TODO: some form of templating maybe? */
+    /* TODO: captions for images */
+    /* TODO: aside/expandable text like marc-ten-bosch */
     PageList topPages = get_pages_in_dir(longa, Page::DEFAULT);
     Str8List_add_node(&dir, &technical);
     PageList technicalPages = get_pages_in_dir(longa, Page::ARTICLE);

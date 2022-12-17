@@ -5,18 +5,11 @@ struct Text {
     
     enum Types { 
         NIL = 0,
-        
-        BOLD,
-        ITALIC,
-        STRUCK,
-        CODE_INLINE,
-        CODE_BLOCK,
-        LINK,
-        IMAGE,
-        BREAK,    
-        LIST_ITEM,
-        EXPLAIN,
         TEXT,
+        BOLD, ITALIC, STRUCK, CODE_INLINE, 
+        LINK, IMAGE, EXPLAIN,
+        LIST_ITEM, CODE_BLOCK,
+        BREAK,
     } type;
     b32 end;
     
@@ -29,19 +22,15 @@ struct Block {
 
     enum { 
         NIL = 0,
-
-        HEADING, 
-        QUOTE,
-        ORD_LIST,
-        UN_LIST,
-        CODE, 
-        RULE,
         PARAGRAPH,
+        HEADING, RULE, CODE, 
+        QUOTE, ORD_LIST, UN_LIST,
     } type;
 
     /* Node Contents */
     u32 num;
     str8 id;
+    Str8List content;
     Text* text;
 };
 

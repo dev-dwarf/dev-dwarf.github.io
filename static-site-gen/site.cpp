@@ -60,14 +60,11 @@ str8 FOOTER = str8_lit(R"(
     </div>
     <script>
 window.onload = function() { 
-    var all_links = document.getElementById("nav-links").getElementsByTagName("a"),
-        i=0, len=all_links.length,
-        full_path = location.href.split('#')[0]; //Ignore hashes?
-    for(; i<len; i++) {
-        if(all_links[i].href.split("#")[0] == full_path) {
-            all_links[i].className += " current";
-        }
-    }
+    full_path = location.href.split('#')[0];
+    Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
+        .filter(l => l.href.split("#")[0] == full_path)
+        .forEach(l => l.className += " current");
+    // document.querySelectorAll("code").forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>
@@ -305,6 +302,7 @@ int main() {
     /* TODO: some form of templating maybe? */
     /* TODO: captions for images */
     /* TODO: aside/expandable text like marc-ten-bosch */
+    /* TODO: give code blocks classes for langs, make html innerText=innerHtml */
     PageList topPages = get_pages_in_dir(longa, Page::DEFAULT);
     Str8List_add_node(&dir, &technical);
     PageList technicalPages = get_pages_in_dir(longa, Page::ARTICLE);

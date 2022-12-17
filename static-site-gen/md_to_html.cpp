@@ -2,17 +2,14 @@
 
 /* Take list of Text nodes with undecided type, parse and return typed list */
 Text* parse_text(Arena* arena, Text* text) {
-    Text *root = text;
-    b32 ignore_next = false;
-    Text *curr = root;
+    Text *curr = text;
     Text pre_filler = {curr, Text::NIL, 0};
     Text *pre = &pre_filler;
+
+    b32 ignore_next = false;
     b32 inside = 0;
-
-    Text::Types stack[32];
-    u32 stacki = 0;
-
-    u32 sz1 = sizeof(Text);
+    Text::Types paren_stack[32];
+    u32 paren_stacki = 0;
 
 #define PUSH_TEXT(TYPE, END, SKIP) {                                    \
         if (END == 0 &&                                                 \
@@ -54,73 +51,68 @@ Text* parse_text(Arena* arena, Text* text) {
             }
             continue;
         }
-        chr8 w[3];
-        w[1] = s.str[0];
-        w[2] = (s.len > 1)? s.str[1] : 0;
-        str8_iter(s) {
-            w[0] = w[1];
-            w[1] = w[2];
-            w[2] = (s.len > i+2)? s.str[i+2] : 0;
+        chr8 c[3]; 
+        c[1] = s.str[0];
+        c[2] = (s.len > 1)? s.str[1] : 0;
+        str8_iter_custom(s, i, _unused) {
+            c[0] = c[1];
+            c[1] = c[2];
+            c[2] = (s.len > i+2)? s.str[i+2] : 0;
+            
             if (ignore_next) {
                 PUSH_TEXT(Text::TEXT, i-1, 1);
                 ignore_next = false;
-            } else if (w[0] == '*' && w[1] == '*') {
-                PUSH_TEXT(Text::BOLD, i, 2);
-                break;
-            } else if (w[0] == '*') {
-                PUSH_TEXT(Text::ITALIC, i, 1);
-                break;
-            } else if (w[0] == '~' && w[1] == '~') {
-                PUSH_TEXT(Text::STRUCK, i, 1);
-                break;
-            } else if (w[0] == '`') {
+            } else if (c[0] == '`') {
                 PUSH_TEXT(Text::CODE_INLINE, i, 1);
                 break;
-            } else if (w[0] == '@' && w[1] == '(') {
+            } else if (curr->type == Text::CODE_INLINE && !curr->end) {
+                /* Do nothing, do not parse stuff inside code */
+            } else if (c[0] == '*' && c[1] == '*') {
+                PUSH_TEXT(Text::BOLD, i, 2);
+                break;
+            } else if (c[0] == '*') {
+                PUSH_TEXT(Text::ITALIC, i, 1);
+                break;
+            } else if (c[0] == '~' && c[1] == '~') {
+                PUSH_TEXT(Text::STRUCK, i, 1);
+                break;
+            } else if (c[0] == '@' && c[1] == '(') {
                 PUSH_TEXT(Text::LINK, i, 2);
                 curr = curr->next;
                 u64 sentinel = str8_char_location(curr->text, ' ');
                 ASSERT(sentinel != LCF_STRING_NO_MATCH);
                 PUSH_TEXT(Text::TEXT, sentinel, 1);
-                stack[stacki++] = Text::LINK;
+                paren_stack[paren_stacki++] = Text::LINK;
                 break;
-            } else if (w[0] == '!' && w[1] == '(') {
+            } else if (c[0] == '!' && c[1] == '(') {
                 PUSH_TEXT(Text::IMAGE, i, 2);
                 curr = curr->next;
                 u64 sentinel = str8_char_location(curr->text, ')');
                 ASSERT(sentinel != LCF_STRING_NO_MATCH);
                 PUSH_TEXT(Text::TEXT, sentinel, 1);
                 break;
-            } else if (w[0] == '?' && w[1] == '(') {
+            } else if (c[0] == '?' && c[1] == '(') {
                 PUSH_TEXT(Text::EXPLAIN, i, 2);
                 curr = curr->next;
                 u64 sentinel = str8_char_location(curr->text, ',');
                 ASSERT(sentinel != LCF_STRING_NO_MATCH);
                 PUSH_TEXT(Text::TEXT, sentinel, 2);
-                stack[stacki++] = Text::EXPLAIN;
+                paren_stack[paren_stacki++] = Text::EXPLAIN;
                 break;
-            } else if (w[0] == ')') {
-                if (stacki > 0) {
-                    Text::Types t = stack[--stacki];
+            } else if (c[0] == ')') {
+                if (paren_stacki > 0) {
+                    Text::Types t = paren_stack[--paren_stacki];
                     PUSH_TEXT(t, i, 1);
                 }
                 break;
-            } else if (w[0] == '\\') {
+            } else if (c[0] == '\\') {
                 ignore_next = true;
             }
         } /* end str8_iter */
-        ASSERT(pre == &pre_filler || pre->type != Text::NIL);
+        ASSERTM(pre == &pre_filler || pre->type != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
     }
 
-    if (root && root->type == Text::NIL) {
-        if (root->text.len > 0) {
-            root->type = Text::TEXT;
-        } else {
-            root = root->next;
-        }
-    }
-
-    return root;
+    return text;
 }
 
 /* Take str8, return tree of blocks representing markdown structure */
@@ -247,34 +239,22 @@ Str8List render_text(Arena* arena, Text* root) {
     for (Text* t = root, *prev = &prev_filler; t->type != Text::NIL; prev = t, t = t->next) {
         switch (t->type) {
         case Text::BOLD: {
-            str8 s[2] = {
-                str8_lit("<b>"),
-                str8_lit("</b>")
-            };
+            str8 s[2] = {str8_lit("<b>"), str8_lit("</b>")};
             Str8List_add(arena, &out, s[t->end]);
             Str8List_add(arena, &out, t->text);
         } break;
         case Text::ITALIC: {
-            str8 s[2] = {
-                str8_lit("<em>"),
-                str8_lit("</em>")
-            };
+            str8 s[2] = {str8_lit("<em>"), str8_lit("</em>")};
             Str8List_add(arena, &out, s[t->end]);
             Str8List_add(arena, &out, t->text);
         } break;
         case Text::STRUCK: {
-            str8 s[2] = {
-                str8_lit("<s>"),
-                str8_lit("</s>")
-            };
+            str8 s[2] = {str8_lit("<s>"), str8_lit("</s>")};
             Str8List_add(arena, &out, s[t->end]);
             Str8List_add(arena, &out, t->text);
         } break;
         case Text::CODE_INLINE: {
-            str8 s[2] = {
-                str8_lit("<code>"),
-                str8_lit("</code>")
-            };
+            str8 s[2] = {str8_lit("<code>"), str8_lit("</code>")};
             Str8List_add(arena, &out, s[t->end]);
             Str8List_add(arena, &out, t->text);
         } break;
@@ -313,10 +293,7 @@ Str8List render_text(Arena* arena, Text* root) {
             Str8List_add(arena, &out, t->text);
         } break;
         case Text::LIST_ITEM: {
-            str8 s[2] = {
-                str8_lit("<li>"),
-                str8_lit("</li>\n")
-            };
+            str8 s[2] = {str8_lit("<li>"), str8_lit("</li>\n")};
             Str8List_add(arena, &out, s[t->end]);
             Str8List_add(arena, &out, t->text);
         } break;

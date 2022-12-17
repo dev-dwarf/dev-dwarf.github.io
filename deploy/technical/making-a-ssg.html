@@ -24,7 +24,7 @@
 	<title>LCF/DD:Making A Static Site Generator (December 15, 2022)</title>
 <br><a href='/writing.html#technical'>back</a><h2>Making A Static Site Generator (December 15, 2022)</h2><hr>
 <h2 id='intro'>Introduction</h2><p>
-I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to <a href='/contact.html'>reach out</a>!). The main options seem to be some engines like WordPress, raw html/css/js, or generators like Jekyll. I respect the engine approach, but generally don't like that sort of thing, and my attempts at raw html always seems to end as a tedious mess. In the past I made a small site following the Jekyll tutorial, but it also felt off to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:</p>
+I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to <a href='/contact.html'>reach out</a>!). The main options seem to be some engines like WordPress, raw html/css/js, or generators like Jekyll. I respect the engine approach, but generally don't like that sort of thing, and my attempts at raw html always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:</p>
 <ol>
 <li> Easily extendable. Do exactly what I want, quickly.</li>
 <li> Markdown-like language to write pages/articles in.</li>
@@ -97,7 +97,6 @@ I started by making a compiler for a simple markdown language. There is a specif
         
     } else {
         /* Paragraph */
-        
     }
 }
 <br></code></pre>
@@ -108,7 +107,93 @@ Each of these cases has some additional semantics, such as ending the previous b
 }
 </code></pre>
 <p>
-The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support patterns like <code><b><em>bold-and-italic</em> just-bold</b></code> generating <b><em>bold-and-italic</em> just-bold</b>, its not enough to just have <code>BOLD</code> node encapsulate the bolded text.<br><br></p>
+The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support patterns like <code>***bold-and-italic* just-bold**</code> generating <b><em>bold-and-italic</em> just-bold</b>, its not enough to just have <code>BOLD</code> node encapsulate the bolded text. For this reason each text node has an <code>end</code> flag marking it as the start or end node of a pair:</p>
+<pre><code>for (; curr->next != 0; pre = curr, curr = curr->next) {
+    str8 s = curr->text;
+    if ((curr->type == Text::LIST_ITEM) /* Already formatted, do not parse */
+        || (curr->type == Text::CODE_BLOCK)
+        || (curr->type == Text::BREAK)) {
+        continue;
+    }
+    if (curr->type == Text::NIL) {
+        curr->type = Text::TEXT;
+    }
+    if (s.len == 0) {
+        if (curr->type == Text::TEXT) {
+            curr->type = Text::BREAK;
+        } else {
+            PUSH_TEXT(Text::BREAK, 0, 1);
+        }
+        continue;
+    }
+    chr8 c[3]; 
+    c[1] = s.str[0];
+    c[2] = (s.len > 1)? s.str[1] : 0;
+    str8_iter_custom(s, i, _unused) {
+        c[0] = c[1];
+        c[1] = c[2];
+        c[2] = (s.len > i+2)? s.str[i+2] : 0;
+        if (ignore_next) {
+            PUSH_TEXT(Text::TEXT, i-1, 1);
+            ignore_next = false;
+        } else if (c[0] == '`') {
+            /* Inline Code */
+            
+        } else if (curr->type == Text::CODE_INLINE && !curr->end) {
+            /* Do nothing, do not parse stuff inside code */
+        } else if (c[0] == '*' && c[1] == '*') {
+            /* Bold *.
+            
+        } else if (c[0] == '*') {
+            /* Italic */
+            
+        } else if (c[0] == '~' && c[1] == '~') {
+            /* Strikethrough */
+            
+        } else if (c[0] == '@' && c[1] == '(') {
+            /* Links */
+            
+        } else if (c[0] == '!' && c[1] == '(') {
+            /* Images */
+            
+        } else if (c[0] == '?' && c[1] == '(') {
+            /* Explain - Hover over to see expanded text */
+            
+        } else if (c[0] == ')') {
+            /* Closing parenthesis can end one of the above ^ */
+            if (paren_stacki > 0) {
+                Text::Types t = paren_stack[--paren_stacki];
+                PUSH_TEXT(t, i, 1);
+            }
+            break;
+        } else if (c[0] == '\\') {
+            /* Backslash ignores next formatting char */
+        }
+    } /* end str8_iter */
+    ASSERTM(pre == &pre_filler || pre->type != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
+}
+</code></pre>
+<p>
+I have been leaving out the details inside the if statements in the parsing, but you can see the full details <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/static-site-gen/md_to_html.cpp'>here</a>. The insides are mostly just small amounts of parsing text and then macros for pushing new nodes onto the linked list. You might notice in the above parsing some departures from Markdown, such as <code>@(</code> to open a link, instead of a <code>(<</code>.<br>As a basic example, parsing the following:</p>
+<pre><code>## Hello
+It's nice to be **loud**!
+</code></pre>
+<p>
+Will give this structure:</p>
+<pre><code>Block(type=Header, num=2, text=[
+    Text(type=Text, str="Hello")
+]),
+Block(type=Paragraph, text=[
+    Text(type=Text, str="It's nice to be "),
+    Text(type=Bold, str="loud", end=false),
+    Text(type=Bold, str="!", end=true)
+])
+</code></pre>
+<p>
+The desired html is something like:</p>
+<pre><code><h2>Hello</h2>
+<p>It's nice to be <b>loud</b>!</p>
+</code></pre>
 <br><a href='/writing.html#technical'>back</a>
     </main> 
     </div>
@@ -130,14 +215,11 @@ The Text parsing is similar to the Block parsing, except each character is check
     </div>
     <script>
 window.onload = function() { 
-    var all_links = document.getElementById("nav-links").getElementsByTagName("a"),
-        i=0, len=all_links.length,
-        full_path = location.href.split('#')[0]; //Ignore hashes?
-    for(; i<len; i++) {
-        if(all_links[i].href.split("#")[0] == full_path) {
-            all_links[i].className += " current";
-        }
-    }
+    full_path = location.href.split('#')[0];
+    Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
+        .filter(l => l.href.split("#")[0] == full_path)
+        .forEach(l => l.className += " current");
+    // document.querySelectorAll("code").forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>

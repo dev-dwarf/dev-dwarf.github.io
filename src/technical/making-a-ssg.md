@@ -2,7 +2,7 @@
 
 ---
 ##intro Introduction
-I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to @(/contact.html reach out)!). The main options seem to be some engines like WordPress, raw html/css/js, or generators like Jekyll. I respect the engine approach, but generally don't like that sort of thing, and my attempts at raw html always seems to end as a tedious mess. In the past I made a small site following the Jekyll tutorial, but it also felt off to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
+I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to @(/contact.html reach out)!). The main options seem to be some engines like WordPress, raw html/css/js, or generators like Jekyll. I respect the engine approach, but generally don't like that sort of thing, and my attempts at raw html always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
 
 
 I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
@@ -79,7 +79,6 @@ str8_iter_pop_line(str) { /* macro, sets str8 line */
         
     } else {
         /* Paragraph */
-        
     }
 }
 
@@ -92,6 +91,93 @@ for (curr = root; curr->type != Block::NIL; curr = curr->next) {
     curr->text = parse_text(arena, curr->text);
 }
 ```
-The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support patterns like `***bold-and-italic* just-bold**` generating ***bold-and-italic* just-bold**, its not enough to just have `BOLD` node encapsulate the bolded text.
+The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support patterns like `***bold-and-italic* just-bold**` generating ***bold-and-italic* just-bold**, its not enough to just have `BOLD` node encapsulate the bolded text. For this reason each text node has an `end` flag marking it as the start or end node of a pair:
+```
+for (; curr->next != 0; pre = curr, curr = curr->next) {
+    str8 s = curr->text;
+    if ((curr->type == Text::LIST_ITEM) /* Already formatted, do not parse */
+        || (curr->type == Text::CODE_BLOCK)
+        || (curr->type == Text::BREAK)) {
+        continue;
+    }
+    if (curr->type == Text::NIL) {
+        curr->type = Text::TEXT;
+    }
+    if (s.len == 0) {
+        if (curr->type == Text::TEXT) {
+            curr->type = Text::BREAK;
+        } else {
+            PUSH_TEXT(Text::BREAK, 0, 1);
+        }
+        continue;
+    }
+    chr8 c[3]; 
+    c[1] = s.str[0];
+    c[2] = (s.len > 1)? s.str[1] : 0;
+    str8_iter_custom(s, i, _unused) {
+        c[0] = c[1];
+        c[1] = c[2];
+        c[2] = (s.len > i+2)? s.str[i+2] : 0;
+        if (ignore_next) {
+            PUSH_TEXT(Text::TEXT, i-1, 1);
+            ignore_next = false;
+        } else if (c[0] == '`') {
+            /* Inline Code */
+            
+        } else if (curr->type == Text::CODE_INLINE && !curr->end) {
+            /* Do nothing, do not parse stuff inside code */
+        } else if (c[0] == '*' && c[1] == '*') {
+            /* Bold *.
+            
+        } else if (c[0] == '*') {
+            /* Italic */
+            
+        } else if (c[0] == '~' && c[1] == '~') {
+            /* Strikethrough */
+            
+        } else if (c[0] == '@' && c[1] == '(') {
+            /* Links */
+            
+        } else if (c[0] == '!' && c[1] == '(') {
+            /* Images */
+            
+        } else if (c[0] == '?' && c[1] == '(') {
+            /* Explain - Hover over to see expanded text */
+            
+        } else if (c[0] == ')') {
+            /* Closing parenthesis can end one of the above ^ */
+            if (paren_stacki > 0) {
+                Text::Types t = paren_stack[--paren_stacki];
+                PUSH_TEXT(t, i, 1);
+            }
+            break;
+        } else if (c[0] == '\\') {
+            /* Backslash ignores next formatting char */
+        }
+    } /* end str8_iter */
+    ASSERTM(pre == &pre_filler || pre->type != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
+}
+```
+I have been leaving out the details inside the if statements in the parsing, but you can see the full details @(https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/static-site-gen/md_to_html.cpp here). The insides are mostly just small amounts of parsing text and then macros for pushing new nodes onto the linked list. You might notice in the above parsing some departures from Markdown, such as `@(` to open a link, instead of a `(<`.
 
-
+As a basic example, parsing the following:
+```
+## Hello
+It's nice to be **loud**!
+```
+Will give this structure:
+```
+Block(type=Header, num=2, text=[
+    Text(type=Text, str="Hello")
+]),
+Block(type=Paragraph, text=[
+    Text(type=Text, str="It's nice to be "),
+    Text(type=Bold, str="loud", end=false),
+    Text(type=Bold, str="!", end=true)
+])
+```
+The desired html is something like:
+```
+<h2>Hello</h2>
+<p>It's nice to be <b>loud</b>!</p>
+```

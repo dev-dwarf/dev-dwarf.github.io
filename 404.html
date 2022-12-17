@@ -47,14 +47,11 @@ whoops..</p>
     </div>
     <script>
 window.onload = function() { 
-    var all_links = document.getElementById("nav-links").getElementsByTagName("a"),
-        i=0, len=all_links.length,
-        full_path = location.href.split('#')[0]; //Ignore hashes?
-    for(; i<len; i++) {
-        if(all_links[i].href.split("#")[0] == full_path) {
-            all_links[i].className += " current";
-        }
-    }
+    full_path = location.href.split('#')[0];
+    Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
+        .filter(l => l.href.split("#")[0] == full_path)
+        .forEach(l => l.className += " current");
+    // document.querySelectorAll("code").forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>

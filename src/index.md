@@ -2,9 +2,9 @@
 
 ##center Logan Forman @(https://www.twitter.com/dev_dwarf @dev dwarf)
 Welcome to my portfolio site! You can find my 
-@(assets/resume.pdf general resume), 
-@(projects.html project portfolio), and some 
-@(writing.html writing I've done).
+@(/assets/resume.pdf general resume), 
+@(/projects.html project portfolio), and some 
+@(/writing.html writing I've done).
 
 ---
 I'm Logan Forman, a game and systems programmer from New Mexico. I've been playing games as long as I can remember and programming them since I was 11. Currently I'm finishing a B.S in Applied Mathematics at ?(New Mexico Tech, NMT) University; I'll be done in Spring 2023 so I am looking for a job after that!

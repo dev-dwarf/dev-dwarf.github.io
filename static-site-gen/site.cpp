@@ -23,6 +23,7 @@ R"(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="/assets/dd.png" />
     <link rel="canonical" href="http://lcfd.dev/" />
     <meta property="og:url" content="http://lcfd.dev/"/>
     <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />

@@ -118,7 +118,7 @@ blockquote {
 pre {
     border-left: 0.5em solid var(--blue);
     margin: 1em 1em;
-    padding: 0px 1em;
+    padding: 1em 1em;
     white-space: pre-wrap;       
 }
 code {
@@ -137,9 +137,9 @@ abbr {
 a {
     color: var(--text);
     text-align: center;
-    text-decoration: underline 0.2em;
+    text-decoration: underline 0.2rem;
+    text-underline-offset: 0.3rem;
     text-decoration-color: var(--link) !important;
-    text-underline-offset: 0.3em;
 }
 a:visited {
     text-decoration-color: var(--lowlight) !important;

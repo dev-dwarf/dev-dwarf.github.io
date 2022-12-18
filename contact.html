@@ -25,7 +25,7 @@
 <p>
 <img src='/assets/dd.png'><br><br></p>
 <h2 style='text-align:center' id=''>Contact Me</h2><p>
-Thanks for wanting to reach out! Here are the best ways to reach me in order of how often I check them:</p>
+Thanks for wanting to reach out! Here are the best ways to reach me:</p>
 <ol>
 <li> Email: <a href='mailto:contact@lcfd.dev'>contact@lcfd.dev</a><br></li>
 <li> Discord: dev_dwarf#3925</li>
@@ -57,7 +57,9 @@ window.onload = function() {
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)
         .forEach(l => l.className += " current");
-    // document.querySelectorAll("code").forEach(el => el.innerText = el.innerHTML);
+    Array.from(document.getElementsByTagName("code"))
+        .filter(el => el.id == "html")  
+        .forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>

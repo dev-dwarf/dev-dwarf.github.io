@@ -10,7 +10,7 @@ I've been working on building my understanding of text-handling in low-level lan
 1. Small Codebase. Should be <1000 LOC.
 ---
 ##parse Parsing Markdown
-I started by making a compiler for a simple markdown language. There is a specification called CommonMark that I *think* is the canonical version of Markdown, with a reference implementation @(https://github.com/commonmark/cmark cmark), clocking in at -20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the @(https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis 17 rules) for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
+I started by making a compiler for a simple markdown language. There is a specification called CommonMark that I *think* is the canonical version of Markdown, with a reference implementation @(https://github.com/commonmark/cmark cmark), clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the @(https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis 17 rules) for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
 
 
 Taking a hint from the Markdown spec, I implemented my language as a composition of `Block` and `Text` structures:
@@ -313,13 +313,10 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     Str8List_pop(&dir, page->base_dir.count);
 }
 ```
-And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found @(https://github.com/dev-dwarf/dev-dwarf.github.io on GitHub). You may have noticed an unused type field for pages; the real version of the generator has `ARTICLE` pages and and `INDEX` page. `ARTICLE`s have slightly different HTML generated, and the `INDEX` gets a list of links to articles appended to it. I don't think its worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
+And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found @(https://github.com/dev-dwarf/dev-dwarf.github.io on GitHub). You may have noticed an unused type field for pages; the real version of the generator has `ARTICLE` pages and an `INDEX` page. `ARTICLE`s have slightly different HTML generated, and the `INDEX` gets a list of links to articles appended to it. I don't think its worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
 ---
 ##conc Conclusion
-Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs.
-
-
-I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
+Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 LOC, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
 1. Generate an index/section list for articles.
 1. Generate an RSS feed from recent articles.
 1. After the first compile of each page, run in the background checking for changes and compile files automatically. Right now I manually run `site.exe` to see my changes each time, but it would help my flow if that was taken care of for me.

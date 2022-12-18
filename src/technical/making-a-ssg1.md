@@ -320,6 +320,7 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 
 
 I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
+1. Generate an index/section list for articles.
 1. Generate an RSS feed from recent articles.
 1. After the first compile of each page, run in the background checking for changes and compile files automatically. Right now I manually run `site.exe` to see my changes each time, but it would help my flow if that was taken care of for me.
 1. Introduce some sort of templating/custom generation for individual pages. I **abhor** how most generators handle this sort of feature so I'm excited to look for a unique approach. I'd prefer something where I can easily hack in new templates in C++ instead of using some bogus templating language.

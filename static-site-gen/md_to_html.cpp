@@ -164,6 +164,7 @@ Block* parse(Arena *arena, str8 str) {
             if (next.type != Block::CODE) {
                 PUSH_BLOCK();
                 next.type = Block::CODE;
+                next.id = str8_skip(line, 3);
             } else {
                 PUSH_BLOCK();
             }
@@ -234,7 +235,6 @@ Block* parse(Arena *arena, str8 str) {
 /* render linked list of Text* to html tags */
 Str8List render_text(Arena* arena, Text* root) {
     Str8List out = {0};
-
     Text prev_filler = {root, Text::NIL, 0};
     for (Text* t = root, *prev = &prev_filler; t->type != Text::NIL; prev = t, t = t->next) {
         switch (t->type) {
@@ -336,55 +336,67 @@ Str8List render(Arena* arena, Block* root) {
                 Str8List_add(arena, &out, str8_lit("'"));
             }
             Str8List_add(arena, &out, str8_lit(">"));
-
-            b->content = render_text(arena, b->text);
-            Str8List_append(&out, Str8List_copy(arena, b->content));
-                    
-            Str8List_add(arena, &out, str8_lit("</"));
-            Str8List_add(arena, &out, h);
-            Str8List_add(arena, &out, str8_lit(">"));
         } break;
         case Block::QUOTE: {
             Str8List_add(arena, &out, str8_lit("<blockquote>\n"));
-            b->content = render_text(arena, b->text);
-            Str8List_append(&out, b->content);
-            Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
         } break;
         case Block::ORD_LIST: {
             Str8List_add(arena, &out, str8_lit("<ol>\n"));
-            b->content = render_text(arena, b->text);
-            Str8List_append(&out, b->content);
-            Str8List_add(arena, &out, str8_lit("\n</ol>\n"));
         } break;
         case Block::UN_LIST: {
             Str8List_add(arena, &out, str8_lit("<ul>\n"));
-            b->content = render_text(arena, b->text);
-            Str8List_append(&out, b->content);
-            Str8List_add(arena, &out, str8_lit("\n</ul>\n"));
         } break;
         case Block::CODE:  {
-            Str8List_add(arena, &out, str8_lit("<pre><code>"));
-            b->content = render_text(arena, b->text);
-            Str8List_append(&out, b->content);
-            Str8List_add(arena, &out, str8_lit("</code></pre>\n"));
+            Str8List_add(arena, &out, str8_lit("<pre><code id='"));
+            Str8List_add(arena, &out, b->id);
+            Str8List_add(arena, &out, str8_lit("'>"));
         } break;
         case Block::RULE:  {
             Str8List_add(arena, &out, str8_lit("<hr>\n"));
         } break;
         case Block::PARAGRAPH: {
             Str8List_add(arena, &out, str8_lit("<p>\n"));
-            b->content = render_text(arena, b->text);
-            Str8List_append(&out, b->content);
-            Str8List_add(arena, &out, str8_lit("</p>\n"));
         } break;  
-        default:
+        default: {
             NOTIMPLEMENTED();
             break;
         }
-    }
-    return out;
-}
+        }
 
-Str8List md_to_html(Arena *arena, str8 md) {
-    return render(arena, parse(arena, md));
+        b->content = render_text(arena, b->text);
+        Str8List_append(&out, Str8List_copy(arena, b->content));    
+
+        switch (b->type) {
+        case Block::HEADING: {
+            str8 h = str8_create_size(arena, 2);
+            h.str[0] = 'h';
+            h.str[1] = '0' + (u8) b->num;
+                    
+            Str8List_add(arena, &out, str8_lit("</"));
+            Str8List_add(arena, &out, h);
+            Str8List_add(arena, &out, str8_lit(">"));
+        } break;
+        case Block::QUOTE: {
+            Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
+        } break;
+        case Block::ORD_LIST: {
+            Str8List_add(arena, &out, str8_lit("\n</ol>\n"));
+        } break;
+        case Block::UN_LIST: {
+            Str8List_add(arena, &out, str8_lit("\n</ul>\n"));
+        } break;
+        case Block::CODE:  {
+            Str8List_add(arena, &out, str8_lit("</code></pre>\n"));
+        } break;
+        case Block::RULE:  {} break;
+        case Block::PARAGRAPH: {
+            Str8List_add(arena, &out, str8_lit("</p>\n"));
+        } break;  
+        default: {
+            NOTIMPLEMENTED();
+            break;
+        }
+        }
+    } /* end for */
+    return out;
 }

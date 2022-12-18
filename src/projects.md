@@ -12,8 +12,8 @@ Features:
 * Compile a Markdown-like language to html.
 * Add html boilerplate for each page automatically.
 * Easily customizeable, Small Codebase (<1000 LOC).
-Source on @(https://github.com/dev-dwarf/dev-dwarf.github.io Github).
-Read my posts about making this @(/writing.html#making-a-ssg.html here).
+Source on @(https://github.com/dev-dwarf/dev-dwarf.github.io Github). 
+Read my posts about making this @(/writing.html#making-a-ssg1.html here).
 
 ## LCF (WIP)
 My personal @(http://nothings.org/stb.h stb.h) style standard libary for my C/C++ projects. Features:

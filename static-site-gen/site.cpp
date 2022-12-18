@@ -64,7 +64,9 @@ window.onload = function() {
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)
         .forEach(l => l.className += " current");
-    // document.querySelectorAll("code").forEach(el => el.innerText = el.innerHTML);
+    Array.from(document.getElementsByTagName("code"))
+        .filter(el => el.id == "html")  
+        .forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>
@@ -92,7 +94,7 @@ void win32_write_file(chr8* filepath, Str8List html) {
     CloseHandle(file);
 }
 
-void switch_to(Str8Node *new_folder_node) {
+void switch_to_dir(Str8Node *new_folder_node) {
     Str8Node *cur_folder_node = dir.first->next;
     if (cur_folder_node != new_folder_node) {
         dir.total_len -= cur_folder_node->str.len;
@@ -121,7 +123,7 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
     HANDLE find = INVALID_HANDLE_VALUE;
     WIN32_FIND_DATA ffd = {0};
     ARENA_SESSION(arena) { /* Compose search string */
-        switch_to(&src);
+        switch_to_dir(&src);
         Str8List_add_node(&dir, &wildcard);
         str8 search = build_dir(arena);
         find = FindFirstFile(search.str, &ffd);
@@ -183,18 +185,18 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
     return dirPages;
 }
 
-void update_page(Arena *longa, Arena *tempa, Page *page) {
+void compile_page(Arena *longa, Arena *tempa, Page *page) {
     Str8List_append(&dir, page->base_dir);
         
     filename.str = page->filename;
     Str8List_add_node(&dir, &filename);
-    switch_to(&src);
+    switch_to_dir(&src);
     page->content = win32_load_entire_file(tempa, build_dir(tempa));
         
     if (page->type == Page::ARTICLE) {
         str8 dummy = page->content;
         str8 first_line = str8_pop_at_first_delimiter(&dummy, str8_NEWLINE);
-        page->title = str8_copy(longa, str8_cut(str8_skip(first_line, 3), 1));
+        page->title = str8_copy(longa, str8_cut(str8_skip(first_line, 2), 1));
     }  else {
         page->title = str8_cut(page->filename, 4);
     }
@@ -268,11 +270,12 @@ void update_page(Arena *longa, Arena *tempa, Page *page) {
 
     Str8List_add(tempa, &html, FOOTER);
 
-    switch_to(&deploy);
+    switch_to_dir(&deploy);
     win32_write_file(build_dir(tempa).str, html);
 
     printf("> %.*s%.*s\n", str8_PRINTF_ARGS(page->base_href), str8_PRINTF_ARGS(page->filename));
-        
+
+    page->content = str8_EMPTY;
     Str8List_pop_node(&dir);
     Str8List_pop(&dir, page->base_dir.count);
 }
@@ -302,7 +305,6 @@ int main() {
     /* TODO: some form of templating maybe? */
     /* TODO: captions for images */
     /* TODO: aside/expandable text like marc-ten-bosch */
-    /* TODO: give code blocks classes for langs, make html innerText=innerHtml */
     PageList topPages = get_pages_in_dir(longa, Page::DEFAULT);
     Str8List_add_node(&dir, &technical);
     PageList technicalPages = get_pages_in_dir(longa, Page::ARTICLE);
@@ -321,7 +323,7 @@ int main() {
     }
     
     for (Page *n = allPages.first; n != 0; n = n->next) {
-        update_page(longa, tempa, n);
+        compile_page(longa, tempa, n);
         Arena_reset_all(tempa);
     }
 }

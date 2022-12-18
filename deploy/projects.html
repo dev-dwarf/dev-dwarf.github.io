@@ -35,7 +35,7 @@ A Static Site Generator used to make this website, made in (C-like) C++. Feature
 
 </ul>
 <p>
-Source on <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>Github</a>.Read my posts about making this <a href='/writing.html#making-a-ssg.html'>here</a>.<br></p>
+Source on <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>Github</a>. Read my posts about making this <a href='/writing.html#making-a-ssg1.html'>here</a>.<br></p>
 <h2>LCF (WIP)</h2><p>
 My personal <a href='http://nothings.org/stb.h'>stb.h</a> style standard libary for my C/C++ projects. Features:</p>
 <ul>
@@ -107,7 +107,9 @@ window.onload = function() {
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)
         .forEach(l => l.className += " current");
-    // document.querySelectorAll("code").forEach(el => el.innerText = el.innerHTML);
+    Array.from(document.getElementsByTagName("code"))
+        .filter(el => el.id == "html")  
+        .forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>

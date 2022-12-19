@@ -7,7 +7,7 @@ I wanted to make a new portfolio site as I get ready to apply for jobs after I g
 I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
 1. Easily extendable. Do exactly what I want, quickly.
 1. Markdown-like language to write pages/articles in.
-1. Small Codebase. Should be <1000 LOC.
+1. Small. Should be <1000 LOC.
 ---
 ##parse Parsing Markdown
 I started by making a compiler for a simple markdown language. There is a specification called CommonMark that I *think* is the canonical version of Markdown, with a reference implementation @(https://github.com/commonmark/cmark cmark), clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the @(https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis 17 rules) for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
@@ -94,7 +94,7 @@ for (curr = root; curr->type != Block::NIL; curr = curr->next) {
     curr->text = parse_text(arena, curr->text);
 }
 ```
-The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support composing formatting like `***bold-and-italic* just-bold**` generating ***bold-and-italic* just-bold**, its not enough to just have `BOLD` node encapsulate the bolded text in a pair of tags. For this reason each text node has an `end` flag marking it as the start or end node of a pair:
+The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support composing formatting like `***bold-and-italic* just-bold**` generating ***bold-and-italic* just-bold**, it's not enough to just have `BOLD` node encapsulate the bolded text in a pair of tags. For this reason each text node has an `end` flag marking it as the start or end node of a pair:
 ```
 for (; curr->next != 0; pre = curr, curr = curr->next) {
     str8 s = curr->text;
@@ -185,7 +185,7 @@ The desired HTML is something like:
 <h2>Hello</h2>
 <p>It's nice to be <b>loud</b>!</p>
 ```
-With the above as the goal, its not hard to imagine rendering the parsed nodes to HTML using a couple loops:
+With the above as the goal, it's not hard to imagine rendering the parsed nodes to HTML using a couple loops:
 ```
 Str8List render(Arena* arena, Block* root) {
     Str8List out = {0};
@@ -313,7 +313,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     Str8List_pop(&dir, page->base_dir.count);
 }
 ```
-And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found @(https://github.com/dev-dwarf/dev-dwarf.github.io on GitHub). You may have noticed an unused type field for pages; the real version of the generator has `ARTICLE` pages and an `INDEX` page. `ARTICLE`s have slightly different HTML generated, and the `INDEX` gets a list of links to articles appended to it. I don't think its worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
+And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found @(https://github.com/dev-dwarf/dev-dwarf.github.io on GitHub). You may have noticed an unused type field for pages; the real version of the generator has `ARTICLE` pages and an `INDEX` page. `ARTICLE`s have slightly different HTML generated, and the `INDEX` gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
 ---
 ##conc Conclusion
 Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 LOC, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
@@ -321,5 +321,5 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 1. Generate an RSS feed from recent articles.
 1. After the first compile of each page, run in the background checking for changes and compile files automatically. Right now I manually run `site.exe` to see my changes each time, but it would help my flow if that was taken care of for me.
 1. Introduce some sort of templating/custom generation for individual pages. I **abhor** how most generators handle this sort of feature so I'm excited to look for a unique approach. I'd prefer something where I can easily hack in new templates in C++ instead of using some bogus templating language.
-1. Additional miscellanous features like captions for images, subsections, and asides/expandable text. 
+1. Additional miscellaneous features like captions for images, subsections, and asides/expandable text. 
 I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without lcf, my @(http://nothings.org/stb.h stb)-esque standard library. I've only fairly recently started my library and I tend to make tweaks and additions almost everytime I work on a project right now, so I don't feel comfortable having it out there as a public repo. If you really want a copy so you can compile my site yourself @(/contact.html send me a message).

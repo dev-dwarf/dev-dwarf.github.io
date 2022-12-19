@@ -73,28 +73,6 @@ window.onload = function() {
     </div>
     </html>)");
 
-void win32_write_file(chr8* filepath, Str8List html) {
-    HANDLE file = CreateFileA(filepath, FILE_APPEND_DATA | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
-
-    ASSERT(file != INVALID_HANDLE_VALUE);
-    u32 toWrite = 0;
-    u32 written = 0;
-    u32 bytesWrittenTotal = 0;
-    Str8Node* n = html.first;
-    for (u64 i = 0; i < html.count; i++, n = n->next) {
-        toWrite = (u32) n->str.len;
-        written = 0;
-
-        while (written != toWrite) {
-            WriteFile(file, n->str.str, toWrite, (LPDWORD) &written, 0);
-        }
-            
-        bytesWrittenTotal += written;
-    }
-    ASSERT(bytesWrittenTotal == html.total_len);
-    CloseHandle(file);
-}
-
 void switch_to_dir(Str8Node *new_folder_node) {
     Str8Node *cur_folder_node = dir.first->next;
     if (cur_folder_node != new_folder_node) {

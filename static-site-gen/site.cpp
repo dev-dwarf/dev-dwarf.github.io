@@ -177,14 +177,14 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
         str8 first_line = str8_pop_at_first_delimiter(&dummy, str8_NEWLINE);
         page->title = str8_copy(longa, str8_cut(str8_skip(first_line, 2), 1));
     }  else {
-        page->title = str8_cut(page->filename, 4);
+        page->title = str8_cut(page->filename, 3);
     }
         
     printf("%.*s \"%.*s\" ", str8_PRINTF_ARGS(filename.str), str8_PRINTF_ARGS(page->title));
 
     Str8List_pop_node(&dir);
 
-    filename.str = str8_concat(tempa, str8_cut(page->filename, 3), str8_lit("html\0"));
+    filename.str = str8_concat(tempa, str8_cut(page->filename, 2), str8_lit("html\0"));
     Str8List_add_node(&dir, &filename);
 
     Str8List html = {0};
@@ -236,7 +236,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
             if (link->type == Page::ARTICLE) {
                 Str8List_add(tempa, &html, str8_lit("<li><a href='"));
                 Str8List_add(tempa, &html, link->base_href);
-                Str8List_add(tempa, &html, str8_cut(link->filename,3));
+                Str8List_add(tempa, &html, str8_cut(link->filename,2));
                 Str8List_add(tempa, &html, str8_lit("html' id='"));
                 Str8List_add(tempa, &html, link->filename);
                 Str8List_add(tempa, &html, str8_lit("'>"));
@@ -250,7 +250,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     Str8List_add(tempa, &html, FOOTER);
 
     switch_to_dir(&deploy);
-    win32_write_file(build_dir(tempa).str, html);
+    win32_write_file(build_dir(tempa), html);
 
     printf("> %.*s%.*s\n", str8_PRINTF_ARGS(page->base_href), str8_PRINTF_ARGS(page->filename));
 

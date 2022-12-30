@@ -15,6 +15,13 @@ Features:
 Source on @(https://github.com/dev-dwarf/dev-dwarf.github.io Github). 
 Read my posts about making this @(/writing.html#making-a-ssg1.html here).
 
+## Handmade Math 2.0
+I was hired to bring HandmadeMath, A single-file C/C++ library implementing math useful for 3d graphics and games, to its 2.0 milestone as described in this @(https://github.com/HandmadeMath/HandmadeMath/issues/147 github issue). You can see my changes in one @(https://github.com/HandmadeMath/HandmadeMath/pull/149 big pull request). A summary:
+- Implemented 2x2 and 3x3 matrices, with basic operations.
+- Implemented determinants and inverses for all matrices, with several fast paths for common types of 4x4 matrices. 
+- Created a portable tool in C to update user's code to the new version, to help with the many breaking changes that were made to the API. 
+The code for the update tool can be found in a seperate @(https://github.com/dev-dwarf/HMM2.0UpdateTool github repository).
+
 ## LCF (WIP)
 My personal @(http://nothings.org/stb.h stb.h) style standard libary for my C/C++ projects. Features:
 * Shorter type names and macros for commonly used functionality.

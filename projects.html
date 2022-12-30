@@ -7,14 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:locale" content="en_US" />
-    <link rel="canonical" href="http://lcfd.dev/" />
-    <meta property="og:url" content="http://lcfd.dev/"/>
+    <meta property="og:image" content="/assets/dd.png" />
+    <link rel="canonical" href="http://loganforman.com/" />
+    <meta property="og:url" content="http://loganforman.com/"/>
     <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <meta property="twitter:title" content="Stuffed Wombat" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://lcfd.dev/"}</script>
+      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
     <link rel="stylesheet" href="/dwarf.css">
     </head>
     <body>
@@ -23,7 +24,7 @@
 
 	<title>LCF/DD:projects</title>
 <h2 style='text-align:center' id=''>Programming</h2><hr>
-<h2>Custom Game Engine (very WIP)</h2><p>
+<h2 id='engine'>Custom Game Engine (very WIP)</h2><p>
 Custom game engine codebase built in C++ with minimal libraries.<br><br>Not much to say about this yet except that I have been deep-diving into Platform APIs for Windowing, Input, Rendering, Sound, and seemingly endless other topics. Once I duct-tape some games together with this I'll have more to say!<br></p>
 <h2>Static Site Generator (WIP)</h2><p>
 A Static Site Generator used to make this website, made in (C-like) C++. Features:
@@ -36,6 +37,16 @@ A Static Site Generator used to make this website, made in (C-like) C++. Feature
 </ul>
 <p>
 Source on <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>Github</a>. Read my posts about making this <a href='/writing.html#making-a-ssg1.html'>here</a>.<br></p>
+<h2>Handmade Math 2.0</h2><p>
+I was hired to bring HandmadeMath, A single-file C/C++ library implementing math useful for 3d graphics and games, to its 2.0 milestone as described in this <a href='https://github.com/HandmadeMath/HandmadeMath/issues/147'>github issue</a>. You can see my changes in one <a href='https://github.com/HandmadeMath/HandmadeMath/pull/149'>big pull request</a>. A summary:</p>
+<ul>
+<li>Implemented 2x2 and 3x3 matrices, with basic operations.</li>
+<li>Implemented determinants and inverses for all matrices, with several fast paths for common types of 4x4 matrices. </li>
+<li>Created a portable tool in C to update user's code to the new version, to help with the many breaking changes that were made to the API. </li>
+
+</ul>
+<p>
+The code for the update tool can be found in a seperate <a href='https://github.com/dev-dwarf/HMM2.0UpdateTool'>github repository</a>.<br></p>
 <h2>LCF (WIP)</h2><p>
 My personal <a href='http://nothings.org/stb.h'>stb.h</a> style standard libary for my C/C++ projects. Features:</p>
 <ul>

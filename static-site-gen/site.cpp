@@ -24,14 +24,14 @@ R"(
     <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="/assets/dd.png" />
-    <link rel="canonical" href="http://lcfd.dev/" />
-    <meta property="og:url" content="http://lcfd.dev/"/>
+    <link rel="canonical" href="http://loganforman.com/" />
+    <meta property="og:url" content="http://loganforman.com/"/>
     <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <meta property="twitter:title" content="Stuffed Wombat" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://lcfd.dev/"}</script>
+      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
     <link rel="stylesheet" href="/dwarf.css">
     </head>
     <body>

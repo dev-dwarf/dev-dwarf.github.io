@@ -5,3 +5,5 @@ todo
 .vs/*
 *.exe
 *.map
+deploy
+deploy/*

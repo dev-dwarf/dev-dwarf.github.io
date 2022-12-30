@@ -57,7 +57,7 @@ Text* parse_text(Arena* arena, Text* text) {
         str8_iter_custom(s, i, _unused) {
             c[0] = c[1];
             c[1] = c[2];
-            c[2] = (s.len > i+2)? s.str[i+2] : 0;
+            c[2] = ((s64) s.len > i+2)? s.str[i+2] : 0;
             
             if (ignore_next) {
                 PUSH_TEXT(Text::TEXT, i-1, 1);

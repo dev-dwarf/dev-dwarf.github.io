@@ -167,7 +167,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
     (void) blocks; /* NOTE(lcf): Unused for now. */
     
     if (str8_eq(block->id, str8_lit("sections"))) {
-        Str8List_add(tempa, front, str8_lit("<ol>\n"));
+        Str8List_add(tempa, front, str8_lit("<ol class='sections'>\n"));
         for (Block* b = block; b->type != Block::NIL; b = b->next) {
             if (b->type == Block::HEADING && str8_not_empty(b->id)) {
                 Str8List_add(tempa, front, str8_lit("<li><a href='#"));
@@ -212,6 +212,29 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
             }
         }
         Str8List_add(tempa, front, str8_lit("</ul>"));
+    }
+    if (str8_eq(block->id, str8_lit("project"))) {
+        Str8Node *param = block->content.first;
+        str8 title = param->str; param = param->next;
+        str8 date = param->str; param = param->next;
+        str8 link = param->str; param = param->next;
+        str8 img = param->str;
+        Str8List_add(tempa, front, str8_lit("<h2><a href="));
+        Str8List_add(tempa, front, link);
+        Str8List_add(tempa, front, str8_lit(">"));
+        Str8List_add(tempa, front, title);
+        Str8List_add(tempa, front, str8_lit("</a>"));
+        Str8List_add(tempa, front, str8_lit(" ("));
+        Str8List_add(tempa, front, date);
+        Str8List_add(tempa, front, str8_lit(")</h2>"));
+Str8List_add(tempa, front, str8_lit("<div class='project'><div class='project-image'><a href='"));
+        Str8List_add(tempa, front, link); 
+        Str8List_add(tempa, front, str8_lit("'><img src='"));
+        Str8List_add(tempa, front, img);
+        Str8List_add(tempa, front, str8_lit("'></a></div><div class='project-text'>"));
+    }
+    if (str8_eq(block->id, str8_lit("project-end"))) {
+        Str8List_add(tempa, front, str8_lit("</div></div>"));
     }
 }
 

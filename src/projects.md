@@ -31,10 +31,7 @@ Source is not available yet because I update this very frequently and don't want
 
 ##center Finished Games
 ---
-## @(https://store.steampowered.com/app/1769510/FEWARDVD/ FEWAR-DVD) (December 2021)
-<div class="project">
-<div class="project-image"> @(https://store.steampowered.com/app/1769510/FEWARDVD/ !(/assets/FewarDVD.png)) </div>
-<div class="project-text">
+@{project, FEWAR-DVD, December 2021, https://store.steampowered.com/app/1769510/FEWARDVD/, /assets/FewarDVD.png}
 Speedrunning arcade game with maze-like procedurally generated levels and eclectic visual style. Positive reviews on steam.
 > A rapid arcade game. Avoid the swords. Find the key. Enter the portal. It's a migraine.
 > 
@@ -45,13 +42,9 @@ Speedrunning arcade game with maze-like procedurally generated levels and eclect
 > "Here’s a great game: a scratchy, noisy, ridiculously tough arcade game that I can’t stop one-more-trying."
 > 
 > -- *@(https://buried-treasure.org/2022/01/quicky-fewar-dvd/ Buried Treasure)*
-</div>
-</div>
+@{project-end}
 
-## @(https://dev-dwarf.itch.io/self SELF) (February 2021)
-<div class="project">
-<div class="project-image"> @(https://dev-dwarf.itch.io/self !(/assets/SELF.gif)) </div>
-<div class="project-text">
+@{project, SELF, February 2021, https://dev-dwarf.itch.io/self, /assets/SELF.gif}
 2D Platforming game with precise controls. 100,000+ players, licensed by
 Cool Math Games and Armor Games. Featured on @(https://superraregames.com/products/srg-mixtape-volume-4 Super Rare Mixtape Vol 4).
 > who are you
@@ -61,17 +54,12 @@ Cool Math Games and Armor Games. Featured on @(https://superraregames.com/produc
 > recover the fragments of your SELF
 > 
 > be touched by the higher being
-</div>
-</div>
+@{project-end}
 
-## @(https://dev-dwarf.itch.io/lianthus Lianthus) (September 2020)
-<div class="project">
-<div class="project-image"> @(https://dev-dwarf.itch.io/lianthus !(/assets/Lianthus.png)) </div>
-<div class="project-text">
+@{project, Lianthus, September 2020, https://dev-dwarf.itch.io/lianthus, /assets/Lianthus.png}
 3D adventure game with unique graphical style. 5000+ downloads on itch.io. Featured on @(https://superraregames.com/products/srg-mixtape-volume-1 Super Rare Mixtape Vol 1).
 > A small adventure game with sunflowers, magic, and skeletons. After the darkness is unleashed, journey through the light and dark worlds, rediscover your powers, and seal the dark away.
-</div>
-</div>
+@{project-end}
 
 ##center Jam Games
 ---

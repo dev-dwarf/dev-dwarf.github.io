@@ -3,7 +3,7 @@
 @{desc, First post! A brief walkthrough of how I made the SSG for my personal website.}
 @{sections}
 ---
-##intro Introduction
+##introd Introduction
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to @(/contact.html reach out)!). The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
 
 

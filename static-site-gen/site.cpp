@@ -181,9 +181,9 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
     }
     if (str8_eq(block->id, str8_lit("title"))) {
         page->title = Str8List_join(longa, block->content, str8_lit(""), str8_lit(" ("), str8_lit(")"));
-        Str8List_add(tempa, front, str8_lit("<div style='clear: both'><h1 style='display: inline-block; float: left'>"));
+        Str8List_add(tempa, front, str8_lit("<div style='clear: both'><h1>"));
         Str8List_add(tempa, front, block->content.first->str);
-        Str8List_add(tempa, front, str8_lit("</h1><h3 style='inline-block;'>"));
+        Str8List_add(tempa, front, str8_lit("</h1><h3>"));
         Str8List_add(tempa, front, block->content.last->str);
         Str8List_add(tempa, front, str8_lit("</h3></div>\n"));
     }

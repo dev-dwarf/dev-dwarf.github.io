@@ -172,8 +172,7 @@ Block* parse(Arena *arena, str8 str) {
             end->type = Text::CODE_BLOCK;
             PUSH_STR(line);
         } else if (c[0] == '#') {
-            BREAK_BLOCK_IF_NOT(Block::HEADING);
-            
+            PUSH_BLOCK();
             u32 n = 1;
             for (; n < line.len && line.str[n] == '#'; n++)
                 ;
@@ -211,6 +210,18 @@ Block* parse(Arena *arena, str8 str) {
             end->next = Arena_take_struct_zero(arena, Text);
             end->end = true;
             end = end->next;
+        } else if (c[0] == '@' && c[1] == '{') {
+            PUSH_BLOCK();
+            line = str8_skip(line, 2);
+            next.type = Block::SPECIAL;
+            next.id = str8_pop_at_first_delimiter(&line, str8_lit(",}"));
+            str8_iter_pop_delimiter(line, str8_lit(",}")) {
+                if (str8_char_location(sub, ' ') == 0) {
+                    sub = str8_skip(sub, 1);
+                }
+                Str8List_add(arena, &next.content, sub);
+            }
+            PUSH_BLOCK();
         } else if (c[0] == '-' && c[1] == '-' && c[2] == '-') {
             PUSH_BLOCK();
             next.type = Block::RULE;
@@ -311,92 +322,90 @@ Str8List render_text(Arena* arena, Text* root) {
 }
 
 /* take fully parsed markdown blocks and render as html tags */
-Str8List render(Arena* arena, Block* root) {
+Str8List render_block(Arena* arena, Block* block) {
     Str8List out = {0};
-    for (Block* b = root; b->type != Block::NIL; b = b->next) {
-        switch (b->type) {
-        case Block::HEADING: {
-            str8 h = str8_create_size(arena, 2);
-            h.str[0] = 'h';
-            h.str[1] = '0' + (u8) b->num;
-            Str8List_add(arena, &out, str8_lit("<"));
-            Str8List_add(arena, &out, h);
-            if (b->id.len > 0) {
-                static const str8 center = str8_lit("center");
-                static const str8 right = str8_lit("right");
-                if (str8_has_prefix(b->id, center)) {
-                    b->id = str8_skip(b->id, center.len+1);
-                    Str8List_add(arena, &out, str8_lit(" style='text-align:center'"));
-                } else if (str8_eq(b->id, right)) {
-                    b->id = str8_skip(b->id, right.len+1);
-                    Str8List_add(arena, &out, str8_lit(" style='text-align:right'"));
-                }
-                Str8List_add(arena, &out, str8_lit(" id='"));
-                Str8List_add(arena, &out, b->id);
-                Str8List_add(arena, &out, str8_lit("'"));
+    switch (block->type) {
+    case Block::HEADING: {
+        str8 h = str8_create_size(arena, 2);
+        h.str[0] = 'h';
+        h.str[1] = '0' + (u8) block->num;
+        Str8List_add(arena, &out, str8_lit("<"));
+        Str8List_add(arena, &out, h);
+        if (block->id.len > 0) {
+            static const str8 center = str8_lit("center");
+            static const str8 right = str8_lit("right");
+            if (str8_has_prefix(block->id, center)) {
+                block->id = str8_skip(block->id, center.len+1);
+                Str8List_add(arena, &out, str8_lit(" style='text-align:center'"));
+            } else if (str8_eq(block->id, right)) {
+                block->id = str8_skip(block->id, right.len+1);
+                Str8List_add(arena, &out, str8_lit(" style='text-align:right'"));
             }
-            Str8List_add(arena, &out, str8_lit(">"));
-        } break;
-        case Block::QUOTE: {
-            Str8List_add(arena, &out, str8_lit("<blockquote>\n"));
-        } break;
-        case Block::ORD_LIST: {
-            Str8List_add(arena, &out, str8_lit("<ol>\n"));
-        } break;
-        case Block::UN_LIST: {
-            Str8List_add(arena, &out, str8_lit("<ul>\n"));
-        } break;
-        case Block::CODE:  {
-            Str8List_add(arena, &out, str8_lit("<pre><code id='"));
-            Str8List_add(arena, &out, b->id);
-            Str8List_add(arena, &out, str8_lit("'>"));
-        } break;
-        case Block::RULE:  {
-            Str8List_add(arena, &out, str8_lit("<hr>\n"));
-        } break;
-        case Block::PARAGRAPH: {
-            Str8List_add(arena, &out, str8_lit("<p>\n"));
-        } break;  
-        default: {
-            NOTIMPLEMENTED();
-            break;
+            Str8List_add(arena, &out, str8_lit(" id='"));
+            Str8List_add(arena, &out, block->id);
+            Str8List_add(arena, &out, str8_lit("'"));
         }
-        }
+        Str8List_add(arena, &out, str8_lit(">"));
+    } break;
+    case Block::QUOTE: {
+        Str8List_add(arena, &out, str8_lit("<blockquote>\n"));
+    } break;
+    case Block::ORD_LIST: {
+        Str8List_add(arena, &out, str8_lit("<ol>\n"));
+    } break;
+    case Block::UN_LIST: {
+        Str8List_add(arena, &out, str8_lit("<ul>\n"));
+    } break;
+    case Block::CODE:  {
+        Str8List_add(arena, &out, str8_lit("<pre><code id='"));
+        Str8List_add(arena, &out, block->id);
+        Str8List_add(arena, &out, str8_lit("'>"));
+    } break;
+    case Block::RULE:  {
+        Str8List_add(arena, &out, str8_lit("<hr>\n"));
+    } break;
+    case Block::PARAGRAPH: {
+        Str8List_add(arena, &out, str8_lit("<p>\n"));
+    } break;
+    default: {
+        NOTIMPLEMENTED();
+        break;
+    }
+    }
 
-        b->content = render_text(arena, b->text);
-        Str8List_append(&out, Str8List_copy(arena, b->content));    
+    block->content = render_text(arena, block->text);
+    Str8List_append(&out, Str8List_copy(arena, block->content));    
 
-        switch (b->type) {
-        case Block::HEADING: {
-            str8 h = str8_create_size(arena, 2);
-            h.str[0] = 'h';
-            h.str[1] = '0' + (u8) b->num;
+    switch (block->type) {
+    case Block::HEADING: {
+        str8 h = str8_create_size(arena, 2);
+        h.str[0] = 'h';
+        h.str[1] = '0' + (u8) block->num;
                     
-            Str8List_add(arena, &out, str8_lit("</"));
-            Str8List_add(arena, &out, h);
-            Str8List_add(arena, &out, str8_lit(">"));
-        } break;
-        case Block::QUOTE: {
-            Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
-        } break;
-        case Block::ORD_LIST: {
-            Str8List_add(arena, &out, str8_lit("\n</ol>\n"));
-        } break;
-        case Block::UN_LIST: {
-            Str8List_add(arena, &out, str8_lit("\n</ul>\n"));
-        } break;
-        case Block::CODE:  {
-            Str8List_add(arena, &out, str8_lit("</code></pre>\n"));
-        } break;
-        case Block::RULE:  {} break;
-        case Block::PARAGRAPH: {
-            Str8List_add(arena, &out, str8_lit("</p>\n"));
-        } break;  
-        default: {
-            NOTIMPLEMENTED();
-            break;
-        }
-        }
-    } /* end for */
+        Str8List_add(arena, &out, str8_lit("</"));
+        Str8List_add(arena, &out, h);
+        Str8List_add(arena, &out, str8_lit(">"));
+    } break;
+    case Block::QUOTE: {
+        Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
+    } break;
+    case Block::ORD_LIST: {
+        Str8List_add(arena, &out, str8_lit("\n</ol>\n"));
+    } break;
+    case Block::UN_LIST: {
+        Str8List_add(arena, &out, str8_lit("\n</ul>\n"));
+    } break;
+    case Block::CODE:  {
+        Str8List_add(arena, &out, str8_lit("</code></pre>\n"));
+    } break;
+    case Block::RULE:  {} break;
+    case Block::PARAGRAPH: {
+        Str8List_add(arena, &out, str8_lit("</p>\n"));
+    } break;
+    default: {
+        NOTIMPLEMENTED();
+        break;
+    }
+    }
     return out;
 }

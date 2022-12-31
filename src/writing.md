@@ -1,3 +1,4 @@
 ##center Writing
-Subscribe to **@(./feed.xml RSS)**.
+Subscribe to **@(./rss.xml RSS)**.
 ###technical Technical Articles: 
+@{index, /technical/}

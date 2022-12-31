@@ -1,4 +1,7 @@
-# Making A Static Site Generator (December 18, 2022)
+@{article}
+@{title, Making A Static Site Generator, December 18 2022}
+@{desc, First post! A brief walkthrough of how I made the SSG for my personal website.}
+@{sections}
 ---
 ##intro Introduction
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to @(/contact.html reach out)!). The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
@@ -316,7 +319,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
 And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found @(https://github.com/dev-dwarf/dev-dwarf.github.io on GitHub). You may have noticed an unused type field for pages; the real version of the generator has `ARTICLE` pages and an `INDEX` page. `ARTICLE`s have slightly different HTML generated, and the `INDEX` gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
 ---
 ##conc Conclusion
-Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 LOC, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
+Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 lines of C-like C++, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
 1. Generate an index/section list for articles.
 1. Generate an RSS feed from recent articles.
 1. After the first compile of each page, run in the background checking for changes and compile files automatically. Right now I manually run `site.exe` to see my changes each time, but it would help my flow if that was taken care of for me.

@@ -29,7 +29,7 @@ R"(
     <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Stuffed Wombat" />
+    <meta property="twitter:title" content="Logan Forman" />
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
     <link rel="stylesheet" href="/dwarf.css">
@@ -91,7 +91,7 @@ str8 build_dir(Arena *arena) {
     return Str8List_join(arena, dir, str8_lit(""), str8_lit("\\"), str8_lit("\0"));
 }
 
-PageList get_pages_in_dir(Arena *arena, Page::Types type) {
+PageList get_pages_in_dir(Arena *arena) {
     PageList dirPages = {0};
     
     union {
@@ -133,7 +133,6 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
         next->created_time = giveMeTheBits.u;
         giveMeTheBits.ft = ffd.ftLastWriteTime;
         next->modified_time = giveMeTheBits.u;
-        next->type = type;
 
         Page *curr = dirPages.first, *pre = curr;
         if (curr == 0) {
@@ -164,6 +163,58 @@ PageList get_pages_in_dir(Arena *arena, Page::Types type) {
     return dirPages;
 }
 
+void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* front, Str8List* back, Block* blocks, Block* block) {
+    (void) blocks; /* NOTE(lcf): Unused for now. */
+    
+    if (str8_eq(block->id, str8_lit("sections"))) {
+        Str8List_add(tempa, front, str8_lit("<ol>\n"));
+        for (Block* b = block; b->type != Block::NIL; b = b->next) {
+            if (b->type == Block::HEADING && str8_not_empty(b->id)) {
+                Str8List_add(tempa, front, str8_lit("<li><a href='#"));
+                Str8List_add(tempa, front, b->id);
+                Str8List_add(tempa, front, str8_lit("'>"));
+                Str8List_append(front, render_text(tempa, b->text));
+                Str8List_add(tempa, front, str8_lit("</a></li>\n"));
+            } 
+        }
+        Str8List_add(tempa, front, str8_lit("</ol>\n"));
+    }
+    if (str8_eq(block->id, str8_lit("title"))) {
+        page->title = Str8List_join(longa, block->content, str8_lit(""), str8_lit(" ("), str8_lit(")"));
+        Str8List_add(tempa, front, str8_lit("<div style='clear: both'><h1 style='display: inline-block; float: left'>"));
+        Str8List_add(tempa, front, block->content.first->str);
+        Str8List_add(tempa, front, str8_lit("</h1><h3 style='inline-block;'>"));
+        Str8List_add(tempa, front, block->content.last->str);
+        Str8List_add(tempa, front, str8_lit("</h3></div>\n"));
+    }
+    if (str8_eq(block->id, str8_lit("desc"))) {
+        page->desc = Str8List_join(longa, block->content, str8_lit(""), str8_lit(" "), str8_lit(""));
+    }
+    if (str8_eq(block->id, str8_lit("article"))) {
+        str8 link_ref = Str8List_join(tempa, page->base_dir, str8_lit("#"), str8_lit("/  "), str8_lit(""));
+        Str8List_add(tempa, back, str8_lit("<br><a href='"));
+        /* NOTE(lcf): could change based on type of article */
+        Str8List_add(tempa, back, str8_lit("/writing.html"));
+        Str8List_add(tempa, back, link_ref);
+        Str8List_add(tempa, back, str8_lit("'>back</a>"));
+    }
+    if (str8_eq(block->id, str8_lit("index"))) {
+        str8 base_href = block->content.first->str;
+        Str8List_add(tempa, front, str8_lit("<ul>"));
+        for (Page *p = allPages.first; p != 0; p = p->next) {
+            if (str8_eq(p->base_href, base_href)) {
+                Str8List_add(tempa, front, str8_lit("<li><a href='"));
+                Str8List_add(tempa, front, p->base_href);
+                Str8List_add(tempa, front, str8_cut(p->filename,2));
+                Str8List_add(tempa, front, str8_lit("html'>"));
+                Str8List_add(tempa, front, p->title);
+                Str8List_add(tempa, front, str8_lit("</a></li>"));
+            }
+        }
+        Str8List_add(tempa, front, str8_lit("</ul>"));
+    }
+}
+
 void compile_page(Arena *longa, Arena *tempa, Page *page) {
     Str8List_append(&dir, page->base_dir);
         
@@ -171,83 +222,38 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     Str8List_add_node(&dir, &filename);
     switch_to_dir(&src);
     page->content = win32_load_entire_file(tempa, build_dir(tempa));
+    page->title = str8_cut(page->filename, 3);
         
-    if (page->type == Page::ARTICLE) {
-        str8 dummy = page->content;
-        str8 first_line = str8_pop_at_first_delimiter(&dummy, str8_NEWLINE);
-        page->title = str8_copy(longa, str8_cut(str8_skip(first_line, 2), 1));
-    }  else {
-        page->title = str8_cut(page->filename, 3);
-    }
-        
-    printf("%.*s \"%.*s\" ", str8_PRINTF_ARGS(filename.str), str8_PRINTF_ARGS(page->title));
-
     Str8List_pop_node(&dir);
 
     filename.str = str8_concat(tempa, str8_cut(page->filename, 2), str8_lit("html\0"));
     Str8List_add_node(&dir, &filename);
 
     Str8List html = {0};
-    Str8List_add(tempa, &html, HEADER);
-    Str8List_add(tempa, &html, str8_lit("\t<title>LCF/DD:"));
-    Str8List_add(tempa, &html, page->title);
-    Str8List_add(tempa, &html, str8_lit("</title>\n"));
-
-    if (page->type == Page::ARTICLE) {
-        Str8List_add(tempa, &html, str8_lit("<br><a href='/writing.html#"));
-        str8 link_ref = Str8List_join(tempa, page->base_dir, str8_lit(""), str8_lit("/"), str8_lit(""));
-        Str8List_add(tempa, &html, link_ref);
-        Str8List_add(tempa, &html, str8_lit("'>back</a>"));
-    }
+    Str8List back = {0};
 
     Block* blocks = parse(tempa, page->content);
-    Str8List md = render(tempa, blocks);
-
-    /* TODO: make this replace a designated block in the text */
-    /* Should have a SPECIAL block that we replace with arbitrary content */
-    // if (page->type == Page::ARTICLE) {
-    //     Str8List_add(tempa, &html, str8_lit("<ul>\n"));
-    //     for (Block* b = blocks; b != 0; b = b->next) {
-    //         if (b->type == Block::HEADING) {
-    //             if (str8_not_empty(b->id)) {
-    //                 Str8List_add(tempa, &html, str8_lit("<li><a href='#"));
-    //                 Str8List_add(tempa, &html, b->id);
-    //                 Str8List_add(tempa, &html, str8_lit("'>"));
-    //                 Str8List_append(&html, b->content);
-    //                 Str8List_add(tempa, &html, str8_lit("</a></li>\n"));
-    //             }
-    //         }
-    //     }
-    //     Str8List_add(tempa, &html, str8_lit("</ul>\n"));
-    // }
-    
-    Str8List_append(&html, md);
-        
-    if (page->type == Page::ARTICLE) {
-        str8 link_ref = Str8List_join(tempa, page->base_dir, str8_lit(""), str8_lit("/  "), str8_lit(""));
-        Str8List_add(tempa, &html, str8_lit("<br><a href='/writing.html#"));
-        Str8List_add(tempa, &html, link_ref);
-        Str8List_add(tempa, &html, str8_lit("'>back</a>"));
-    }
-
-    if (page->type == Page::INDEX) {
-        Str8List_add(tempa, &html, str8_lit("<ul>"));
-        for (Page *link = allPages.first; link != 0; link = link->next) {
-            if (link->type == Page::ARTICLE) {
-                Str8List_add(tempa, &html, str8_lit("<li><a href='"));
-                Str8List_add(tempa, &html, link->base_href);
-                Str8List_add(tempa, &html, str8_cut(link->filename,2));
-                Str8List_add(tempa, &html, str8_lit("html' id='"));
-                Str8List_add(tempa, &html, link->filename);
-                Str8List_add(tempa, &html, str8_lit("'>"));
-                Str8List_add(tempa, &html, link->title);
-                Str8List_add(tempa, &html, str8_lit("</a></li>"));
-            }
+    Str8List md = {0};
+    for (Block* b = blocks; b->type != Block::NIL; b = b->next) {
+        if (b->type != Block::SPECIAL) {
+            md = render_block(tempa, b);
+            Str8List_append(&html, md);
+        } else {
+            render_special_block(longa, tempa, page, &html, &back, blocks, b);
         }
-        Str8List_add(tempa, &html, str8_lit("</ul>"));
     }
 
-    Str8List_add(tempa, &html, FOOTER);
+    /* Header and Footer */
+    Str8List head = {0};
+    Str8List_add(tempa, &head, HEADER);
+    Str8List_add(tempa, &head, str8_lit("\t<title>LCF/D  D:"));
+    Str8List_add(tempa, &head, page->title);
+    Str8List_add(tempa, &head, str8_lit("</title>\n"));
+    Str8List_add(tempa, &back, FOOTER);
+    Str8List_prepend(&html, head);
+    Str8List_append(&html, back);
+
+    printf("%.*s \"%.*s\" ", str8_PRINTF_ARGS(filename.str), str8_PRINTF_ARGS(page->title));
 
     switch_to_dir(&deploy);
     win32_write_file(build_dir(tempa), html);
@@ -256,7 +262,47 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
 
     page->content = str8_EMPTY;
     Str8List_pop_node(&dir);
-    Str8List_pop(&dir, page->base_dir.count);
+    Str8List_pop(&dir, page->base_dir.count);    
+}
+
+global str8 RSS_HEADER = str8_lit(R"(<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Logan Forman</title>
+    <link>http://loganforman.com/</link>
+    <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
+    <description>Writings and such.</description>
+)");
+global str8 RSS_FOOTER = str8_lit(R"(
+  </channel>
+</rss>
+)");
+void compile_feeds(Arena *arena, PageList pages) {
+    printf("RSS Feed:\n");
+    Str8List rss = {0};
+    Str8List_add(arena, &rss, RSS_HEADER);
+    Page *n = pages.first;
+    for (s64 i = 0; i < pages.count; i++, n = n->next) {
+        printf("\t %.*s\n", str8_PRINTF_ARGS(n->title));
+        Str8List_add(arena, &rss, str8_lit("<item>\n<title>"));
+        Str8List_add(arena, &rss, n->title);
+        Str8List_add(arena, &rss, str8_lit("</title>\n<description>"));
+        Str8List_add(arena, &rss, n->desc);
+        Str8List_add(arena, &rss, str8_lit("</description>\n<link>https://loganforman.com/"));
+        Str8List_add(arena, &rss, n->base_href);
+        Str8List_add(arena, &rss, str8_cut(n->filename, 2));
+        Str8List_add(arena, &rss, str8_lit("html</link><guid isPermaLink='true'>https://loganforman.com/"));
+        Str8List_add(arena, &rss, n->base_href);
+        Str8List_add(arena, &rss, str8_cut(n->filename, 2));
+        Str8List_add(arena, &rss, str8_lit("</guid>\n"));
+        /* TODO: date for RSS feed items, from created_time */
+        Str8List_add(arena, &rss, str8_lit("</item>"));
+    }
+    Str8List_add(arena, &rss, RSS_FOOTER);
+    switch_to_dir(&deploy);
+    Str8List_add(arena, &dir, str8_lit("rss.xml"));
+    win32_write_file(build_dir(arena), rss);
+    Str8List_pop_node(&dir);
+    Arena_reset_all(arena);
 }
 
 int main() {
@@ -279,31 +325,21 @@ int main() {
     /* TODO: loop this as a daemon, whenever any of the files change update them automatically
         REF: https://learn.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
     */
-    /* TODO: str8_trim_suffix might not work, check */
-    /* TODO: generate RSS feed from 10 recent posts */
-    /* TODO: some form of templating maybe? */
-    /* TODO: captions for images */
     /* TODO: aside/expandable text like marc-ten-bosch */
-    PageList topPages = get_pages_in_dir(longa, Page::DEFAULT);
+    PageList topPages = get_pages_in_dir(longa);
     Str8List_add_node(&dir, &technical);
-    PageList technicalPages = get_pages_in_dir(longa, Page::ARTICLE);
+    PageList technicalPages = get_pages_in_dir(longa);
     Str8List_pop_node(&dir);
     allPages = technicalPages;
     allPages.count += topPages.count;
     allPages.last->next = topPages.first;
     allPages.last = topPages.last;
-
-    /* NOTE: Special case since writing is the only index page for now */
-    for (Page *n = allPages.first; n != 0; n = n->next) {
-        if (str8_has_prefix(n->filename, str8_lit("writing.md"))) {
-            n->type = Page::INDEX;
-            break;
-        }
-    }
     
     for (Page *n = allPages.first; n != 0; n = n->next) {
         compile_page(longa, tempa, n);
         Arena_reset_all(tempa);
     }
+
+    compile_feeds(tempa, technicalPages);
 }
 

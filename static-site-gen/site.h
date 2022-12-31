@@ -6,16 +6,12 @@ struct Page {
     u64 created_time;
     u64 modified_time;
     str8 title;
+    str8 desc;
     str8 content;
-    enum Types {
-        DEFAULT,
-        ARTICLE,
-        INDEX
-    } type;
 };
 
 struct PageList {
     Page *first;
     Page *last;
-    u64 count;
+    s64 count;
 };

@@ -25,6 +25,7 @@ struct Block {
         PARAGRAPH,
         HEADING, RULE, CODE, 
         QUOTE, ORD_LIST, UN_LIST,
+        SPECIAL, /* Let caller deal with these */
     } type;
 
     /* Node Contents */

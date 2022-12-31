@@ -24,15 +24,15 @@
 
 	<title>LCF/DD:Making A Static Site Generator (December 18 2022)</title>
 <div style='clear: both'><h1>Making A Static Site Generator</h1><h3>December 18 2022</h3></div>
-<ol>
-<li><a href='#intro'>Introduction</a></li>
+<ol class='sections'>
+<li><a href='#introd'>Introduction</a></li>
 <li><a href='#parse'>Parsing Markdown</a></li>
 <li><a href='#compile'>Render as HTML</a></li>
 <li><a href='#generate'>Generating the site.</a></li>
 <li><a href='#conc'>Conclusion</a></li>
 </ol>
 <hr>
-<h2 id='intro'>Introduction</h2><p>
+<h2 id='introd'>Introduction</h2><p>
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to <a href='/contact.html'>reach out</a>!). The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:</p>
 <ol>
 <li> Easily extendable. Do exactly what I want, quickly.</li>

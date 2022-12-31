@@ -1,0 +1,13 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Logan Forman</title>
+    <link>http://loganforman.com/</link>
+    <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
+    <description>Writings and such.</description>
+<item>
+<title>Making A Static Site Generator (December 18 2022)</title>
+<description>First post! A brief walkthrough of how I made the SSG for my personal website.</description>
+<link>https://loganforman.com//technical/making-a-ssg1.html</link><guid isPermaLink='true'>https://loganforman.com//technical/making-a-ssg1.</guid>
+</item>
+  </channel>
+</rss>

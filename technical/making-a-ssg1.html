@@ -13,7 +13,7 @@
     <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Stuffed Wombat" />
+    <meta property="twitter:title" content="Logan Forman" />
     <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
     <link rel="stylesheet" href="/dwarf.css">
@@ -22,8 +22,16 @@
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 
-	<title>LCF/DD:Making A Static Site Generator (December 18, 2022)</title>
-<br><a href='/writing.html#technical'>back</a><h1>Making A Static Site Generator (December 18, 2022)</h1><hr>
+	<title>LCF/DD:Making A Static Site Generator (December 18 2022)</title>
+<div style='clear: both'><h1>Making A Static Site Generator</h1><h3>December 18 2022</h3></div>
+<ol>
+<li><a href='#intro'>Introduction</a></li>
+<li><a href='#parse'>Parsing Markdown</a></li>
+<li><a href='#compile'>Render as HTML</a></li>
+<li><a href='#generate'>Generating the site.</a></li>
+<li><a href='#conc'>Conclusion</a></li>
+</ol>
+<hr>
 <h2 id='intro'>Introduction</h2><p>
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to <a href='/contact.html'>reach out</a>!). The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:</p>
 <ol>
@@ -323,7 +331,7 @@ The <code>global Str8List dir</code> holds the current directory/file. It's conv
 And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>on GitHub</a>. You may have noticed an unused type field for pages; the real version of the generator has <code>ARTICLE</code> pages and an <code>INDEX</code> page. <code>ARTICLE</code>s have slightly different HTML generated, and the <code>INDEX</code> gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.</p>
 <hr>
 <h2 id='conc'>Conclusion</h2><p>
-Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 LOC, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:</p>
+Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 lines of C-like C++, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:</p>
 <ol>
 <li> Generate an index/section list for articles.</li>
 <li> Generate an RSS feed from recent articles.</li>

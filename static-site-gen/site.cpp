@@ -246,7 +246,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     /* Header and Footer */
     Str8List head = {0};
     Str8List_add(tempa, &head, HEADER);
-    Str8List_add(tempa, &head, str8_lit("\t<title>LCF/D  D:"));
+    Str8List_add(tempa, &head, str8_lit("\t<title>LCF/DD:"));
     Str8List_add(tempa, &head, page->title);
     Str8List_add(tempa, &head, str8_lit("</title>\n"));
     Str8List_add(tempa, &back, FOOTER);

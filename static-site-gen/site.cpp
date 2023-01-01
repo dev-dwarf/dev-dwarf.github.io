@@ -89,7 +89,7 @@ void switch_to_dir(Str8Node *new_folder_node) {
 }
 
 str8 build_dir(Arena *arena) {
-    return Str8List_join(arena, dir, str8_lit(""), str8_lit("\\"), str8_lit("\0"));
+    return Str8List_join(arena, dir, {str8_lit(""), str8_lit("\\"), str8_lit("\0")});
 }
 
 PageList get_pages_in_dir(Arena *arena) {
@@ -120,7 +120,7 @@ PageList get_pages_in_dir(Arena *arena) {
             base_href = str8_lit("/");
             base_dir = {0};
         } else {
-            base_href = Str8List_join(arena, href, str8_lit("/"), str8_lit("/"), str8_lit("/"));
+            base_href = Str8List_join(arena, href, {str8_lit("/"), str8_lit("/"), str8_lit("/")});
             base_dir = Str8List_copy(arena, href);
         }
     }
@@ -181,7 +181,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
         Str8List_add(tempa, front, str8_lit("</ol>\n"));
     }
     if (str8_eq(block->id, str8_lit("title"))) {
-        page->title = Str8List_join(longa, block->content, str8_lit(""), str8_lit(" ("), str8_lit(")"));
+        page->title = Str8List_join(longa, block->content, {{0}, str8_lit(" ("), str8_lit(")")});
         Str8List_add(tempa, front, str8_lit("<div style='clear: both'><h1>"));
         Str8List_add(tempa, front, block->content.first->str);
         Str8List_add(tempa, front, str8_lit("</h1><h3>"));
@@ -189,10 +189,10 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
         Str8List_add(tempa, front, str8_lit("</h3></div>\n"));
     }
     if (str8_eq(block->id, str8_lit("desc"))) {
-        page->desc = Str8List_join(longa, block->content, str8_lit(""), str8_lit(" "), str8_lit(""));
+        page->desc = Str8List_join(longa, block->content, {{0}, str8_lit(" "), {0}});
     }
     if (str8_eq(block->id, str8_lit("article"))) {
-        str8 link_ref = Str8List_join(tempa, page->base_dir, str8_lit("#"), str8_lit("/  "), str8_lit(""));
+        str8 link_ref = Str8List_join(tempa, page->base_dir, {str8_lit("#"), str8_lit("/  "), {0}});
         Str8List_add(tempa, back, str8_lit("<br><a href='"));
         /* NOTE(lcf): could change based on type of article */
         Str8List_add(tempa, back, str8_lit("/writing.html"));
@@ -334,9 +334,6 @@ int main() {
     Arena *tempa = Arena_create_default();
 
     Str8Node technical = {0, str8_lit("technical")};
-    Str8List articleDirs = {0};
-    Str8List_add_node(&articleDirs, &technical);
-
     dir = {0};
     chr8 root_path_buffer[MAX_FILEPATH];
     root.str.str = root_path_buffer;

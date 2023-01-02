@@ -176,7 +176,14 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
                 Str8List_add(tempa, front, str8_lit("'>"));
                 Str8List_append(front, render_text(tempa, b->text));
                 Str8List_add(tempa, front, str8_lit("</a></li>\n"));
-            } 
+            }
+            if (b->type == Block::EXPAND && str8_not_empty(b->id)) {
+                Str8List_add(tempa, front, str8_lit("<li><a href='#"));
+                Str8List_add(tempa, front, b->id);
+                Str8List_add(tempa, front, str8_lit("'>"));
+                Str8List_add(tempa, front, b->title);
+                Str8List_add(tempa, front, str8_lit("</a></li>\n"));
+            }
         }
         Str8List_add(tempa, front, str8_lit("</ol>\n"));
     }
@@ -345,8 +352,8 @@ int main() {
     
     /* TODO: loop this as a daemon, whenever any of the files change update them automatically
         REF: https://learn.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
+        Would need UTF-16 to use appropriate APIs.. dont want to do that right now.
     */
-    /* TODO: aside/expandable text like marc-ten-bosch */
     PageList topPages = get_pages_in_dir(longa);
     Str8List_add_node(&dir, &technical);
     PageList technicalPages = get_pages_in_dir(longa);

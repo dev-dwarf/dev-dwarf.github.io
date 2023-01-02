@@ -188,6 +188,25 @@ Block* parse(Arena *arena, str8 str) {
             BREAK_BLOCK_IF_NOT(Block::QUOTE);
             next.type = Block::QUOTE;
             PUSH_STR(str8_skip(line, 2));
+        } else if (c[0] == '|' && c[1] == ' ')  {
+            if (next.type != Block::EXPAND) {
+                PUSH_BLOCK();
+                next.type = Block::EXPAND;
+                str8 rem = str8_skip(line, 2);
+                u32 n = 0;
+                for (; n < rem.len && rem.str[n] == '#'; n++)
+                    ;
+                rem = str8_skip(rem, n);
+                if (n > 0) {
+                    next.id = rem;
+                    next.id.len = str8_char_location(rem, ' ');
+                    rem = str8_skip(rem, next.id.len+1);
+                }
+                next.title = rem;
+                next.num = n;
+            } else {
+                PUSH_STR(str8_skip(line, 2));
+            }
         } else if (c[0] >= '1' && c[0] <= '9' && c[1] == '.' && c[2] == ' ') {
             BREAK_BLOCK_IF_NOT(Block::ORD_LIST);
             next.type = Block::ORD_LIST;
@@ -216,6 +235,7 @@ Block* parse(Arena *arena, str8 str) {
             next.type = Block::SPECIAL;
             next.id = str8_pop_at_first_delimiter(&line, str8_lit(",}"));
             str8_iter_pop_delimiter(line, str8_lit(",}")) {
+                /* NOTE(lcf): optionally allow space in args list */
                 if (str8_char_location(sub, ' ') == 0) {
                     sub = str8_skip(sub, 1);
                 }
@@ -350,6 +370,27 @@ Str8List render_block(Arena* arena, Block* block) {
     case Block::QUOTE: {
         Str8List_add(arena, &out, str8_lit("<blockquote>\n"));
     } break;
+    case Block::EXPAND: {
+        Str8List_add(arena, &out, str8_lit("<details>\n<summary>\n"));
+        str8 h = {0};
+        if (block->num) {
+            h = str8_create_size(arena, 2);
+            h.str[0] = 'h';
+            h.str[1] = '0' + (u8) block->num;
+            Str8List_add(arena, &out, str8_lit("<"));
+            Str8List_add(arena, &out, h);
+            Str8List_add(arena, &out, str8_lit(" id='"));
+            Str8List_add(arena, &out, block->id);
+            Str8List_add(arena, &out, str8_lit("'>"));
+        }
+        Str8List_add(arena, &out, block->title);
+        if (block->num) {
+            Str8List_add(arena, &out, str8_lit("</"));
+            Str8List_add(arena, &out, h);
+            Str8List_add(arena, &out, str8_lit(">"));
+        }
+        Str8List_add(arena, &out, str8_lit("</summary>\n<p>\n"));
+    } break;
     case Block::ORD_LIST: {
         Str8List_add(arena, &out, str8_lit("<ol>\n"));
     } break;
@@ -388,6 +429,9 @@ Str8List render_block(Arena* arena, Block* block) {
     } break;
     case Block::QUOTE: {
         Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
+    } break;
+    case Block::EXPAND: {
+        Str8List_add(arena, &out, str8_lit("</p>\n</details>\n"));
     } break;
     case Block::ORD_LIST: {
         Str8List_add(arena, &out, str8_lit("\n</ol>\n"));

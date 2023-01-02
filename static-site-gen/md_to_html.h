@@ -25,12 +25,14 @@ struct Block {
         PARAGRAPH,
         HEADING, RULE, CODE, 
         QUOTE, ORD_LIST, UN_LIST,
+        EXPAND,
         SPECIAL, /* Let caller deal with these */
     } type;
 
     /* Node Contents */
     u32 num;
     str8 id;
+    str8 title;
     Str8List content;
     Text* text;
 };

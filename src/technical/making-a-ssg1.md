@@ -326,3 +326,6 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 1. Introduce some sort of templating/custom generation for individual pages. I **abhor** how most generators handle this sort of feature so I'm excited to look for a unique approach. I'd prefer something where I can easily hack in new templates in C++ instead of using some bogus templating language.
 1. Additional miscellaneous features like captions for images, subsections, and asides/expandable text. 
 I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without lcf, my @(http://nothings.org/stb.h stb)-esque standard library. I've only fairly recently started my library and I tend to make tweaks and additions almost everytime I work on a project right now, so I don't feel comfortable having it out there as a public repo. If you really want a copy so you can compile my site yourself @(/contact.html send me a message).
+
+| ### Follow Up
+| TODO

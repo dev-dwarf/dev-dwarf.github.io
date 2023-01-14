@@ -19,18 +19,18 @@ Text* parse_text(Arena* arena, Text* text) {
             curr = pre; /* overwrite current node */                    \
         } else {                                                        \
             Text* temp = curr->next;                                    \
-            curr->next = Arena_take_struct_zero(arena, Text);           \
+            curr->next = arena->take_struct_zero<Text>();                \
             curr->next->type = TYPE;                                    \
             curr->next->text = str8_skip(curr->text, (END) + (SKIP));   \
             curr->next->next = temp;                                    \
             curr->text = str8_first(curr->text, (END));                 \
         }                                                               \
-        if (TEST_FLAG(inside, TO_FLAG(TYPE))) {                         \
+        if (TEST_FLAG(inside, FLAG(TYPE))) {                            \
             curr->next->end = true;                                     \
         }                                                               \
-        TOGGLE_FLAG(inside, TO_FLAG(TYPE));                             \
-        REM_FLAG(inside, TO_FLAG(Text::TEXT));                          \
-        REM_FLAG(inside, TO_FLAG(Text::BREAK));                         \
+        TOGGLE_FLAG(inside, FLAG(TYPE));                                \
+        REM_FLAG(inside, FLAG(Text::TEXT));                             \
+        REM_FLAG(inside, FLAG(Text::BREAK));                            \
     }
 
     for (; curr->next != 0; pre = curr, curr = curr->next) {
@@ -79,7 +79,7 @@ Text* parse_text(Arena* arena, Text* text) {
             } else if (c[0] == '@' && c[1] == '(') {
                 PUSH_TEXT(Text::LINK, i, 2);
                 curr = curr->next;
-                u64 sentinel = str8_char_location(curr->text, ' ');
+                s64 sentinel = str8_char_location(curr->text, ' ');
                 ASSERT(sentinel != LCF_STRING_NO_MATCH);
                 PUSH_TEXT(Text::TEXT, sentinel, 1);
                 paren_stack[paren_stacki++] = Text::LINK;
@@ -87,14 +87,14 @@ Text* parse_text(Arena* arena, Text* text) {
             } else if (c[0] == '!' && c[1] == '(') {
                 PUSH_TEXT(Text::IMAGE, i, 2);
                 curr = curr->next;
-                u64 sentinel = str8_char_location(curr->text, ')');
+                s64 sentinel = str8_char_location(curr->text, ')');
                 ASSERT(sentinel != LCF_STRING_NO_MATCH);
                 PUSH_TEXT(Text::TEXT, sentinel, 1);
                 break;
             } else if (c[0] == '?' && c[1] == '(') {
                 PUSH_TEXT(Text::EXPLAIN, i, 2);
                 curr = curr->next;
-                u64 sentinel = str8_char_location(curr->text, ',');
+                s64 sentinel = str8_char_location(curr->text, ',');
                 ASSERT(sentinel != LCF_STRING_NO_MATCH);
                 PUSH_TEXT(Text::TEXT, sentinel, 2);
                 paren_stack[paren_stacki++] = Text::EXPLAIN;
@@ -117,26 +117,26 @@ Text* parse_text(Arena* arena, Text* text) {
 
 /* Take str8, return tree of blocks representing markdown structure */
 Block* parse(Arena *arena, str8 str) {
-    Block* root = Arena_take_struct_zero(arena, Block);
+    Block* root = arena->take_struct_zero<Block>();
     Block* curr = root;
     Block next = {0};
-    next.text = Arena_take_struct_zero(arena, Text);
+    next.text = arena->take_struct_zero<Text>();
     Text* end = next.text;
         
     u64 next_len = 0;
 
 #define PUSH_STR(str) {                                     \
         end->text = str;                                    \
-        end->next = Arena_take_struct_zero(arena, Text);    \
+        end->next = arena->take_struct_zero<Text>();         \
         end = end->next;                                    \
 }
 
 #define PUSH_BLOCK() if (next.type != Block::NIL) {     \
     *curr = next;                                       \
-    curr->next = Arena_take_struct_zero(arena, Block);  \
+    curr->next =  arena->take_struct_zero<Block>();      \
     curr = curr->next;                                  \
     next = {0};                                         \
-    next.text = Arena_take_struct_zero(arena, Text);    \
+    next.text = arena->take_struct_zero<Text>();         \
     end = next.text;                                    \
 }
 
@@ -148,7 +148,7 @@ Block* parse(Arena *arena, str8 str) {
     
     str8_iter_pop_line(str) {
         /* Remove windows newline encoding (\r\n) */
-        line = str8_trim_suffix(line, str8_lit("\r"));
+        line = str8_trim_suffix(line, str8("\r"));
         if (line.len == 0) {
             PUSH_STR(line);
             if (!(next.type == Block::CODE || next.type == Block::PARAGRAPH)) {
@@ -211,30 +211,30 @@ Block* parse(Arena *arena, str8 str) {
             BREAK_BLOCK_IF_NOT(Block::ORD_LIST);
             next.type = Block::ORD_LIST;
             end->type = Text::LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
+            end->next = arena->take_struct_zero<Text>();
             end = end->next;
             PUSH_STR(str8_skip(line, 2));
             end->type = Text::LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
+            end->next = arena->take_struct_zero<Text>();
             end->end = true;
             end = end->next;
         } else if ((c[0] == '*' || c[0] == '-') && c[1] == ' ') {
             BREAK_BLOCK_IF_NOT(Block::UN_LIST);
             next.type = Block::UN_LIST;
             end->type = Text::LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
+            end->next = arena->take_struct_zero<Text>();
             end = end->next;
             PUSH_STR(str8_skip(line, 2));
             end->type = Text::LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
+            end->next = arena->take_struct_zero<Text>();
             end->end = true;
             end = end->next;
         } else if (c[0] == '@' && c[1] == '{') {
             PUSH_BLOCK();
             line = str8_skip(line, 2);
             next.type = Block::SPECIAL;
-            next.id = str8_pop_at_first_delimiter(&line, str8_lit(",}"));
-            str8_iter_pop_delimiter(line, str8_lit(",}")) {
+            next.id = str8_pop_at_first_delimiter(&line, str8(",}"));
+            str8_iter_pop_delimiter(line, str8(",}")) {
                 /* NOTE(lcf): optionally allow space in args list */
                 if (str8_char_location(sub, ' ') == 0) {
                     sub = str8_skip(sub, 1);
@@ -270,68 +270,68 @@ Str8List render_text(Arena* arena, Text* root) {
     for (Text* t = root, *prev = &prev_filler; t->type != Text::NIL; prev = t, t = t->next) {
         switch (t->type) {
         case Text::BOLD: {
-            str8 s[2] = {str8_lit("<b>"), str8_lit("</b>")};
-            Str8List_add(arena, &out, s[t->end]);
-            Str8List_add(arena, &out, t->text);
+            str8 s[2] = {str8("<b>"), str8("</b>")};
+            out.add(arena, s[t->end]);
+            out.add(arena, t->text);
         } break;
         case Text::ITALIC: {
-            str8 s[2] = {str8_lit("<em>"), str8_lit("</em>")};
-            Str8List_add(arena, &out, s[t->end]);
-            Str8List_add(arena, &out, t->text);
+            str8 s[2] = {str8("<em>"), str8("</em>")};
+            out.add(arena, s[t->end]);
+            out.add(arena, t->text);
         } break;
         case Text::STRUCK: {
-            str8 s[2] = {str8_lit("<s>"), str8_lit("</s>")};
-            Str8List_add(arena, &out, s[t->end]);
-            Str8List_add(arena, &out, t->text);
+            str8 s[2] = {str8("<s>"), str8("</s>")};
+            out.add(arena, s[t->end]);
+            out.add(arena, t->text);
         } break;
         case Text::CODE_INLINE: {
-            str8 s[2] = {str8_lit("<code>"), str8_lit("</code>")};
-            Str8List_add(arena, &out, s[t->end]);
-            Str8List_add(arena, &out, t->text);
+            str8 s[2] = {str8("<code>"), str8("</code>")};
+            out.add(arena, s[t->end]);
+            out.add(arena, t->text);
         } break;
         case Text::CODE_BLOCK: {
-            Str8List_add(arena, &out, t->text);
-            Str8List_add(arena, &out, str8_NEWLINE);
+            out.add(arena, t->text);
+            out.add(arena, str8_NEWLINE);
         } break;
         case Text::LINK: {
             if (!t->end) {
-                Str8List_add(arena, &out, str8_lit("<a href='"));
-                Str8List_add(arena, &out, t->text);
-                Str8List_add(arena, &out, str8_lit("'>"));
+                out.add(arena, str8("<a href='"));
+                out.add(arena, t->text);
+                out.add(arena, str8("'>"));
             } else {
-                Str8List_add(arena, &out, str8_lit("</a>"));
-                Str8List_add(arena, &out, t->text);
+                out.add(arena, str8("</a>"));
+                out.add(arena, t->text);
             }
         } break;
         case Text::EXPLAIN: {
             if (!t->end) {
-                Str8List_add(arena, &out, str8_lit("<abbr title='"));
-                Str8List_add(arena, &out, t->text);
-                Str8List_add(arena, &out, str8_lit("'>"));
+                out.add(arena, str8("<abbr title='"));
+                out.add(arena, t->text);
+                out.add(arena, str8("'>"));
             } else {
-                Str8List_add(arena, &out, str8_lit("</abbr>"));
-                Str8List_add(arena, &out, t->text);
+                out.add(arena, str8("</abbr>"));
+                out.add(arena, t->text);
             }
         } break;
         case Text::IMAGE: {
             /* TODO alt text, styles, etc */
-            Str8List_add(arena, &out, str8_lit("<img src='"));
-            Str8List_add(arena, &out, t->text);
-            Str8List_add(arena, &out, str8_lit("'>"));
+            out.add(arena, str8("<img src='"));
+            out.add(arena, t->text);
+            out.add(arena, str8("'>"));
         } break;
         case Text::BREAK: {
-            Str8List_add(arena, &out, str8_lit("<br>"));
-            Str8List_add(arena, &out, t->text);
+            out.add(arena, str8("<br>"));
+            out.add(arena, t->text);
         } break;
         case Text::LIST_ITEM: {
-            str8 s[2] = {str8_lit("<li>"), str8_lit("</li>\n")};
-            Str8List_add(arena, &out, s[t->end]);
-            Str8List_add(arena, &out, t->text);
+            str8 s[2] = {str8("<li>"), str8("</li>\n")};
+            out.add(arena, s[t->end]);
+            out.add(arena, t->text);
         } break;
         case Text::TEXT: {
-            Str8List_add(arena, &out, t->text);
+            out.add(arena, t->text);
             if (prev->type == Text::TEXT) {
-                Str8List_add(arena, &out, str8_NEWLINE);
+                out.add(arena, str8_NEWLINE);
             }
         } break;
         default:
@@ -349,64 +349,64 @@ Str8List render_block(Arena* arena, Block* block) {
         str8 h = str8_create_size(arena, 2);
         h.str[0] = 'h';
         h.str[1] = '0' + (u8) block->num;
-        Str8List_add(arena, &out, str8_lit("<"));
-        Str8List_add(arena, &out, h);
+        out.add(arena, str8("<"));
+        out.add(arena, h);
         if (block->id.len > 0) {
-            static const str8 center = str8_lit("center");
-            static const str8 right = str8_lit("right");
+            static const str8 center = str8("center");
+            static const str8 right = str8("right");
             if (str8_has_prefix(block->id, center)) {
                 block->id = str8_skip(block->id, center.len+1);
-                Str8List_add(arena, &out, str8_lit(" style='text-align:center'"));
+                out.add(arena, str8(" style='text-align:center'"));
             } else if (str8_eq(block->id, right)) {
                 block->id = str8_skip(block->id, right.len+1);
-                Str8List_add(arena, &out, str8_lit(" style='text-align:right'"));
+                out.add(arena, str8(" style='text-align:right'"));
             }
-            Str8List_add(arena, &out, str8_lit(" id='"));
-            Str8List_add(arena, &out, block->id);
-            Str8List_add(arena, &out, str8_lit("'"));
+            out.add(arena, str8(" id='"));
+            out.add(arena, block->id);
+            out.add(arena, str8("'"));
         }
-        Str8List_add(arena, &out, str8_lit(">"));
+        out.add(arena, str8(">"));
     } break;
     case Block::QUOTE: {
-        Str8List_add(arena, &out, str8_lit("<blockquote>\n"));
+        out.add(arena, str8("<blockquote>\n"));
     } break;
     case Block::EXPAND: {
-        Str8List_add(arena, &out, str8_lit("<details>\n<summary>\n"));
-        str8 h = {0};
+        out.add(arena, str8("<details>\n<summary>\n"));
+        str8 h = {};
         if (block->num) {
             h = str8_create_size(arena, 2);
             h.str[0] = 'h';
             h.str[1] = '0' + (u8) block->num;
-            Str8List_add(arena, &out, str8_lit("<"));
-            Str8List_add(arena, &out, h);
-            Str8List_add(arena, &out, str8_lit(" id='"));
-            Str8List_add(arena, &out, block->id);
-            Str8List_add(arena, &out, str8_lit("'>"));
+            out.add(arena, str8("<"));
+            out.add(arena, h);
+            out.add(arena, str8(" id='"));
+            out.add(arena, block->id);
+            out.add(arena, str8("'>"));
         }
-        Str8List_add(arena, &out, block->title);
+        out.add(arena, block->title);
         if (block->num) {
-            Str8List_add(arena, &out, str8_lit("</"));
-            Str8List_add(arena, &out, h);
-            Str8List_add(arena, &out, str8_lit(">"));
+            out.add(arena, str8("</"));
+            out.add(arena, h);
+            out.add(arena, str8(">"));
         }
-        Str8List_add(arena, &out, str8_lit("</summary>\n<p>\n"));
+        out.add(arena, str8("</summary>\n<p>\n"));
     } break;
     case Block::ORD_LIST: {
-        Str8List_add(arena, &out, str8_lit("<ol>\n"));
+        out.add(arena, str8("<ol>\n"));
     } break;
     case Block::UN_LIST: {
-        Str8List_add(arena, &out, str8_lit("<ul>\n"));
+        out.add(arena, str8("<ul>\n"));
     } break;
     case Block::CODE:  {
-        Str8List_add(arena, &out, str8_lit("<pre><code id='"));
-        Str8List_add(arena, &out, block->id);
-        Str8List_add(arena, &out, str8_lit("'>"));
+        out.add(arena, str8("<pre><code id='"));
+        out.add(arena, block->id);
+        out.add(arena, str8("'>"));
     } break;
     case Block::RULE:  {
-        Str8List_add(arena, &out, str8_lit("<hr>\n"));
+        out.add(arena, str8("<hr>\n"));
     } break;
     case Block::PARAGRAPH: {
-        Str8List_add(arena, &out, str8_lit("<p>\n"));
+        out.add(arena, str8("<p>\n"));
     } break;
     default: {
         NOTIMPLEMENTED();
@@ -415,7 +415,7 @@ Str8List render_block(Arena* arena, Block* block) {
     }
 
     block->content = render_text(arena, block->text);
-    Str8List_append(&out, Str8List_copy(arena, block->content));    
+    out.append(block->content);    
 
     switch (block->type) {
     case Block::HEADING: {
@@ -423,28 +423,28 @@ Str8List render_block(Arena* arena, Block* block) {
         h.str[0] = 'h';
         h.str[1] = '0' + (u8) block->num;
                     
-        Str8List_add(arena, &out, str8_lit("</"));
-        Str8List_add(arena, &out, h);
-        Str8List_add(arena, &out, str8_lit(">"));
+        out.add(arena, str8("</"));
+        out.add(arena, h);
+        out.add(arena, str8(">"));
     } break;
     case Block::QUOTE: {
-        Str8List_add(arena, &out, str8_lit("</blockquote>\n"));
+        out.add(arena, str8("</blockquote>\n"));
     } break;
     case Block::EXPAND: {
-        Str8List_add(arena, &out, str8_lit("</p>\n</details>\n"));
+        out.add(arena, str8("</p>\n</details>\n"));
     } break;
     case Block::ORD_LIST: {
-        Str8List_add(arena, &out, str8_lit("\n</ol>\n"));
+        out.add(arena, str8("\n</ol>\n"));
     } break;
     case Block::UN_LIST: {
-        Str8List_add(arena, &out, str8_lit("\n</ul>\n"));
+        out.add(arena, str8("\n</ul>\n"));
     } break;
     case Block::CODE:  {
-        Str8List_add(arena, &out, str8_lit("</code></pre>\n"));
+        out.add(arena, str8("</code></pre>\n"));
     } break;
     case Block::RULE:  {} break;
     case Block::PARAGRAPH: {
-        Str8List_add(arena, &out, str8_lit("</p>\n"));
+        out.add(arena, str8("</p>\n"));
     } break;
     default: {
         NOTIMPLEMENTED();

@@ -1,5 +1,5 @@
 @{article}
-@{title, Making A Static Site Generator, December 18 2022}
+@{title, Making A Static Site Generator, Dec. 18, 2022}
 @{desc, First post! A brief walkthrough of how I made the SSG for my personal website.}
 @{sections}
 ---
@@ -327,5 +327,5 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 1. Additional miscellaneous features like captions for images, subsections, and asides/expandable text. 
 I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without lcf, my @(http://nothings.org/stb.h stb)-esque standard library. I've only fairly recently started my library and I tend to make tweaks and additions almost everytime I work on a project right now, so I don't feel comfortable having it out there as a public repo. If you really want a copy so you can compile my site yourself @(/contact.html send me a message).
 
-| ### Follow Up
-| TODO
+### Follow Up
+TODO

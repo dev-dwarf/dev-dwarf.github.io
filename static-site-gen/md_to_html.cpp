@@ -19,7 +19,7 @@ Text* parse_text(Arena* arena, Text* text) {
             curr = pre; /* overwrite current node */                    \
         } else {                                                        \
             Text* temp = curr->next;                                    \
-            curr->next = arena->take_struct_zero<Text>();                \
+            curr->next = arena->take_struct_zero<Text>();               \
             curr->next->type = TYPE;                                    \
             curr->next->text = str8_skip(curr->text, (END) + (SKIP));   \
             curr->next->next = temp;                                    \

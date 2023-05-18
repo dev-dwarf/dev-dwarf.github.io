@@ -46,21 +46,22 @@ str8 FOOTER = str8(R"(
     </main> 
     </div>
     </body>
-    <div class="nav">
+    <div>
     <hr>
-    <div class="nav-left">
-    <nav id="nav-links">
-    <a class="nav-link-l" href="/index.html">home</a>
-    <a class="nav-link-l" href="/projects.html">projects</a>
-    <a class="nav-link-l" href="/writing.html">writing</a>
-    <a class="nav-link-l" href="/contact.html">contact</a>
+    <nav>
+    <table class="left"><tr>
+    <td><a href="/index.html">home</a></td>
+    <td><a href="/projects.html">projects</a></td>
+    <td><a href="/writing.html">writing</a></td>
+    <td><a href='./rss.xml'>rss</a></td>
+    <table><tr>
+
+    <table class="right"><tr>
+    <td><a href="https://github.com/dev-dwarf">github</a></td>
+    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
+    <td><a href="https://dev-dwarf.itch.io">games</a></td>
+    </tr></table>
     </nav>
-    </div>
-    <div class="nav-right">
-    <a class="nav-link-r" href="https://github.com/dev-dwarf">github</a>
-    <a class="nav-link-r" href="https://twitter.com/dev_dwarf">twitter</a>
-    <a class="nav-link-r" href="https://dev-dwarf.itch.io">games</a>
-    </div>
     <script>
 window.onload = function() { 
     full_path = location.href.split('#')[0];
@@ -90,7 +91,7 @@ void switch_to_dir(Str8Node *new_folder_node) {
 }
 
 str8 build_dir(Arena *arena) {
-    return dir.join(arena, {str8(""), str8("\\"), str8("\0")});
+    return dir.join(arena, {str8(""), str8("\\"), str8_lit("\0")});
 }
 
 PageList get_pages_in_dir(Arena *arena) {
@@ -288,7 +289,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     printf("%.*s \"%.*s\" ", str8_PRINTF_ARGS(filename.str), str8_PRINTF_ARGS(page->title));
 
     switch_to_dir(&deploy);
-    os_WriteFile(build_dir(tempa), html);
+    ASSERT(os_WriteFile(build_dir(tempa), html));
 
     printf("> %.*s%.*s\n", str8_PRINTF_ARGS(page->base_href), str8_PRINTF_ARGS(page->filename));
 
@@ -326,14 +327,20 @@ void compile_feeds(Arena *arena, PageList pages) {
         rss.add(arena, n->base_href);
         rss.add(arena, str8_cut(n->filename, 2));
         rss.add(arena, str8("</guid>\n"));
-        /* .DO: date for RSS feed items, from created_time */
+        /* TODO: date for RSS feed items, from created_time */
         rss.add(arena, str8("</item>"));
     }
     rss.add(arena, RSS_FOOTER);
     switch_to_dir(&deploy);
+    
     dir.add(arena, str8("rss.xml"));
-    os_WriteFile(build_dir(arena), rss);
+    ASSERT(os_WriteFile(build_dir(arena), rss));
     dir.pop_node();
+    
+    dir.add(arena, str8("feed.xml"));
+    ASSERT(os_WriteFile(build_dir(arena), rss));
+    dir.pop_node();
+    
     arena->reset();
 }
 

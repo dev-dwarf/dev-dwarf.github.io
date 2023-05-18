@@ -60,10 +60,24 @@ str8 FOOTER = str8(R"(
     <td><a href="https://github.com/dev-dwarf">github</a></td>
     <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
     <td><a href="https://dev-dwarf.itch.io">games</a></td>
+    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
+    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
     </tr></table>
     </nav>
     <script>
-window.onload = function() { 
+    
+    function toggleNight() {
+        document.body.classList.toggle("night");
+        const val = document.body.classList.contains("night");
+        localStorage.setItem('theme', val);
+        console.log(val);
+    }
+
+window.onload = function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'true') {
+        document.body.classList.add('night');
+    }
     full_path = location.href.split('#')[0];
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)

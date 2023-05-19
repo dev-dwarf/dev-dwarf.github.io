@@ -1,7 +1,8 @@
 #include "md_to_html.h"
 
 /* Take list of Text nodes with undecided type, parse and return typed list */
-Text* parse_text(Arena* arena, Text* text) {
+Text* parse_text(Arena* arena, Block* block) {
+    Text *text = block->text;
     Text *curr = text;
     Text pre_filler = {curr, Text::NIL, 0};
     Text *pre = &pre_filler;
@@ -46,7 +47,7 @@ Text* parse_text(Arena* arena, Text* text) {
         if (s.len == 0) {
             if (curr->type == Text::TEXT) {
                 curr->type = Text::BREAK;
-            } else {
+            } else if (curr->type != Text::TABLE_CELL) {
                 PUSH_TEXT(Text::BREAK, 0, 1);
             }
             continue;
@@ -67,6 +68,12 @@ Text* parse_text(Arena* arena, Text* text) {
                 break;
             } else if (curr->type == Text::CODE_INLINE && !curr->end) {
                 /* Do nothing, do not parse stuff inside code */
+            } else if (c[0] == '|') {
+                PUSH_TEXT(Text::TABLE_CELL, i, 1);
+                break;
+            } else if (c[0] == '|' && c[1] == ' ') {
+                PUSH_TEXT(Text::TABLE_CELL, i, 2);
+                break;
             } else if (c[0] == '*' && c[1] == '*') {
                 PUSH_TEXT(Text::BOLD, i, 2);
                 break;
@@ -166,7 +173,7 @@ Block* parse(Arena *arena, str8 str) {
                 next.type = Block::CODE;
                 next.id = str8_skip(line, 3);
             } else {
-                PUSH_BLOCK();
+                PUSH_BLOCK();                
             }
         } else if (next.type == Block::CODE) {
             end->type = Text::CODE_BLOCK;
@@ -184,11 +191,16 @@ Block* parse(Arena *arena, str8 str) {
             
             PUSH_STR(str8_skip(rem, next.id.len+1));
             PUSH_BLOCK();
+            
+        } else if (c[0] == '!' && c[1] == '|') {
+            PUSH_BLOCK();
+            next.type = Block::TABLE_ROW;
+            PUSH_STR(str8_skip(line, 1));
         } else if (c[0] == '>' && c[1] == ' ') {
             BREAK_BLOCK_IF_NOT(Block::QUOTE);
             next.type = Block::QUOTE;
             PUSH_STR(str8_skip(line, 2));
-        } else if (c[0] == '|' && c[1] == ' ')  {
+        } else if (c[0] == '[' && c[1] == ' ')  {
             if (next.type != Block::EXPAND) {
                 PUSH_BLOCK();
                 next.type = Block::EXPAND;
@@ -257,7 +269,7 @@ Block* parse(Arena *arena, str8 str) {
     PUSH_BLOCK();
 
     for (curr = root; curr->type != Block::NIL; curr = curr->next) {
-        curr->text = parse_text(arena, curr->text);
+        curr->text = parse_text(arena, curr);
     }
     
     return root;
@@ -319,6 +331,11 @@ Str8List render_text(Arena* arena, Text* root) {
             out.add(arena, t->text);
             out.add(arena, str8("'>"));
         } break;
+        case Text::TABLE_CELL: {
+            str8 s[2] = {str8("<td>"), str8("</td>\n")};
+            out.add(arena, s[t->end]);
+            out.add(arena, t->text);
+        } break;
         case Text::BREAK: {
             out.add(arena, str8("<br>"));
             out.add(arena, t->text);
@@ -367,6 +384,9 @@ Str8List render_block(Arena* arena, Block* block) {
         }
         out.add(arena, str8(">"));
     } break;
+    case Block::TABLE_ROW: {
+        out.add(arena, str8("<tr>"));
+    } break;
     case Block::QUOTE: {
         out.add(arena, str8("<blockquote>\n"));
     } break;
@@ -406,7 +426,7 @@ Str8List render_block(Arena* arena, Block* block) {
         out.add(arena, str8("<hr>\n"));
     } break;
     case Block::PARAGRAPH: {
-        out.add(arena, str8("<p>\n"));
+        // out.add(arena, str8("<p>\n"));
     } break;
     default: {
         NOTIMPLEMENTED();
@@ -427,6 +447,12 @@ Str8List render_block(Arena* arena, Block* block) {
         out.add(arena, h);
         out.add(arena, str8(">"));
     } break;
+    case Block::TABLE_ROW: {
+        out.add(arena, str8("</tr>\n"));
+        if (block->next->type != Block::TABLE_ROW) {
+            out.add(arena, str8("</table>\n"));
+        }
+    } break;
     case Block::QUOTE: {
         out.add(arena, str8("</blockquote>\n"));
     } break;
@@ -444,12 +470,17 @@ Str8List render_block(Arena* arena, Block* block) {
     } break;
     case Block::RULE:  {} break;
     case Block::PARAGRAPH: {
-        out.add(arena, str8("</p>\n"));
+        // out.add(arena, str8("</p>\n"));
     } break;
     default: {
         NOTIMPLEMENTED();
         break;
     }
     }
+
+    if (block->type != Block::TABLE_ROW && block->next->type == Block::TABLE_ROW) {
+        out.add(arena, str8("<table>"));
+    }
+    
     return out;
 }

@@ -49,14 +49,14 @@ str8 FOOTER = str8(R"(
     <div>
     <hr>
     <nav>
-    <table class="left"><tr>
+    <table class="w33 left"><tr>
     <td><a href="/index.html">home</a></td>
     <td><a href="/projects.html">projects</a></td>
     <td><a href="/writing.html">writing</a></td>
     <td><a href='./rss.xml'>rss</a></td>
-    <table><tr>
+    </tr></table>
 
-    <table class="right"><tr>
+    <table class="w33 right"><tr>
     <td><a href="https://github.com/dev-dwarf">github</a></td>
     <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
     <td><a href="https://dev-dwarf.itch.io">games</a></td>

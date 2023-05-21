@@ -23,8 +23,8 @@
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 
-	<title>LCF/DD:Making A Static Site Generator (December 18 2022)</title>
-<div style='clear: both'><h1>Making A Static Site Generator</h1><h3>December 18 2022</h3></div>
+	<title>LCF/DD:Making A Static Site Generator</title>
+<div style='clear: both'><h1>Making A Static Site Generator</h1><h3>18 Dec 2022</h3></div>
 <ol class='sections'>
 <li><a href='#introd'>Introduction</a></li>
 <li><a href='#parse'>Parsing Markdown</a></li>
@@ -342,28 +342,46 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 
 </ol>
 <p>
-I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without lcf, my <a href='http://nothings.org/stb.h'>stb</a>-esque standard library. I've only fairly recently started my library and I tend to make tweaks and additions almost everytime I work on a project right now, so I don't feel comfortable having it out there as a public repo. If you really want a copy so you can compile my site yourself <a href='/contact.html'>send me a message</a>.</p>
+I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without lcf, my <a href='http://nothings.org/stb.h'>stb</a>-esque standard library. I've only fairly recently started my library and I tend to make tweaks and additions almost everytime I work on a project right now, so I don't feel comfortable having it out there as a public repo. If you really want a copy so you can compile my site yourself <a href='/contact.html'>send me a message</a>.<br></p>
+<h3>Follow Up</h3><p>
+TODO</p>
 <br><a href='/writing.html#technical'>back</a>
     </main> 
     </div>
     </body>
-    <div class="nav">
+    <div>
     <hr>
-    <div class="nav-left">
-    <nav id="nav-links">
-    <a class="nav-link-l" href="/index.html">home</a>
-    <a class="nav-link-l" href="/projects.html">projects</a>
-    <a class="nav-link-l" href="/writing.html">writing</a>
-    <a class="nav-link-l" href="/contact.html">contact</a>
+    <nav>
+    <table class="w33 left"><tr>
+    <td><a href="/index.html">home</a></td>
+    <td><a href="/projects.html">projects</a></td>
+    <td><a href="/writing.html">writing</a></td>
+    <td><a href='./rss.xml'>rss</a></td>
+    </tr></table>
+
+    <table class="w33 right"><tr>
+    <td><a href="https://github.com/dev-dwarf">github</a></td>
+    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
+    <td><a href="https://dev-dwarf.itch.io">games</a></td>
+    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
+    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
+    </tr></table>
+    <p><br><br><br></p>
     </nav>
-    </div>
-    <div class="nav-right">
-    <a class="nav-link-r" href="https://github.com/dev-dwarf">github</a>
-    <a class="nav-link-r" href="https://twitter.com/dev_dwarf">twitter</a>
-    <a class="nav-link-r" href="https://dev-dwarf.itch.io">games</a>
-    </div>
     <script>
-window.onload = function() { 
+    
+    function toggleNight() {
+        document.body.classList.toggle("night");
+        const val = document.body.classList.contains("night");
+        localStorage.setItem('theme', val);
+        console.log(val);
+    }
+
+window.onload = function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'true') {
+        document.body.classList.add('night');
+    }
     full_path = location.href.split('#')[0];
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)

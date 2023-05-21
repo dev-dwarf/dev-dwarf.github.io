@@ -25,33 +25,90 @@
 
 	<title>LCF/DD:index</title>
 <p>
-<img src='/assets/dd.png'><br><br></p>
-<h2 style='text-align:center' id=''>Logan Forman <a href='https://www.twitter.com/dev_dwarf'>@dev dwarf</a><br></h2><p>
-Welcome to my portfolio site! You can find my <a href='/assets/resume.pdf'>general resume</a>, <a href='/projects.html'>project portfolio</a>, and some <a href='/writing.html'>writing I've done</a>.<br></p>
-<hr>
+<div class="center"> <img src='/assets/dd.png'> </div></p>
+<h2 style='text-align:center' id=''>Logan Forman <a href='https://www.twitter.com/dev_dwarf'>@dev dwarf</a><br></h2><table class="w100"><tr><td> Personal Info </td>
+<td> </td>
+</tr>
+<tr><td> Occupation </td>
+<td> Programming, Applied Mathematics </td>
+</tr>
+<tr><td> Location </td>
+<td> Albuquerque, New Mexico <img style="display: inline-block" src='/assets/zia.png'> </td>
+</tr>
+<tr><td> Employment </td>
+<td> Embedded Software Engineer <br> <a href='https://www.ideas-tek.com/'>Ideas-Tek</a> </td>
+</tr>
+<tr><td> Education </td>
+<td> BS. Applied Mathematics <br> <a href='https://nmt.edu/'>New Mexico Institute of Mining and Technology</a> </td>
+ </tr>
+</table>
+<table class="left w50"><tr><br><td> Quick Links </td>
+<td> </td>
+</tr>
+<tr><td> <a href='/assets/resume.pdf'>Resume</a> </td>
+<td> <a href='https://github.com/dev-dwarf'>GitHub</a> </td>
+</tr>
+<tr><td> <a href='/projects.html'>Portfolio</a> </td>
+<td> <a href='/rss.xml'>RSS</a> </td>
+</tr>
+<tr><td> <a href='/writing.html'>Writing</a> </td>
+ </tr>
+</table>
+<table class="right w50"><tr><td> Contact </td>
+<td> </td>
+</tr>
+<tr><td> Email </td>
+<td> contact@loganforman.com </td>
+</tr>
+<tr><td> Text </td>
+<td> +1 505 690 0103 </td>
+</tr>
+<tr><td> Discord </td>
+<td> dev-dwarf#3925 </td>
+ </tr>
+</table>
 <p>
-I'm Logan Forman, a game and systems programmer from New Mexico. I've been playing games as long as I can remember and programming them since I was 11. Currently I'm finishing a B.S. in Applied Mathematics at <abbr title='New Mexico Tech'>NMT</abbr> University; I'll be graduating in Spring 2023 so I am looking for a job after that!<br><br>I love observing the emergent consequences of complex programs; Seeing how systems react when pushed on in unintended ways. These moments can reveal annoying problems or invaluable treasure. As I switched my university education from software development to applied math I found that my interests in math and programming aren't entirely seperate. I'm excited to explore the intersection of these passions for as long as I can.<br></p>
+<div class="space-after"></div><br></p>
+<hr>
+<h2>Brief</h2><p>
+I'm Logan Forman, a game and systems programmer from New Mexico. I've been playing games as long as I can remember and programming them since I was 11. <br><br>I love observing the emergent consequences of complex programs; Seeing how systems react when pushed on in unintended ways. These moments can reveal annoying problems or invaluable treasure. As I switched my university education from software development to applied math I found that my interests in math and programming aren't seperate. I'm excited to explore the intersection of these passions for as long as I can.</p>
 
     </main> 
     </div>
     </body>
-    <div class="nav">
+    <div>
     <hr>
-    <div class="nav-left">
-    <nav id="nav-links">
-    <a class="nav-link-l" href="/index.html">home</a>
-    <a class="nav-link-l" href="/projects.html">projects</a>
-    <a class="nav-link-l" href="/writing.html">writing</a>
-    <a class="nav-link-l" href="/contact.html">contact</a>
+    <nav>
+    <table class="w33 left"><tr>
+    <td><a href="/index.html">home</a></td>
+    <td><a href="/projects.html">projects</a></td>
+    <td><a href="/writing.html">writing</a></td>
+    <td><a href='./rss.xml'>rss</a></td>
+    </tr></table>
+
+    <table class="w33 right"><tr>
+    <td><a href="https://github.com/dev-dwarf">github</a></td>
+    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
+    <td><a href="https://dev-dwarf.itch.io">games</a></td>
+    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
+    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
+    </tr></table>
+    <p><br><br><br></p>
     </nav>
-    </div>
-    <div class="nav-right">
-    <a class="nav-link-r" href="https://github.com/dev-dwarf">github</a>
-    <a class="nav-link-r" href="https://twitter.com/dev_dwarf">twitter</a>
-    <a class="nav-link-r" href="https://dev-dwarf.itch.io">games</a>
-    </div>
     <script>
-window.onload = function() { 
+    
+    function toggleNight() {
+        document.body.classList.toggle("night");
+        const val = document.body.classList.contains("night");
+        localStorage.setItem('theme', val);
+        console.log(val);
+    }
+
+window.onload = function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'true') {
+        document.body.classList.add('night');
+    }
     full_path = location.href.split('#')[0];
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)

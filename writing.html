@@ -24,29 +24,43 @@
     <main class="page-content" aria-label="Content">
 
 	<title>LCF/DD:writing</title>
-<h2 style='text-align:center' id=''>Writing</h2><p>
-Subscribe to <b><a href='./rss.xml'>RSS</a></b>.</p>
-<h3 id='technical'>Technical Articles: </h3><ul><li><a href='/technical/making-a-ssg1.html'>Making A Static Site Generator (December 18 2022)</a></li></ul>
+<h2 style='text-align:center' id=''>Writing</h2><h2 id='technical'>Technical Articles: </h2><table><tr><td>Date</td><td>Title</td><tr><tr><td>18 Dec 2022</td><td><a href='/technical/making-a-ssg1.html'>Making A Static Site Generator</a></td></tr></table>
     </main> 
     </div>
     </body>
-    <div class="nav">
+    <div>
     <hr>
-    <div class="nav-left">
-    <nav id="nav-links">
-    <a class="nav-link-l" href="/index.html">home</a>
-    <a class="nav-link-l" href="/projects.html">projects</a>
-    <a class="nav-link-l" href="/writing.html">writing</a>
-    <a class="nav-link-l" href="/contact.html">contact</a>
+    <nav>
+    <table class="w33 left"><tr>
+    <td><a href="/index.html">home</a></td>
+    <td><a href="/projects.html">projects</a></td>
+    <td><a href="/writing.html">writing</a></td>
+    <td><a href='./rss.xml'>rss</a></td>
+    </tr></table>
+
+    <table class="w33 right"><tr>
+    <td><a href="https://github.com/dev-dwarf">github</a></td>
+    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
+    <td><a href="https://dev-dwarf.itch.io">games</a></td>
+    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
+    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
+    </tr></table>
+    <p><br><br><br></p>
     </nav>
-    </div>
-    <div class="nav-right">
-    <a class="nav-link-r" href="https://github.com/dev-dwarf">github</a>
-    <a class="nav-link-r" href="https://twitter.com/dev_dwarf">twitter</a>
-    <a class="nav-link-r" href="https://dev-dwarf.itch.io">games</a>
-    </div>
     <script>
-window.onload = function() { 
+    
+    function toggleNight() {
+        document.body.classList.toggle("night");
+        const val = document.body.classList.contains("night");
+        localStorage.setItem('theme', val);
+        console.log(val);
+    }
+
+window.onload = function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'true') {
+        document.body.classList.add('night');
+    }
     full_path = location.href.split('#')[0];
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)

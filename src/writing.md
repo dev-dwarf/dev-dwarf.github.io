@@ -1,3 +1,3 @@
 ##center Writing
-###technical Technical Articles: 
+##technical Technical Articles: 
 @{index, /technical/}

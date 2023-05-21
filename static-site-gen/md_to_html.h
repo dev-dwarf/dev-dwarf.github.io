@@ -25,7 +25,7 @@ struct Block {
         NIL = 0,
         PARAGRAPH,
         HEADING, RULE, CODE,
-        TABLE_ROW,
+        TABLE_ROW, TABLE_END,
         QUOTE, ORD_LIST, UN_LIST,
         EXPAND,
         SPECIAL, /* Let caller deal with these */

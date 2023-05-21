@@ -63,6 +63,7 @@ str8 FOOTER = str8(R"(
     <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
     <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
     </tr></table>
+    <p><br><br><br></p>
     </nav>
     <script>
     
@@ -204,11 +205,12 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
         front->add(tempa, str8("</ol>\n"));
     }
     if (str8_eq(block->id, str8("title"))) {
-        page->title = Str8List_join(longa, block->content, {{}, str8(" ("), str8(")")});
+        page->title = str8_copy(longa, block->content.first->str);
+        page->date = str8_copy(longa, block->content.last->str);
         front->add(tempa, str8("<div style='clear: both'><h1>"));
-        front->add(tempa, block->content.first->str);
+        front->add(tempa, page->title);
         front->add(tempa, str8("</h1><h3>"));
-        front->add(tempa, block->content.last->str);
+        front->add(tempa, page->date);
         front->add(tempa, str8("</h3></div>\n"));
     }
     if (str8_eq(block->id, str8("desc"))) {
@@ -224,18 +226,23 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, Str8List* fron
     }
     if (str8_eq(block->id, str8("index"))) {
         str8 base_href = block->content.first->str;
-        front->add(tempa, str8("<ul>"));
+        front->add(tempa, str8("<table>"));
+        front->add(tempa, str8("<tr><td>Date</td><td>Title</td><tr>"));
         for (Page *p = allPages.first; p != 0; p = p->next) {
             if (str8_eq(p->base_href, base_href)) {
-                front->add(tempa, str8("<li><a href='"));
+                front->add(tempa, str8("<tr><td>"));
+                front->add(tempa, p->date);
+                front->add(tempa, str8("</td><td>"));
+                front->add(tempa, str8("<a href='"));
                 front->add(tempa, p->base_href);
                 front->add(tempa, str8_cut(p->filename,2));
                 front->add(tempa, str8("html'>"));
                 front->add(tempa, p->title);
-                front->add(tempa, str8("</a></li>"));
+                front->add(tempa, str8("</a>"));
+                front->add(tempa, str8("</td></tr>"));
             }
         }
-        front->add(tempa, str8("</ul>"));
+        front->add(tempa, str8("</table>"));
     }
     if (str8_eq(block->id, str8("project"))) {
         Str8Node *param = block->content.first;

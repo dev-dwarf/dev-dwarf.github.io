@@ -1,26 +1,21 @@
 <div class="center"> !(/assets/dd.png) </div>
 ##center Logan Forman @(https://www.twitter.com/dev_dwarf @dev dwarf)
-<div class="w100">
-!| Personal Info || |
-!| Occupation || Programming, Applied Mathematics |
-!| Location || Albuquerque, New Mexico <img style="display: inline-block" src='/assets/zia.png'> |
-!| Employment || Embedded Software Engineer <br> @(https://www.ideas-tek.com/ Ideas-Tek) |
-!| Education || BS. Applied Mathematics <br> @(https://nmt.edu/ New Mexico Institute of Mining and Technology) | 
-</div>
+!|w100| Personal Info || |
+!|| Occupation || Programming, Applied Mathematics |
+!|| Location || Albuquerque, New Mexico <img style="display: inline-block" src='/assets/zia.png'> |
+!|| Employment || Embedded Software Engineer <br> @(https://www.ideas-tek.com/ Ideas-Tek) |
+!|| Education || BS. Applied Mathematics <br> @(https://nmt.edu/ New Mexico Institute of Mining and Technology) | 
 
-<div class="left w50">
-!| Quick Links || |
-!| @(/assets/resume.pdf Resume) || @(https://github.com/dev-dwarf GitHub) |
-!| @(/projects.html Portfolio) || @(/rss.xml RSS) |
-!| @(/writing.html Writing) | 
-</div>
-<div class="right w50">
-!| Contact || |
-!| Email || contact@loganforman.com |
-!| Text || +1 505 690 0103 |
-!| Discord || dev-dwarf#3925 | 
-</div>
 
+!|left w50| Quick Links || |
+!|| @(/assets/resume.pdf Resume) || @(https://github.com/dev-dwarf GitHub) |
+!|| @(/projects.html Portfolio) || @(/rss.xml RSS) |
+!|| @(/writing.html Writing) | 
+
+!|right w50| Contact || |
+!|| Email || contact@loganforman.com |
+!|| Text || +1 505 690 0103 |
+!|| Discord || dev-dwarf#3925 | 
 <div class="space-after"></div>
 
 ---

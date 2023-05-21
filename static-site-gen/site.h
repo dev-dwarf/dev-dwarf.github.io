@@ -6,6 +6,7 @@ struct Page {
     u64 created_time;
     u64 modified_time;
     str8 title;
+    str8 date;
     str8 desc;
     str8 content;
 };

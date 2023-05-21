@@ -37,8 +37,8 @@ Speedrunning arcade game with maze-like procedurally generated levels and eclect
 > 
 > 
 > “Every run is short enough that you think 'Ok, just one more go' and before you know it you've been acupunctured to oblivion. ... This is a surreal arcade game that you should experience.” 
-> 
 > -- *PC Gamer UK*
+> 
 > "Here’s a great game: a scratchy, noisy, ridiculously tough arcade game that I can’t stop one-more-trying."
 > 
 > -- *@(https://buried-treasure.org/2022/01/quicky-fewar-dvd/ Buried Treasure)*

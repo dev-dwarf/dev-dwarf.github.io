@@ -150,13 +150,17 @@ Block* parse(Arena *arena, str8 str) {
 #define BREAK_BLOCK_IF_NOT(TYPE) {                      \
     if (next.type != TYPE) {                            \
         PUSH_BLOCK();                                   \
-    } \
+    }                                                   \
 }
     
     str8_iter_pop_line(str) {
         /* Remove windows newline encoding (\r\n) */
         line = str8_trim_suffix(line, str8("\r"));
         if (line.len == 0) {
+            if (next.type == Block::TABLE_ROW) {
+                PUSH_BLOCK();
+                next.type = Block::TABLE_END;
+            }
             PUSH_STR(line);
             if (!(next.type == Block::CODE || next.type == Block::PARAGRAPH)) {
                 PUSH_BLOCK();
@@ -194,8 +198,12 @@ Block* parse(Arena *arena, str8 str) {
             
         } else if (c[0] == '!' && c[1] == '|') {
             PUSH_BLOCK();
+            line = str8_skip(line, 2);
+            next.id = line;
+            next.id.len = str8_char_location(line, '|');
+            line = str8_skip(line, next.id.len);
             next.type = Block::TABLE_ROW;
-            PUSH_STR(str8_skip(line, 1));
+            PUSH_STR(line);
         } else if (c[0] == '>' && c[1] == ' ') {
             BREAK_BLOCK_IF_NOT(Block::QUOTE);
             next.type = Block::QUOTE;
@@ -263,6 +271,7 @@ Block* parse(Arena *arena, str8 str) {
                 PUSH_BLOCK();
                 next.type = Block::PARAGRAPH;
             }
+
             PUSH_STR(line);
         }
     }
@@ -383,12 +392,27 @@ Str8List render_block(Arena* arena, Block* block) {
             out.add(arena, str8("'"));
         }
         out.add(arena, str8(">"));
+        out.append(block->content = render_text(arena, block->text));
+         out.add(arena, str8("</"));
+        out.add(arena, h);
+        out.add(arena, str8(">"));
+
     } break;
     case Block::TABLE_ROW: {
         out.add(arena, str8("<tr>"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("</tr>\n"));
+        if (block->next->type != Block::TABLE_ROW) {
+            out.add(arena, str8("</table>\n"));
+        }
+    } break;
+    case Block::TABLE_END: {
     } break;
     case Block::QUOTE: {
         out.add(arena, str8("<blockquote>\n"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("</blockquote>\n"));
+
     } break;
     case Block::EXPAND: {
         out.add(arena, str8("<details>\n<summary>\n"));
@@ -410,67 +434,35 @@ Str8List render_block(Arena* arena, Block* block) {
             out.add(arena, str8(">"));
         }
         out.add(arena, str8("</summary>\n<p>\n"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("</p>\n</details>\n"));
+
     } break;
     case Block::ORD_LIST: {
         out.add(arena, str8("<ol>\n"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("\n</ol>\n"));
     } break;
     case Block::UN_LIST: {
         out.add(arena, str8("<ul>\n"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("\n</ul>\n"));
     } break;
     case Block::CODE:  {
         out.add(arena, str8("<pre><code id='"));
         out.add(arena, block->id);
         out.add(arena, str8("'>"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("</code></pre>\n"));
     } break;
     case Block::RULE:  {
         out.add(arena, str8("<hr>\n"));
+        out.append(block->content = render_text(arena, block->text));
     } break;
     case Block::PARAGRAPH: {
-        // out.add(arena, str8("<p>\n"));
-    } break;
-    default: {
-        NOTIMPLEMENTED();
-        break;
-    }
-    }
-
-    block->content = render_text(arena, block->text);
-    out.append(block->content);    
-
-    switch (block->type) {
-    case Block::HEADING: {
-        str8 h = str8_create_size(arena, 2);
-        h.str[0] = 'h';
-        h.str[1] = '0' + (u8) block->num;
-                    
-        out.add(arena, str8("</"));
-        out.add(arena, h);
-        out.add(arena, str8(">"));
-    } break;
-    case Block::TABLE_ROW: {
-        out.add(arena, str8("</tr>\n"));
-        if (block->next->type != Block::TABLE_ROW) {
-            out.add(arena, str8("</table>\n"));
-        }
-    } break;
-    case Block::QUOTE: {
-        out.add(arena, str8("</blockquote>\n"));
-    } break;
-    case Block::EXPAND: {
-        out.add(arena, str8("</p>\n</details>\n"));
-    } break;
-    case Block::ORD_LIST: {
-        out.add(arena, str8("\n</ol>\n"));
-    } break;
-    case Block::UN_LIST: {
-        out.add(arena, str8("\n</ul>\n"));
-    } break;
-    case Block::CODE:  {
-        out.add(arena, str8("</code></pre>\n"));
-    } break;
-    case Block::RULE:  {} break;
-    case Block::PARAGRAPH: {
-        // out.add(arena, str8("</p>\n"));
+        out.add(arena, str8("<p>\n"));
+        out.append(block->content = render_text(arena, block->text));
+        out.add(arena, str8("</p>\n"));
     } break;
     default: {
         NOTIMPLEMENTED();
@@ -479,7 +471,9 @@ Str8List render_block(Arena* arena, Block* block) {
     }
 
     if (block->type != Block::TABLE_ROW && block->next->type == Block::TABLE_ROW) {
-        out.add(arena, str8("<table>"));
+        out.add(arena, str8("<table class=\""));
+        out.add(arena, block->next->id);
+        out.add(arena, str8("\">"));
     }
     
     return out;

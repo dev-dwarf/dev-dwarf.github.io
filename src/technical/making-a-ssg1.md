@@ -231,7 +231,7 @@ Str8List render_text(Arena* arena, Text* root) {
 }
 ```
 ---
-##generate Generating the site.
+##generate Generating the Site
 The Markdown compiler is a good step, but it needs to be told what to compile, and the results are still missing necessary HTML boilerplate. For my site I decided to have a `src` folder for the markdown contents of my articles, and then compile everything to a `deploy` folder containing the generated HTML and other assets:
 ```
 - dev-dwarf.github.io

@@ -14,7 +14,7 @@ struct Text {
     } type;
     b32 end;
     
-    str8 text;
+    str text;
 };
 
 struct Block {
@@ -33,9 +33,9 @@ struct Block {
 
     /* Node Contents */
     u32 num;
-    str8 id;
-    str8 title;
-    Str8List content;
+    str id;
+    str title;
+    StrList content;
     Text* text;
 };
 

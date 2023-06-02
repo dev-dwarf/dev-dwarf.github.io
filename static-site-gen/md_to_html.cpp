@@ -155,7 +155,7 @@ Block* parse(Arena *arena, str s) {
     
     str_iter_pop_line(s) {
         /* Remove windows newline encoding (\r\n) */
-        line = str_trim_suffix(line, strlit("\r"));
+        line = str_trim_suffix(line, strl("\r"));
         if (line.len == 0) {
             if (next.type == Block::TABLE_ROW) {
                 PUSH_BLOCK();
@@ -253,8 +253,8 @@ Block* parse(Arena *arena, str s) {
             PUSH_BLOCK();
             line = str_skip(line, 2);
             next.type = Block::SPECIAL;
-            next.id = str_pop_at_first_delimiter(&line, strlit(",}"));
-            str_iter_pop_delimiter(line, strlit(",}")) {
+            next.id = str_pop_at_first_delimiter(&line, strl(",}"));
+            str_iter_pop_delimiter(line, strl(",}")) {
                 /* NOTE(lcf): optionally allow space in args list */
                 if (str_char_location(sub, ' ') == 0) {
                     sub = str_skip(sub, 1);
@@ -291,68 +291,52 @@ StrList render_text(Arena* arena, Text* root) {
     for (Text* t = root, *prev = &prev_filler; t->type != Text::NIL; prev = t, t = t->next) {
         switch (t->type) {
         case Text::BOLD: {
-            str s[2] = {strlit("<b>"), strlit("</b>")};
-            StrList_add(arena, &out, s[t->end]);
-            StrList_add(arena, &out, t->text);
+            str s[2] = {strl("<b>"), strl("</b>")};
+            StrList_addv(arena, &out, s[t->end], t->text);
         } break;
         case Text::ITALIC: {
-            str s[2] = {strlit("<em>"), strlit("</em>")};
-            StrList_add(arena, &out, s[t->end]);
-            StrList_add(arena, &out, t->text);
+            str s[2] = {strl("<em>"), strl("</em>")};
+            StrList_addv(arena, &out, s[t->end], t->text);
         } break;
         case Text::STRUCK: {
-            str s[2] = {strlit("<s>"), strlit("</s>")};
-            StrList_add(arena, &out, s[t->end]);
-            StrList_add(arena, &out, t->text);
+            str s[2] = {strl("<s>"), strl("</s>")};
+            StrList_addv(arena, &out, s[t->end], t->text);
         } break;
         case Text::CODE_INLINE: {
-            str s[2] = {strlit("<code>"), strlit("</code>")};
-            StrList_add(arena, &out, s[t->end]);
-            StrList_add(arena, &out, t->text);
+            str s[2] = {strl("<code>"), strl("</code>")};
+            StrList_addv(arena, &out, s[t->end], t->text);
         } break;
         case Text::CODE_BLOCK: {
-            StrList_add(arena, &out, t->text);
-            StrList_add(arena, &out, str_NEWLINE);
+            StrList_addv(arena, &out, t->text, str_NEWLINE);
         } break;
         case Text::LINK: {
             if (!t->end) {
-                StrList_add(arena, &out, strlit("<a href='"));
-                StrList_add(arena, &out, t->text);
-                StrList_add(arena, &out, strlit("'>"));
+                StrList_addv(arena, &out, strl("<a href='"), t->text, strl("'>"));
             } else {
-                StrList_add(arena, &out, strlit("</a>"));
-                StrList_add(arena, &out, t->text);
+                StrList_addv(arena, &out, strl("</a>"), t->text);
             }
         } break;
         case Text::EXPLAIN: {
             if (!t->end) {
-                StrList_add(arena, &out, strlit("<abbr title='"));
-                StrList_add(arena, &out, t->text);
-                StrList_add(arena, &out, strlit("'>"));
+                StrList_addv(arena, &out, strl("<abbr title='"), t->text, strl("'>"));
             } else {
-                StrList_add(arena, &out, strlit("</abbr>"));
-                StrList_add(arena, &out, t->text);
+                StrList_addv(arena, &out, strl("</abbr>"), t->text);
             }
         } break;
         case Text::IMAGE: {
             /* TODO alt text, styles, etc */
-            StrList_add(arena, &out, strlit("<img src='"));
-            StrList_add(arena, &out, t->text);
-            StrList_add(arena, &out, strlit("'>"));
+            StrList_addv(arena, &out, strl("<img src='"), t->text, strl("'>"));
         } break;
         case Text::TABLE_CELL: {
-            str s[2] = {strlit("<td>"), strlit("</td>\n")};
-            StrList_add(arena, &out, s[t->end]);
-            StrList_add(arena, &out, t->text);
+            str s[2] = {strl("<td>"), strl("</td>\n")};
+            StrList_addv(arena, &out, s[t->end], t->text);
         } break;
         case Text::BREAK: {
-            StrList_add(arena, &out, strlit("<br>"));
-            StrList_add(arena, &out, t->text);
+            StrList_addv(arena, &out, strl("<br>"), t->text);
         } break;
         case Text::LIST_ITEM: {
-            const str s[2] = {strlit("<li>"), strlit("</li>\n")};
-            StrList_add(arena, &out, s[t->end]);
-            StrList_add(arena, &out, t->text);
+            const str s[2] = {strl("<li>"), strl("</li>\n")};
+            StrList_addv(arena, &out, s[t->end], t->text);
         } break;
         case Text::TEXT: {
             StrList_add(arena, &out, t->text);
@@ -377,94 +361,81 @@ StrList render_block(Arena *arena, Block *block) {
         str h = str_create_size(arena, 2);
         h.str[0] = 'h';
         h.str[1] = '0' + (u8) block->num;
-        StrList_add(arena, &out, strlit("<"));
-        StrList_add(arena, &out, h);
+        StrList_addv(arena, &out, strl("<"), h);
         if (block->id.len > 0) {
-            static const str center = strlit("center");
-            static const str right = strlit("right");
+            static const str center = strl("center");
+            static const str right = strl("right");
             if (str_has_prefix(block->id, center)) {
                 block->id = str_skip(block->id, center.len+1);
-                StrList_add(arena, &out, strlit(" style='text-align:center'"));
+                StrList_add(arena, &out, strl(" style='text-align:center'"));
             } else if (str_eq(block->id, right)) {
                 block->id = str_skip(block->id, right.len+1);
-                StrList_add(arena, &out, strlit(" style='text-align:right'"));
+                StrList_add(arena, &out, strl(" style='text-align:right'"));
             }
-            StrList_add(arena, &out, strlit(" id='"));
-            StrList_add(arena, &out, block->id);
-            StrList_add(arena, &out, strlit("'"));
+            StrList_addv(arena, &out, strl(" id='"), block->id, strl("'"));
         }
-        StrList_add(arena, &out, strlit(">"));
+        StrList_add(arena, &out, strl(">"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("</"));
-        StrList_add(arena, &out, h);
-        StrList_add(arena, &out, strlit(">"));
+        StrList_addv(arena, &out, strl("</"), h, strl(">"));
 
     } break;
     case Block::TABLE_ROW: {
-        StrList_add(arena, &out, strlit("<tr>"));
+        StrList_add(arena, &out, strl("<tr>"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("</tr>\n"));
+        StrList_add(arena, &out, strl("</tr>\n"));
         if (block->next->type != Block::TABLE_ROW) {
-            StrList_add(arena, &out, strlit("</table>\n"));
+            StrList_add(arena, &out, strl("</table>\n"));
         }
     } break;
     case Block::TABLE_END: {
     } break;
     case Block::QUOTE: {
-        StrList_add(arena, &out, strlit("<blockquote>\n"));
+        StrList_add(arena, &out, strl("<blockquote>\n"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("</blockquote>\n"));
+        StrList_add(arena, &out, strl("</blockquote>\n"));
 
     } break;
     case Block::EXPAND: {
-        StrList_add(arena, &out, strlit("<details>\n<summary>\n"));
+        StrList_add(arena, &out, strl("<details>\n<summary>\n"));
         str h = {};
         if (block->num) {
             h = str_create_size(arena, 2);
             h.str[0] = 'h';
             h.str[1] = '0' + (u8) block->num;
-            StrList_add(arena, &out, strlit("<"));
-            StrList_add(arena, &out, h);
-            StrList_add(arena, &out, strlit(" id='"));
-            StrList_add(arena, &out, block->id);
-            StrList_add(arena, &out, strlit("'>"));
+            StrList_addv(arena, &out, strl("<"), h, strl(" id='"), block->id, strl("'>"));
         }
         StrList_add(arena, &out, block->title);
         if (block->num) {
-            StrList_add(arena, &out, strlit("</"));
-            StrList_add(arena, &out, h);
-            StrList_add(arena, &out, strlit(">"));
+            StrList_addv(arena, &out, strl("</"), h, strl(">"));
         }
-        StrList_add(arena, &out, strlit("</summary>\n<p>\n"));
+        StrList_add(arena, &out, strl("</summary>\n<p>\n"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("</p>\n</details>\n"));
+        StrList_add(arena, &out, strl("</p>\n</details>\n"));
 
     } break;
     case Block::ORD_LIST: {
-        StrList_add(arena, &out, strlit("<ol>\n"));
+        StrList_add(arena, &out, strl("<ol>\n"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("\n</ol>\n"));
+        StrList_add(arena, &out, strl("\n</ol>\n"));
     } break;
     case Block::UN_LIST: {
-        StrList_add(arena, &out, strlit("<ul>\n"));
+        StrList_add(arena, &out, strl("<ul>\n"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("\n</ul>\n"));
+        StrList_add(arena, &out, strl("\n</ul>\n"));
     } break;
     case Block::CODE:  {
-        StrList_add(arena, &out, strlit("<pre><code id='"));
-        StrList_add(arena, &out, block->id);
-        StrList_add(arena, &out, strlit("'>"));
+        StrList_addv(arena, &out, strl("<pre><code id='"), block->id, strl("'>"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("</code></pre>\n"));
+        StrList_add(arena, &out, strl("</code></pre>\n"));
     } break;
     case Block::RULE:  {
-        StrList_add(arena, &out, strlit("<hr>\n"));
+        StrList_add(arena, &out, strl("<hr>\n"));
         StrList_append(&out, block->content = render_text(arena, block->text));
     } break;
     case Block::PARAGRAPH: {
-        StrList_add(arena, &out, strlit("<p>\n"));
+        StrList_add(arena, &out, strl("<p>\n"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_add(arena, &out, strlit("</p>\n"));
+        StrList_add(arena, &out, strl("</p>\n"));
     } break;
     default: {
         NOTIMPLEMENTED();
@@ -473,9 +444,7 @@ StrList render_block(Arena *arena, Block *block) {
     }
 
     if (block->type != Block::TABLE_ROW && block->next->type == Block::TABLE_ROW) {
-        StrList_add(arena, &out, strlit("<table class=\""));
-        StrList_add(arena, &out, block->next->id);
-        StrList_add(arena, &out, strlit("\">"));
+        StrList_addv(arena, &out, strl("<table class=\""), block->next->id, strl("\">"));
     }
     
     return out;

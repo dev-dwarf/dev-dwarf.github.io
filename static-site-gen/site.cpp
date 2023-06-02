@@ -8,13 +8,13 @@
 
 global StrList dir = {};
 global StrNode root = {};
-global StrNode src = {0, strlit("src")};
-global StrNode deploy = {0, strlit("deploy")};
-global StrNode wildcard = {0, strlit("*.md")};
+global StrNode src = {0, strl("src")};
+global StrNode deploy = {0, strl("deploy")};
+global StrNode wildcard = {0, strl("*.md")};
 global StrNode filename = {};
 global PageList allPages = {};
 
-str HEADER = strlit(
+str HEADER = strl(
 R"(
 <!DOCTYPE html>
 <!-- GENERATED -->
@@ -42,7 +42,7 @@ R"(
 
 )");
 
-str FOOTER = strlit(R"(
+str FOOTER = strl(R"(
     </main> 
     </div>
     </body>
@@ -106,7 +106,7 @@ void switch_to_dir(StrNode *new_folder_node) {
 }
 
 str build_dir(Arena *arena) {
-    return StrList_join(arena, dir, {strlit(""), strlit("\\"), strlit("\0")});
+    return StrList_join(arena, dir, {strl(""), strl("\\"), strl("\0")});
 }
 
 PageList get_pages_in_dir(Arena *arena) {
@@ -134,10 +134,10 @@ PageList get_pages_in_dir(Arena *arena) {
         StrList href = dir;
         StrList_skip(&href, 2);
         if (href.total_len == 0) {
-            base_href = strlit("/");
+            base_href = strl("/");
             base_dir = {0};
         } else {
-            base_href = StrList_join(arena, href, {strlit("/"), strlit("/"), strlit("/")});
+            base_href = StrList_join(arena, href, {strl("/"), strl("/"), strl("/")});
             base_dir = StrList_copy(arena, href);
         }
     }
@@ -184,88 +184,86 @@ PageList get_pages_in_dir(Arena *arena) {
 void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front, StrList* back, Block* blocks, Block* block) {
     (void) blocks; /* NOTE(lcf): Unused for now. */
     
-    if (str_eq(block->id, strlit("sections"))) {
-        StrList_add(tempa, front, strlit("<ol class='sections'>\n"));
+    if (str_eq(block->id, strl("sections"))) {
+        StrList_add(tempa, front, strl("<ol class='sections'>\n"));
         for (Block* b = block; b->type != Block::NIL; b = b->next) {
             if (b->type == Block::HEADING && str_not_empty(b->id)) {
-                StrList_add(tempa, front, strlit("<li><a href='#"));
-                StrList_add(tempa, front, b->id);
-                StrList_add(tempa, front, strlit("'>"));
+                StrList_addv(tempa, front, strl("<li><a href='#"), b->id, strl("'>"));
                 StrList_append(front, render_text(tempa, b->text));
-                StrList_add(tempa, front, strlit("</a></li>\n"));
+                StrList_add(tempa, front, strl("</a></li>\n"));
             }
             if (b->type == Block::EXPAND && str_not_empty(b->id)) {
-                StrList_add(tempa, front, strlit("<li><a href='#"));
-                StrList_add(tempa, front, b->id);
-                StrList_add(tempa, front, strlit("'>"));
-                StrList_add(tempa, front, b->title);
-                StrList_add(tempa, front, strlit("</a></li>\n"));
+                StrList_addv(tempa, front, strl("<li><a href='#"),
+                            b->id,
+                            strl("'>"),
+                            b->title,
+                            strl("</a></li>\n"));
             }
         }
-        StrList_add(tempa, front, strlit("</ol>\n"));
+        StrList_add(tempa, front, strl("</ol>\n"));
     }
-    if (str_eq(block->id, strlit("title"))) {
+    if (str_eq(block->id, strl("title"))) {
         page->title = str_copy(longa, block->content.first->str);
         page->date = str_copy(longa, block->content.last->str);
-        StrList_add(tempa, front, strlit("<div style='clear: both'><h1>"));
-        StrList_add(tempa, front, page->title);
-        StrList_add(tempa, front, strlit("</h1><h3>"));
-        StrList_add(tempa, front, page->date);
-        StrList_add(tempa, front, strlit("</h3></div>\n"));
+        StrList_addv(tempa, front, strl("<div style='clear: both'><h1>"),
+                    page->title,
+                    strl("</h1><h3>"),
+                    page->date,
+                    strl("</h3></div>\n"));
     }
-    if (str_eq(block->id, strlit("desc"))) {
-        page->desc = StrList_join(longa, block->content, {{}, strlit(" "), {}});
+    if (str_eq(block->id, strl("desc"))) {
+        page->desc = StrList_join(longa, block->content, {{}, strl(" "), {}});
     }
-    if (str_eq(block->id, strlit("article"))) {
-        str link_ref = StrList_join(tempa, page->base_dir, {strlit("#"), strlit("/  "), {}});
-        StrList_add(tempa, back, strlit("<br><a href='"));
+    if (str_eq(block->id, strl("article"))) {
+        str link_ref = StrList_join(tempa, page->base_dir, {strl("#"), strl("/  "), {}});
+        StrList_add(tempa, back, strl("<br><a href='"));
         /* NOTE(lcf): could change based on type of article */
-        StrList_add(tempa, back, strlit("/writing.html"));
-        StrList_add(tempa, back, link_ref);
-        StrList_add(tempa, back, strlit("'>back</a>"));
+        StrList_addv(tempa, back, strl("/writing.html"),
+                     link_ref,
+                     strl("'>back</a>"));
     }
-    if (str_eq(block->id, strlit("index"))) {
+    if (str_eq(block->id, strl("index"))) {
         str base_href = block->content.first->str;
-        StrList_add(tempa, front, strlit("<table>"));
-        StrList_add(tempa, front, strlit("<tr><td>Date</td><td>Title</td><tr>"));
+        StrList_add(tempa, front, strl("<table>"));
+        StrList_add(tempa, front, strl("<tr><td>Date</td><td>Title</td><tr>"));
         for (Page *p = allPages.first; p != 0; p = p->next) {
             if (str_eq(p->base_href, base_href)) {
-                StrList_add(tempa, front, strlit("<tr><td>"));
-                StrList_add(tempa, front, p->date);
-                StrList_add(tempa, front, strlit("</td><td>"));
-                StrList_add(tempa, front, strlit("<a href='"));
-                StrList_add(tempa, front, p->base_href);
-                StrList_add(tempa, front, str_cut(p->filename,2));
-                StrList_add(tempa, front, strlit("html'>"));
-                StrList_add(tempa, front, p->title);
-                StrList_add(tempa, front, strlit("</a>"));
-                StrList_add(tempa, front, strlit("</td></tr>"));
+                StrList_addv(tempa, front, strl("<tr><td>"),
+                             p->date,
+                             strl("</td><td>"),
+                             strl("<a href='"),
+                             p->base_href,
+                             str_cut(p->filename,2),
+                             strl("html'>"),
+                             p->title,
+                             strl("</a>"),
+                             strl("</td></tr>"));
             }
         }
-        StrList_add(tempa, front, strlit("</table>"));
+        StrList_add(tempa, front, strl("</table>"));
     }
-    if (str_eq(block->id, strlit("project"))) {
+    if (str_eq(block->id, strl("project"))) {
         StrNode *param = block->content.first;
         str title = param->str; param = param->next;
         str date = param->str; param = param->next;
         str link = param->str; param = param->next;
         str img = param->str;
-        StrList_add(tempa, front, strlit("<h2><a href="));
-        StrList_add(tempa, front, link);
-        StrList_add(tempa, front, strlit(">"));
-        StrList_add(tempa, front, title);
-        StrList_add(tempa, front, strlit("</a>"));
-        StrList_add(tempa, front, strlit(" ("));
-        StrList_add(tempa, front, date);
-        StrList_add(tempa, front, strlit(")</h2>"));
-        StrList_add(tempa, front, strlit("<div class='project'><div class='project-image'><a href='"));
-        StrList_add(tempa, front, link); 
-        StrList_add(tempa, front, strlit("'><img src='"));
-        StrList_add(tempa, front, img);
-        StrList_add(tempa, front, strlit("'></a></div><div class='project-text'>"));
+        StrList_addv(tempa, front, strl("<h2><a href="),
+                     link,
+                     strl(">"),
+                     title,
+                     strl("</a>"),
+                     strl(" ("),
+                     date,
+                     strl(")</h2>"),
+                     strl("<div class='project'><div class='project-image'><a href='"),
+                     link,
+                     strl("'><img src='"),
+                     img,
+                     strl("'></a></div><div class='project-text'>"));
     }
-    if (str_eq(block->id, strlit("project-end"))) {
-        StrList_add(tempa, front, strlit("</div></div>"));
+    if (str_eq(block->id, strl("project-end"))) {
+        StrList_add(tempa, front, strl("</div></div>"));
     }
 }
 
@@ -280,7 +278,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
 
     StrList_pop_node(&dir);
 
-    filename.str = str_concat(tempa, str_cut(page->filename, 2), strlit("html\0"));
+    filename.str = str_concat(tempa, str_cut(page->filename, 2), strl("html\0"));
     StrList_add_node(&dir, &filename);
 
     StrList html = {0};
@@ -299,10 +297,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
 
     /* Header and Footer */
     StrList head = {0};
-    StrList_add(tempa, &head, HEADER);
-    StrList_add(tempa, &head, strlit("\t<title>LCF/DD:"));
-    StrList_add(tempa, &head, page->title);
-    StrList_add(tempa, &head, strlit("</title>\n"));
+    StrList_addv(tempa, &head, HEADER, strl("\t<title>LCF/DD:"), page->title, strl("</title>\n"));
     StrList_add(tempa, &back, FOOTER);
     StrList_prepend(&html, head);
     StrList_append(&html, back);
@@ -319,14 +314,14 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     StrList_pop(&dir, page->base_dir.count);
 }
 
-global str RSS_HEADER = strlit(R"(<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+global str RSS_HEADER = strl(R"(<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Logan Forman</title>
     <link>http://loganforman.com/</link>
     <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
     <description>Journey to the competence.</description>
 )");
-global str RSS_FOOTER = strlit(R"(
+global str RSS_FOOTER = strl(R"(
   </channel>
 </rss>
 )");
@@ -337,28 +332,28 @@ void compile_feeds(Arena *arena, PageList pages) {
     Page *n = pages.first;
     for (s64 i = 0; i < pages.count; i++, n = n->next) {
         printf("\t %.*s\n", str_PRINTF_ARGS(n->title));
-        StrList_add(arena, &rss, strlit("<item>\n<title>"));
-        StrList_add(arena, &rss, n->title);
-        StrList_add(arena, &rss, strlit("</title>\n<description>"));
-        StrList_add(arena, &rss, n->desc);
-        StrList_add(arena, &rss, strlit("</description>\n<link>https://loganforman.com/"));
-        StrList_add(arena, &rss, n->base_href);
-        StrList_add(arena, &rss, str_cut(n->filename, 2));
-        StrList_add(arena, &rss, strlit("html</link><guid isPermaLink='true'>https://loganforman.com/"));
-        StrList_add(arena, &rss, n->base_href);
-        StrList_add(arena, &rss, str_cut(n->filename, 2));
-        StrList_add(arena, &rss, strlit("</guid>\n"));
+        StrList_addv(arena, &rss, strl("<item>\n<title>"),
+                     n->title,
+                     strl("</title>\n<description>"),
+                     n->desc,
+                     strl("</description>\n<link>https://loganforman.com/"),
+                     n->base_href,
+                     str_cut(n->filename, 2),
+                     strl("html</link><guid isPermaLink='true'>https://loganforman.com/"),
+                     n->base_href,
+                     str_cut(n->filename, 2),
+                     strl("</guid>\n"),
+                     strl("</item>"));
         /* TODO: date for RSS feed items, from created_time */
-        StrList_add(arena, &rss, strlit("</item>"));
     }
     StrList_add(arena, &rss, RSS_FOOTER);
     switch_to_dir(&deploy);
     
-    StrList_add(arena, &dir, strlit("rss.xml"));
+    StrList_add(arena, &dir, strl("rss.xml"));
     ASSERT(os_WriteFile(build_dir(arena), rss));
     StrList_pop_node(&dir);
     
-    StrList_add(arena, &dir, strlit("feed.xml"));
+    StrList_add(arena, &dir, strl("feed.xml"));
     ASSERT(os_WriteFile(build_dir(arena), rss));
     StrList_pop_node(&dir);
 
@@ -369,7 +364,7 @@ int main() {
     Arena *longa = Arena_create();
     Arena *tempa = Arena_create();
 
-    StrNode technical = {0, strlit("technical")};
+    StrNode technical = {0, strl("technical")};
     dir = {};
     ch8 root_path_buffer[MAX_FILEPATH];
     root.str.str = root_path_buffer;

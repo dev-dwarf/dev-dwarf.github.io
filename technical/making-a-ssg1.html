@@ -34,7 +34,7 @@
 </ol>
 <hr>
 <h2 id='introd'>Introduction</h2><p>
-I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring (Feel free to <a href='/contact.html'>reach out</a>!). The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:</p>
+I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring. The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:</p>
 <ol>
 <li> Easily extendable. Do exactly what I want, quickly.</li>
 <li> Markdown-like language to write pages/articles in.</li>
@@ -56,7 +56,7 @@ struct Text {
         BREAK,
     } type;
     b32 end;
-    str8 text;
+    str text;
 };
 </code></pre>
 <pre><code id=''>struct Block {
@@ -68,21 +68,21 @@ struct Text {
         QUOTE, ORD_LIST, UN_LIST,
     } type;
     u32 num; /* For headings */
-    str8 id;
-    Str8List content;
+    str id;
+    StrList content;
     Text* text;
 };
 </code></pre>
 <p>
 <code>Blocks</code> represent distinct formatting of seperate sections of the document. <code>Text</code> handles formatting that composes. From the names it's hopefully easy to tell the equivalent HTML; putting a given tag in one category or the other has been done somewhat arbitrarily. These structures imply parsing the Blocks and then parsing the Text of each block. I decided to parse for Blocks line-by-line, detecting which type of block it is based on the first few characters:</p>
 <pre><code id=''>/* md_to_html.cpp */
-str8_iter_pop_line(str) { /* macro, sets str8 line */
+str_iter_pop_line(str) { 
     /* Remove windows newline encoding (\r\n) */
-    line = str8_trim_suffix(line, str8_lit("\r"));
+    line = str_trim_suffix(line, strl("\r"));
     if (line.len == 0) {
        /* Breaks block unless PARAGRAPH or CODE */
     }
-    chr8 c[3];
+    ch8 c[3];
     c[0] = line.str[0];
     c[1] = (line.len > 1)? line.str[1] : 0;
     c[2] = (line.len > 2)? line.str[2] : 0;
@@ -121,7 +121,7 @@ Each of these cases has some additional semantics, such as ending the previous b
 <p>
 The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support composing formatting like <code>***bold-and-italic* just-bold**</code> generating <b><em>bold-and-italic</em> just-bold</b>, it's not enough to just have <code>BOLD</code> node encapsulate the bolded text in a pair of tags. For this reason each text node has an <code>end</code> flag marking it as the start or end node of a pair:</p>
 <pre><code id=''>for (; curr->next != 0; pre = curr, curr = curr->next) {
-    str8 s = curr->text;
+    str s = curr->text;
     if ((curr->type == Text::LIST_ITEM) /* Already formatted, do not parse */
         || (curr->type == Text::CODE_BLOCK)
         || (curr->type == Text::BREAK)) {
@@ -141,7 +141,7 @@ The Text parsing is similar to the Block parsing, except each character is check
     chr8 c[3]; 
     c[1] = s.str[0];
     c[2] = (s.len > 1)? s.str[1] : 0;
-    str8_iter_custom(s, i, _unused) {
+    str_iter_custom(s, i, _unused) {
         c[0] = c[1];
         c[1] = c[2];
         c[2] = (s.len > i+2)? s.str[i+2] : 0;
@@ -181,7 +181,7 @@ The Text parsing is similar to the Block parsing, except each character is check
         } else if (c[0] == '\\') {
             /* Backslash ignores next formatting char */
         }
-    } /* end str8_iter */
+    } /* end str_iter */
     ASSERTM(pre == &pre_filler || pre->type != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
 }
 </code></pre>
@@ -211,39 +211,39 @@ The desired HTML is something like:</p>
 </code></pre>
 <p>
 With the above as the goal, it's not hard to imagine rendering the parsed nodes to HTML using a couple loops:</p>
-<pre><code id=''>Str8List render(Arena* arena, Block* root) {
-    Str8List out = {0};
+<pre><code id=''>StrList render(Arena* arena, Block* root) {
+    StrList out = {0};
     for (Block* b = root; b->type != Block::NIL; b = b->next) {
         switch (b->type) {
             /* Do pre-content tags for Block type. EX: */
             case Block::ORD_LIST: {
-                Str8List_add(arena, &out, str8_lit("&ltol&gt\n"));
+                StrList_add(arena, &out, strl("&ltol&gt\n"));
             } break;
         }
     
         b->content = render_text(arena, b->text);
-        Str8List_append(&out, Str8List_copy(arena, b->content));    
+        StrList_append(&out, StrList_copy(arena, b->content));    
     
         switch (b->type) {
             /* Do post-content tags for Block type. EX: */
             case Block::ORD_LIST: {
-                Str8List_add(arena, &out, str8_lit("\n&lt/ol&gt\n"));
+                StrList_add(arena, &out, strl("\n&lt/ol&gt\n"));
             } break;                    
         }
     }
     return out;
 }
 </code></pre>
-<pre><code id=''>Str8List render_text(Arena* arena, Text* root) {
-    Str8List out = {0};
+<pre><code id=''>StrList render_text(Arena* arena, Text* root) {
+    StrList out = {0};
     Text prev_filler = {root, Text::NIL, 0};
     for (Text* t = root, *prev = &prev_filler; t->type != Text::NIL; prev = t, t = t->next) {
         switch (t->type) {
             /* Add start or end tags based on t->end. EX: */
             case Text::BOLD: {
-                str8 s[2] = {str8_lit("&ltb&gt"), str8_lit("&lt/b&gt")};
-                Str8List_add(arena, &out, s[t->end]);
-                Str8List_add(arena, &out, t->text);
+                str s[2] = {strl("&ltb&gt"), strl("&lt/b&gt")};
+                StrList_add(arena, &out, s[t->end]);
+                StrList_add(arena, &out, t->text);
             } break;
         }
     }
@@ -266,13 +266,13 @@ I started a new file to drive this process. First I defined some structs to stor
 <pre><code id=''>/* site.h */
 struct Page {
     Page *next; 
-    str8 filename;
-    str8 base_href;
-    Str8List base_dir;
+    str filename;
+    str base_href;
+    StrList base_dir;
     u64 created_time;
     u64 modified_time;
-    str8 title;
-    str8 content;
+    str title;
+    str content;
     enum Types {
         DEFAULT,
         /* don't worry about the other types for now */
@@ -286,7 +286,7 @@ struct PageList {
 </code></pre>
 <p>
 Then there is a main loop that goes something like:</p>
-<pre><code id=''>global Str8List dir;
+<pre><code id=''>global StrList dir;
 int main() {
     Arena *longa = Arena_create_default();
     Arena *tempa = Arena_create_default();
@@ -300,32 +300,32 @@ int main() {
 }
 </code></pre>
 <p>
-The <code>global Str8List dir</code> holds the current directory/file. It's convenient to have it as a list so that I can pop off or switch out nodes to change the targeted file or directory. <code>get_pages_in_dir</code> just uses filesystem calls to make a list of markdown files in the <code>src</code> folder. <code>compile_page</code> loads the raw markdown, compiles it, and adds some enclosing HTML to the front and back. Finally it's written out to the equivalent HTML file in the <code>deploy</code> folder:</p>
+The <code>global StrList dir</code> holds the current directory/file. It's convenient to have it as a list so that I can pop off or switch out nodes to change the targeted file or directory. <code>get_pages_in_dir</code> just uses filesystem calls to make a list of markdown files in the <code>src</code> folder. <code>compile_page</code> loads the raw markdown, compiles it, and adds some enclosing HTML to the front and back. Finally it's written out to the equivalent HTML file in the <code>deploy</code> folder:</p>
 <pre><code id=''>void compile_page(Arena *longa, Arena *tempa, Page *page) {
-    Str8List_append(&dir, page->base_dir);
+    StrList_append(&dir, page->base_dir);
         
     filename.str = page->filename;
-    Str8List_add_node(&dir, &filename);
+    StrList_add_node(&dir, &filename);
     switch_to_dir(&src);
     page->content = win32_load_entire_file(tempa, build_dir(tempa));
-    Str8List_pop_node(&dir);
-<br>    filename.str = str8_concat(tempa, str8_cut(page->filename, 3), str8_lit("html\0"));
-    Str8List_add_node(&dir, &filename);
-<br>    Str8List html = {0};
-    Str8List_add(tempa, &html, HEADER);
-    Str8List_add(tempa, &html, str8_lit("\t<title>LCF/DD:"));
-    Str8List_add(tempa, &html, page->title);
-    Str8List_add(tempa, &html, str8_lit("</title>\n"));
+    StrList_pop_node(&dir);
+<br>    filename.str = str_concat(tempa, str_cut(page->filename, 3), strl("html\0"));
+    StrList_add_node(&dir, &filename);
+<br>    StrList html = {0};
+    StrList_add(tempa, &html, HEADER);
+    StrList_add(tempa, &html, strl("\t<title>LCF/DD:"));
+    StrList_add(tempa, &html, page->title);
+    StrList_add(tempa, &html, strl("</title>\n"));
 <br>    Block* blocks = parse(tempa, page->content);
-    Str8List md = render(tempa, blocks);
-    Str8List_append(&html, md);
+    StrList md = render(tempa, blocks);
+    StrList_append(&html, md);
     
-    Str8List_add(tempa, &html, FOOTER);
+    StrList_add(tempa, &html, FOOTER);
 <br>    switch_to_dir(&deploy);
     win32_write_file(build_dir(tempa).str, html);
-<br>    page->content = str8_EMPTY; /* clear this because it was on the temp arena */
-    Str8List_pop_node(&dir);
-    Str8List_pop(&dir, page->base_dir.count);
+<br>    page->content = str_EMPTY; /* clear this because it was on the temp arena */
+    StrList_pop_node(&dir);
+    StrList_pop(&dir, page->base_dir.count);
 }
 </code></pre>
 <p>
@@ -342,10 +342,8 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 
 </ol>
 <p>
-I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without lcf, my <a href='http://nothings.org/stb.h'>stb</a>-esque standard library. I've only fairly recently started my library and I tend to make tweaks and additions almost everytime I work on a project right now, so I don't feel comfortable having it out there as a public repo. If you really want a copy so you can compile my site yourself <a href='/contact.html'>send me a message</a>.<br></p>
-<h3>Follow Up</h3><p>
-TODO</p>
-<br><a href='/writing.html#technical'>back</a>
+I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without <a href='https://github.com/dev-dwarf/lcf'>lcf</a>, my personal library of C code. </p>
+<hr><p class='centert'> Feel free to message me with any comments about this article! Contact info on <a href='/index.html'>home page.</a></p><a class='btn' href='/writing.html#technical'>← back</a>
     </main> 
     </div>
     </body>

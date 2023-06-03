@@ -192,6 +192,7 @@ tr {
     border: solid 2px var(--low);    
 }
 
+
 td {
     padding: 0.3rem 0.2rem;
     border-right: solid 2px var(--low);
@@ -267,9 +268,29 @@ summary > * {
     width: 31%;
 }
 
+.btn {
+    background: var(--low);
+    font-weight: bold;
+    font-family: "Code", monospace;
+    padding: 4px 2px;
+    box-shadow: 2px 2px var(--deep);
+}
+
+.btn:hover {
+    background: var(--deep);
+    /* margin-top: 2px; */
+    /* margin-left: 2px; */
+    /* box-shadow: -2px -2px var(--deep); */
+}
+
 .centered {
     margin: auto;
 }
+
+.centert {
+    text-align: center;
+}
+
 .bg-deep {
     background-color: var(--deep);
 }

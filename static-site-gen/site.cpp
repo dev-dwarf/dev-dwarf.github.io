@@ -216,16 +216,17 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     }
     if (str_eq(block->id, strl("article"))) {
         str link_ref = StrList_join(tempa, page->base_dir, {strl("#"), strl("/  "), {}});
-        StrList_add(tempa, back, strl("<br><a href='"));
-        /* NOTE(lcf): could change based on type of article */
-        StrList_addv(tempa, back, strl("/writing.html"),
+        StrList_addv(tempa, back,
+                     strl("<hr><p class='centert'> Feel free to message me with any comments about this article! Contact info on <a href='/index.html'>home page.</a></p>"),
+                     strl("<a class='btn' href='"),
+                     strl("/writing.html"),
                      link_ref,
-                     strl("'>back</a>"));
+                     strl("'>← back</a>"));
     }
     if (str_eq(block->id, strl("index"))) {
         str base_href = block->content.first->str;
         StrList_add(tempa, front, strl("<table>"));
-        StrList_add(tempa, front, strl("<tr><td>Date</td><td>Title</td><tr>"));
+        StrList_add(tempa, front, strl("<tr><td>Date</td><td>Title</td><td></td></tr>"));
         for (Page *p = allPages.first; p != 0; p = p->next) {
             if (str_eq(p->base_href, base_href)) {
                 StrList_addv(tempa, front, strl("<tr><td>"),
@@ -237,7 +238,11 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
                              strl("html'>"),
                              p->title,
                              strl("</a>"),
-                             strl("</td></tr>"));
+                             strl("</td><td><a class='centered btn' href='"),
+                             p->base_href,
+                             str_cut(p->filename,2),
+                             strl("html'>"),
+                             strl("Read →</a></td></tr>"));
             }
         }
         StrList_add(tempa, front, strl("</table>"));

@@ -18,7 +18,6 @@ struct Text {
 };
 
 struct Block {
-    /* Navigation */
     Block *next;
 
     enum { 
@@ -31,7 +30,6 @@ struct Block {
         SPECIAL, /* Let caller deal with these */
     } type;
 
-    /* Node Contents */
     u32 num;
     str id;
     str title;

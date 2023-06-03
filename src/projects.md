@@ -23,7 +23,7 @@ I was hired to bring HandmadeMath, A single-file C/C++ library implementing math
 The code for the update tool can be found in a seperate @(https://github.com/dev-dwarf/HMM2.0UpdateTool github repository).
 
 ## LCF (WIP)
-My personal @(http://nothings.org/stb.h stb.h) style standard libary for my C/C++ projects. Features:
+My personal @(http://nothings.org/stb.h stb)/@(https://www.rfleury.com/ rjf) style standard libary for my C/C++ projects. Features:
 * Shorter type names and macros for commonly used functionality.
 * Arena-oriented memory management library.
 * Length-based string library (composes with Arena library).

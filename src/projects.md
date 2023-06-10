@@ -27,9 +27,9 @@ My personal @(http://nothings.org/stb.h stb)/@(https://www.rfleury.com/ rjf) sty
 * Shorter type names and macros for commonly used functionality.
 * Arena-oriented memory management library.
 * Length-based string library (composes with Arena library).
-Source is not available yet because I update this very frequently and don't want others to use it yet. It may seem unnecessary to do this to some but I've found that making my own standard library has given me deeper insight into how the available primitives in a language affect my programming style, as well as greatly increasing my comfort level in my C/C++ codebases (Feels worth it just for string handling alone!)
+Source on @(https://github.com/dev-dwarf/lcf Github). 
 
-##center Finished Games
+##center Large Games
 ---
 @{project, FEWAR-DVD, December 2021, https://store.steampowered.com/app/1769510/FEWARDVD/, /assets/FewarDVD.png}
 Speedrunning arcade game with maze-like procedurally generated levels and eclectic visual style. Positive reviews on steam.

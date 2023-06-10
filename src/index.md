@@ -9,8 +9,8 @@
 
 !|left w50| Quick Links || |
 !|| @(/assets/resume.pdf Resume) || @(https://github.com/dev-dwarf GitHub) |
+!|| @(/writing.html Writing) || @(/resources.html Resources) |
 !|| @(/projects.html Portfolio) || @(/rss.xml RSS) |
-!|| @(/writing.html Writing) | 
 
 !|right w50| Contact || |
 !|| Email || `contact@loganforman.com` |

@@ -23,56 +23,7 @@
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 
-	<title>LCF/DD:index</title>
-<p>
-<div class="center"> <img src='/assets/dd.png'> </div></p>
-<h2 style='text-align:center' id=''>Logan Forman <a href='https://www.twitter.com/dev_dwarf'>@dev dwarf</a><br></h2><table class="w100"><tr><td> Personal Info </td>
-<td> </td>
-</tr>
-<tr><td> Occupation </td>
-<td> Programming, Applied Mathematics </td>
-</tr>
-<tr><td> Location </td>
-<td> Albuquerque, New Mexico <img style="display: inline-block" src='/assets/zia.png'> </td>
-</tr>
-<tr><td> Employment </td>
-<td> Embedded Software Engineer <br> <a href='https://www.ideas-tek.com/'>Ideas-Tek</a> </td>
-</tr>
-<tr><td> Education </td>
-<td> BS. Applied Mathematics <br> <a href='https://nmt.edu/'>New Mexico Institute of Mining and Technology</a> </td>
- </tr>
-</table>
-<table class="left w50"><tr><br><td> Quick Links </td>
-<td> </td>
-</tr>
-<tr><td> <a href='/assets/resume.pdf'>Resume</a> </td>
-<td> <a href='https://github.com/dev-dwarf'>GitHub</a> </td>
-</tr>
-<tr><td> <a href='/writing.html'>Writing</a> </td>
-<td> <a href='/resources.html'>Resources</a> </td>
-</tr>
-<tr><td> <a href='/projects.html'>Portfolio</a> </td>
-<td> <a href='/rss.xml'>RSS</a> </td>
-</tr>
-</table>
-<table class="right w50"><tr><td> Contact </td>
-<td> </td>
-</tr>
-<tr><td> Email </td>
-<td> <code>contact@loganforman.com</code> </td>
-</tr>
-<tr><td> Text </td>
-<td> <code>+1-505-690-0103</code> </td>
-</tr>
-<tr><td> Discord </td>
-<td> <code>dev-dwarf#3925</code> </td>
- </tr>
-</table>
-<p>
-<div class="space-after"></div><br></p>
-<hr>
-<h2>Brief</h2><p>
-I'm Logan Forman, a game and systems programmer from New Mexico. I've been playing games as long as I can remember and programming them since I was 11. <br><br>I love observing the emergent consequences of complex programs; Seeing how systems react when pushed on in unintended ways. These moments can reveal annoying problems or invaluable treasure. As I switched my university education from software development to applied math I found that my interests in math and programming aren't seperate. I'm excited to explore the intersection of these passions for as long as I can!</p>
+	<title>LCF/DD:</title>
 
     </main> 
     </div>

@@ -119,11 +119,16 @@ blockquote {
     padding-right: 2rem;
 }
 
-pre {
+xmp {
     border-left: 0.5rem solid var(--blue);
     margin: 1rem 1rem;
     padding: 1rem 1rem;
-    white-space: pre-wrap;       
+    white-space: pre-wrap;
+    font-family: 'Code', monospace;
+    font-size: 12px;
+    line-height: 1.0rem;
+    font-weight: 625;
+    word-wrap: break-word;       
 }
 code {
     font-family: 'Code', monospace;
@@ -155,6 +160,10 @@ h1 a {
     color: var(--text) !important;
     text-decoration-color: var(--high) !important;
 }
+.sections a:hover {
+    background-color: var(--high) !important;
+}
+
 a:visited {
     text-decoration-color: var(--low) !important;
 }
@@ -163,8 +172,7 @@ a.current {
     text-decoration-color: var(--high) !important;
 }
 a:hover {
-    color: var(--link) !important;
-    text-decoration-color: var(--link) !important;
+    background-color: var(--link) !important;
 }
 a img {
     border-color: var(--text) !important;

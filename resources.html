@@ -27,13 +27,13 @@
 <h2 style='text-align:center' id=''>Resources</h2><hr>
 <p>
 With all the information of the world at our fingertips, it seems the hardest thing is to figure out what to look at. Here are some lists of resources I've personally used to study various topics. If you have trouble finding anything listed send me an email!</p>
-<ol class='sections'>
+<ul class='sections'>
 <li><a href='#analysis'>Analysis</a></li>
 <li><a href='#geometry'>Geometry</a></li>
 <li><a href='#la'>Linear Algebra</a></li>
 <li><a href='#pde'>PDEs</a></li>
+</ul>
 <li><a href='#programming'>Programming</a></li>
-</ol>
 <h2>Math</h2><p>
 todo<br></p>
 <h3 id='analysis'>Analysis</h3><p>
@@ -87,9 +87,6 @@ window.onload = function() {
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)
         .forEach(l => l.className += " current");
-    Array.from(document.getElementsByTagName("code"))
-        .filter(el => el.id == "html")  
-        .forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>

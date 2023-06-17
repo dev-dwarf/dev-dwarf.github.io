@@ -5,9 +5,13 @@
     <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
     <description>Journey to the competence.</description>
 <item>
+<title>Upgrading A Static Site Generator</title>
+<description>It's been a while! See how I've upgraded the site with the 'special' node.</description>
+<link>https://loganforman.com//writing/making-a-ssg2.html</link><guid isPermaLink='true'>https://loganforman.com//writing/making-a-ssg2.</guid>
+</item><item>
 <title>Making A Static Site Generator</title>
 <description>First post! A brief walkthrough of how I made the SSG for my personal website.</description>
-<link>https://loganforman.com//technical/making-a-ssg1.html</link><guid isPermaLink='true'>https://loganforman.com//technical/making-a-ssg1.</guid>
+<link>https://loganforman.com//writing/making-a-ssg1.html</link><guid isPermaLink='true'>https://loganforman.com//writing/making-a-ssg1.</guid>
 </item>
   </channel>
 </rss>

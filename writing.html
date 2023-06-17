@@ -24,7 +24,7 @@
     <main class="page-content" aria-label="Content">
 
 	<title>LCF/DD:writing</title>
-<h2 style='text-align:center' id=''>Writing</h2><h2 id='technical'>Technical Articles: </h2><tr><td>Date</td><td>Title</td><td></td></tr><tr><td>18 Dec 2022</td><td><a href='/technical/making-a-ssg1.html'>Making A Static Site Generator</a></td><td><a class='centered btn' href='/technical/making-a-ssg1.html'>Read →</a></td></tr>
+<h2 style='text-align:center' id=''>Writing</h2><table><tr><td>Date</td><td>Title</td><td></td></tr><tr><td><code>09 Jun 2022</code></td><td><a href='/writing/making-a-ssg2.html'>Upgrading A Static Site Generator</a></td><td><a class='centered btn' href='/writing/making-a-ssg2.html'>Read →</a></td></tr><tr><td><code>18 Dec 2022</code></td><td><a href='/writing/making-a-ssg1.html'>Making A Static Site Generator</a></td><td><a class='centered btn' href='/writing/making-a-ssg1.html'>Read →</a></td></tr></table>
     </main> 
     </div>
     </body>
@@ -65,9 +65,6 @@ window.onload = function() {
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)
         .forEach(l => l.className += " current");
-    Array.from(document.getElementsByTagName("code"))
-        .filter(el => el.id == "html")  
-        .forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>

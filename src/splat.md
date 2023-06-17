@@ -19,16 +19,18 @@ h2
 h3
 ####h4 H4
 h4
-####h5 H5
+#####h5 H5
 h5
 ---
 
-[ ###expand Expandable Note Title
+[ ###expand Expandable Note H3
 [ text of expandable note
 
 !|centered w33| Centered || Small || Table |
 !|| 1 || 2 || 3 |
 !|| 4 || 5 || 6 |
+
+?(Exoteric Explanation, Esoteric Phrase)
 
 ```
 generic code block

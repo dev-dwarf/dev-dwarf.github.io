@@ -83,9 +83,6 @@ window.onload = function() {
     Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
         .filter(l => l.href.split("#")[0] == full_path)
         .forEach(l => l.className += " current");
-    Array.from(document.getElementsByTagName("code"))
-        .filter(el => el.id == "html")  
-        .forEach(el => el.innerText = el.innerHTML);
 }    
     </script>
     </div>
@@ -173,8 +170,23 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     (void) blocks; /* NOTE(lcf): Unused for now. */
     
     if (str_eq(block->id, strl("sections"))) {
-        StrList_push(tempa, front, strl("<ol class='sections'>\n"));
+        StrList_push(tempa, front, strl("<ul class='sections'>\n"));
+        u32 n = 0; u32 nfirst = 0;
         for (Block* b = block; b->type != Block::NIL; b = b->next) {
+            if ((b->type == Block::HEADING || b->type == Block::EXPAND)
+                && str_not_empty(b->id)) {
+                if (n == 0) {
+                    n = b->num;
+                    nfirst = n;
+                }
+                for (; n < b->num; n++) {
+                    StrList_push(tempa, front, strl("<ul class='sections'>\n"));
+                }
+                for (; n > b->num; n--) {
+                    StrList_push(tempa, front, strl("</ul>\n"));
+                }
+                n = b->num;
+            }
             if (b->type == Block::HEADING && str_not_empty(b->id)) {
                 StrList_pushv(tempa, front, strl("<li><a href='#"), b->id, strl("'>"));
                 StrList_append(front, render_text(tempa, b->text));
@@ -188,7 +200,9 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
                             strl("</a></li>\n"));
             }
         }
-        StrList_push(tempa, front, strl("</ol>\n"));
+        for (; n >= nfirst; n--) {
+            StrList_push(tempa, front, strl("</ul>\n"));
+        }
     }
     if (str_eq(block->id, strl("title"))) {
         page->title = str_copy(longa, block->content.first->str);
@@ -205,20 +219,19 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     if (str_eq(block->id, strl("article"))) {
         str link_ref = StrList_join(tempa, page->base_dir, {strl("#"), strl("/  "), {}});
         StrList_pushv(tempa, back,
-                     strl("<hr><p class='centert'> Feel free to message me with any comments about this article! Contact info on <a href='/index.html'>home page.</a></p>"),
-                     strl("<a class='btn' href='"),
-                     strl("/writing.html"),
-                     link_ref,
-                     strl("'>← back</a>"));
+                      strl("<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman  .com</code> </p>"),
+                      strl("<a class='btn' href='/writing.html"),
+                      link_ref,
+                      strl("'>←  back to index</a>"));
     }
     if (str_eq(block->id, strl("index"))) {
         str base_href = block->content.first->str;
-        StrList_push(tempa, front, strl("<tr><td>Date</td><td>Title</td><td></td></tr>"));
+        StrList_push(tempa, front, strl("<table><tr><td>Date</td><td>Title</td><td></td></tr>"));
         for (Page *p = allPages.first; p != 0; p = p->next) {
-            if (str_eq(p->base_href, base_href)) {
-                StrList_pushv(tempa, front, strl("<tr><td>"),
+            if (str_eq(p->base_href, base_href) && str_not_empty(p->title)) {
+                StrList_pushv(tempa, front, strl("<tr><td><code>"),
                              p->date,
-                             strl("</td><td>"),
+                             strl("</code></td><td>"),
                              strl("<a href='"),
                              p->base_href,
                              str_cut(p->filename,2),
@@ -232,6 +245,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
                              strl("Read →</a></td></tr>"));
             }
         }
+        StrList_push(tempa, front, strl("</table>"));
     }
     if (str_eq(block->id, strl("project"))) {
         StrNode *param = block->content.first;
@@ -264,7 +278,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     filename.str = page->filename;
     StrList_push_node(&dir, &filename);
     switch_to_dir(&src);
-    page->content = os_LoadEntireFile(tempa, build_dir(tempa));
+    page->content = os_ReadFile(tempa, build_dir(tempa));
     page->title = str_cut(page->filename, 3);
 
     StrList_pop_node(&dir);
@@ -354,7 +368,7 @@ int main() {
     Arena *longa = Arena_create();
     Arena *tempa = Arena_create();
 
-    StrNode technical = {0, strl("technical")};
+    StrNode writing = {0, strl("writing")};
     dir = {};
     ch8 root_path_buffer[MAX_FILEPATH];
     root.str.str = root_path_buffer;
@@ -363,10 +377,10 @@ int main() {
     StrList_push_node(&dir, &src);
     
     PageList topPages = get_pages_in_dir(longa);
-    StrList_push_node(&dir, &technical);
-    PageList technicalPages = get_pages_in_dir(longa);
+    StrList_push_node(&dir, &writing);
+    PageList writingPages = get_pages_in_dir(longa);
     StrList_pop_node(&dir);
-    allPages = technicalPages;
+    allPages = writingPages;
     allPages.count += topPages.count;
     allPages.last->next = topPages.first;
     allPages.last = topPages.last;
@@ -376,6 +390,8 @@ int main() {
         Arena_reset_all(tempa);
     }
 
-    compile_feeds(tempa, technicalPages);
+    compile_feeds(tempa, writingPages);
+    
+    return 0;
 }
 

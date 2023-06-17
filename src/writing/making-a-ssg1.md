@@ -9,11 +9,11 @@ I wanted to make a new portfolio site as I get ready to apply for jobs after I g
 
 I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
 1. Easily extendable. Do exactly what I want, quickly.
-1. Markdown-like language to write pages/articles in.
+1. Markup language to write pages/articles in.
 1. Small. Should be <1000 LOC.
 ---
 ##parse Parsing Markdown
-I started by making a compiler for a simple markdown language. There is a specification called CommonMark that I *think* is the canonical version of Markdown, with a reference implementation @(https://github.com/commonmark/cmark cmark), clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the @(https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis 17 rules) for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
+I started by making a compiler for a simple markup language. *Markdown* is probably the most popular markup language on the web today. There is a specification called CommonMark that I *think* is the canonical version of Markdown, with a reference implementation @(https://github.com/commonmark/cmark cmark), clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the @(https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis 17 rules) for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
 
 
 Taking a hint from the Markdown spec, I implemented my language as a composition of `Block` and `Text` structures:
@@ -232,7 +232,7 @@ StrList render_text(Arena* arena, Text* root) {
 ```
 ---
 ##generate Generating the Site
-The Markdown compiler is a good step, but it needs to be told what to compile, and the results are still missing necessary HTML boilerplate. For my site I decided to have a `src` folder for the markdown contents of my articles, and then compile everything to a `deploy` folder containing the generated HTML and other assets:
+The markdown compiler is a good step, but it needs to be told what to compile, and the results are still missing necessary HTML boilerplate. For my site I decided to have a `src` folder for the markdown contents of my articles, and then compile everything to a `deploy` folder containing the generated HTML and other assets:
 ```
 - dev-dwarf.github.io
     - src

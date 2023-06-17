@@ -424,9 +424,9 @@ StrList render_block(Arena *arena, Block *block) {
         StrList_push(arena, &out, strl("\n</ul>\n"));
     } break;
     case Block::CODE:  {
-        StrList_pushv(arena, &out, strl("<pre><code id='"), block->id, strl("'>"));
+        StrList_pushv(arena, &out, strl("<xmp id='"), block->id, strl("'>"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</code></pre>\n"));
+        StrList_push(arena, &out, strl("</xmp>\n"));
     } break;
     case Block::RULE:  {
         StrList_push(arena, &out, strl("<hr>\n"));

@@ -4,7 +4,7 @@
 @{sections}
 ---
 ##introd Introduction
-It's been a while since my first post, but I'm hoping to actually us this blog now that I've graduated and have a bit more time. I think a good way to continue would be walking through more of my site generator. When I left off @(/writing/making-a-ssg1.html last time), the main thing missing from my site was a way to handle special elements, like an index for articles on the @(/writing.html writing page).
+It's been a while since my first post, but I'm hoping to actually use this blog now that I've graduated and have a bit more time. I think a good way to continue would be walking through more of my site generator. When I left off @(/writing/making-a-ssg1.html last time), the main thing missing from my site was a way to handle special elements, like an index for articles on the @(/writing.html writing page).
 
 
 In this post I'll walk through how adding one simple feature to my markdown parser lets me handle these cases in my site specific code easily. In most static site generators I see special cases like this implemented using a templating language, like @(https://shopify.github.io/liquid/ Liquid) which is recommended by the Jekyll documentation. In my experience these templates enedd up scattered around my website code, adding yet another underpowered language to the already overpopulated web-dev stack. My approach allow templates to be made in C just like the rest of my site, with full access to all the existing data structures for the website pages.

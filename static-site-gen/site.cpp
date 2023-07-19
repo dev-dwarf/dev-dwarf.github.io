@@ -1,3 +1,11 @@
+/*
+  TODO(lcf, July 18, 2023):
+  - Update projects page to be more table oriented and have seperate pages for each.
+  - Dates for RSS feed, right now its badly broken.
+  - <sup> and <sub> formatting, possibly for math formulas.
+  
+ */
+
 #include "../../lcf/lcf.h"
 #include "../../lcf/lcf.c"
 #include "site.h"
@@ -53,7 +61,7 @@ str FOOTER = strl(R"(
     <td><a href="/index.html">home</a></td>
     <td><a href="/projects.html">projects</a></td>
     <td><a href="/writing.html">writing</a></td>
-    <td><a style="text-decoration-color: #EE802F !important" href='./rss.xml'>rss</a></td>
+    <td><a style="text-decoration-color: #EE802F !important" href='/rss.xml'>rss</a></td>
     </tr></table>
 
     <table class="w33 right"><tr>

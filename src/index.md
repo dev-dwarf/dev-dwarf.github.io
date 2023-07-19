@@ -8,7 +8,7 @@
 
 
 !|left w50| Quick Links || |
-!|| @(/assets/resume.pdf Resume) || @(https://github.com/dev-dwarf GitHub) |
+!|| @(/resume.html Resume) || @(https://github.com/dev-dwarf GitHub) |
 !|| @(/writing.html Writing) || @(/resources.html Resources) |
 !|| @(/projects.html Portfolio) || @(/rss.xml RSS) |
 

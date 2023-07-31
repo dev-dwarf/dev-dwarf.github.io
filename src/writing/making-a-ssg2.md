@@ -1,5 +1,5 @@
 @{article}
-@{title, Upgrading A Static Site Generator, 09 Jun 2022}
+@{title, Upgrading A Static Site Generator, Fri, 09 Jun 2022}
 @{desc, It's been a while! See how I've upgraded the site with the 'special' node.}
 @{sections}
 ---

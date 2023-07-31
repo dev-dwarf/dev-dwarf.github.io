@@ -1,5 +1,5 @@
 @{article}
-@{title, Making A Static Site Generator, 18 Dec 2022}
+@{title, Making A Static Site Generator, Sun, 18 Dec 2022}
 @{desc, First post! A brief walkthrough of how I made the SSG for my personal website.}
 @{sections}
 ---

@@ -6,6 +6,7 @@ struct Page {
     u64 created_time;
     u64 modified_time;
     str title;
+    str rss_day;
     str date;
     str desc;
     str content;

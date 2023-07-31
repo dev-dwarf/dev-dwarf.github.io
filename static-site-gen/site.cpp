@@ -1,7 +1,6 @@
 /*
   TODO(lcf, July 18, 2023):
   - Update projects page to be more table oriented and have seperate pages for each.
-  - Dates for RSS feed, right now its badly broken.
   - <sup> and <sub> formatting, possibly for math formulas.
   
  */
@@ -11,6 +10,7 @@
 #include "site.h"
 #include "md_to_html.cpp"
 #include <stdio.h>
+#include <time.h>
 
 #define MAX_FILEPATH 512
 
@@ -214,6 +214,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     }
     if (str_eq(block->id, strl("title"))) {
         page->title = str_copy(longa, block->content.first->str);
+        page->rss_day = str_copy(longa, block->content.first->next->str);
         page->date = str_copy(longa, block->content.last->str);
         StrList_pushv(tempa, front, strl("<div style='clear: both'><h1>"),
                     page->title,
@@ -227,7 +228,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     if (str_eq(block->id, strl("article"))) {
         str link_ref = StrList_join(tempa, page->base_dir, {strl("#"), strl("/  "), {}});
         StrList_pushv(tempa, back,
-                      strl("<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman  .com</code> </p>"),
+                      strl("<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p>"),
                       strl("<a class='btn' href='/writing.html"),
                       link_ref,
                       strl("'>←  back to index</a>"));
@@ -346,17 +347,21 @@ void compile_feeds(Arena *arena, PageList pages) {
     for (s64 i = 0; i < pages.count; i++, n = n->next) {
         printf("\t %.*s\n", str_PRINTF_ARGS(n->title));
         StrList_pushv(arena, &rss, strl("<item>\n<title>"),
-                     n->title,
-                     strl("</title>\n<description>"),
-                     n->desc,
-                     strl("</description>\n<link>https://loganforman.com/"),
-                     n->base_href,
-                     str_cut(n->filename, 2),
-                     strl("html</link><guid isPermaLink='true'>https://loganforman.com/"),
-                     n->base_href,
-                     str_cut(n->filename, 2),
-                     strl("</guid>\n"),
-                     strl("</item>"));
+                      n->title,
+                      strl("</title>\n<description>"),
+                      n->desc,
+                      strl("</description>\n<link>https://loganforman.com/"),
+                      n->base_href,
+                      str_cut(n->filename, 2),
+                      strl("html</link><guid isPermaLink='true'>https://loganforman.com/"),
+                      n->base_href,
+                      str_cut(n->filename, 2),
+                      strl("</guid>\n<pubDate>"),
+                      n->rss_day,
+                      strl(", "),
+                      n->date,
+                      strl(" 08:00:00 MST</pubDate>\n"),
+                      strl("</item>"));
     }
     StrList_push(arena, &rss, RSS_FOOTER);
     switch_to_dir(&deploy);

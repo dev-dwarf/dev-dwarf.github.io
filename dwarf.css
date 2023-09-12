@@ -85,8 +85,8 @@ h1, h2, h3, h4, h5, h6 {
     font-family: "Code", mono;
     font-stretch: 90%;
     color: var(--text);
-    text-decoration: underline 0.1rem;
-    text-underline-offset: 0.3rem;
+    text-decoration: underline 2px;
+    text-underline-offset: 0.25rem;
     text-decoration-color: var(--high);
     font-weight: bold;
 }
@@ -120,7 +120,7 @@ blockquote {
 }
 
 xmp {
-    border-left: 0.5rem solid var(--blue);
+    border-left: 2px solid var(--yellow);
     margin: 1rem 1rem;
     padding: 1rem 1rem;
     white-space: pre-wrap;
@@ -128,7 +128,7 @@ xmp {
     font-size: 12px;
     line-height: 1.0rem;
     font-weight: 625;
-    word-wrap: break-word;       
+    word-wrap: break-word;
 }
 code {
     font-family: 'Code', monospace;
@@ -147,8 +147,8 @@ abbr {
 a {
     color: var(--text);
     text-align: center;
-    text-decoration: underline 0.1rem;
-    text-underline-offset: 0.3rem;
+    text-decoration: underline 2px;
+    text-underline-offset: .25rem;
     text-decoration-color: var(--link) !important;
 }
 

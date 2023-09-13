@@ -41,8 +41,7 @@ body {
 }
 
 body.night {
-    --bg: var(
-    --black);
+    --bg: #000;
     --text: var(
     --bone);
     --link: var(
@@ -50,7 +49,7 @@ body.night {
     --deep: var(
     --black);
     --low: var(
-    --purple);
+    --dblue);
     --high: var(
     --dblue);
 }
@@ -73,7 +72,7 @@ body {
     font-stretch: 90%;
     line-height: 1.2rem;
     overflow-wrap: break-word;
-    width: 65%;
+    width: 70%;
     max-width: 700px;
     /* margin-left: 2rem; */
     margin: auto;
@@ -81,8 +80,8 @@ body {
 
 .project img {
     width: 100%;
-    border: .25rem solid var(--text);
-    border-radius: .15rem;
+    border: 2px solid var(--text);
+    /* border-radius: 2px; */
     float: right;
 }
 
@@ -120,7 +119,7 @@ li {
 }
 
 blockquote {
-    border-left: 0.5rem solid var(--bone);
+    border-left: 2px solid var(--low);
     margin: 1rem 1rem;
     padding: 1rem 1rem;
     padding-right: 2rem;
@@ -182,11 +181,11 @@ a:hover {
     background-color: var(--link) !important;
 }
 a img {
-    border-color: var(--text) !important;
+    border-color: #000!important;
     border-bottom-color: var(--link) !important;
 }
 a:visited img {
-    border-color: var(--text) !important;
+    border-color: #000 !important;
     border-bottom-color: var(--low) !important;
 }
 a:hover img {

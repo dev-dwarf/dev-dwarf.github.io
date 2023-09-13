@@ -9,6 +9,7 @@
     --blue:     #2CE8F5;
     --grey:     #797366;
     --bone:     #EFEFE0;
+    --dblue: #192669;
 }
 @font-face {
     font-family: 'Text';
@@ -40,12 +41,18 @@ body {
 }
 
 body.night {
-    --bg: var(--black);
-    --text: var(--bone);
-    --link: var(--blue);
-    --deep: var(--purple);
-    --low: var(--green);
-    --high: var(--yellow);
+    --bg: var(
+    --black);
+    --text: var(
+    --bone);
+    --link: var(
+    --green);
+    --deep: var(
+    --black);
+    --low: var(
+    --purple);
+    --high: var(
+    --dblue);
 }
 
 .articles ul {
@@ -120,7 +127,7 @@ blockquote {
 }
 
 xmp {
-    border-left: 2px solid var(--yellow);
+    border-left: 2px solid var(--high);
     margin: 1rem 1rem;
     padding: 1rem 1rem;
     white-space: pre-wrap;
@@ -234,7 +241,7 @@ hr {
 }
 
 body.night hr {
-    color: var(--low);
+    color: var(--high);
 }
 
 /* nav bar sections */

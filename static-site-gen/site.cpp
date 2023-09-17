@@ -44,28 +44,23 @@ R"(
     <link rel="stylesheet" href="/dwarf.css">
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     </head>
-    <script>
-        
-        function toggleNight() {
-            document.body.classList.toggle("night");
-            const val = document.body.classList.contains("night");
-            localStorage.setItem('theme', val);
-            console.log(val);
-        }
     
-    window.onload = function() {
-        const saved = localStorage.getItem('theme');
-        if (saved === 'true') {
-            document.body.classList.add('night');
-        }
-        full_path = location.href.split('#')[0];
-        Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
-            .filter(l => l.href.split("#")[0] == full_path)
-            .forEach(l => l.className += " current");
-    }    
-    </script>
     <body>
+    <script>
+        var theme = localStorage.getItem('theme') || 'light';
 
+        // window.onload = function() {
+           document.querySelector('body').setAttribute('data-theme', theme);
+        // }
+
+        function toggleNight() {
+            console.log('toggle');
+            theme = (theme == 'light')? 'night' : 'light';
+            localStorage.setItem('theme', theme);
+            document.querySelector('body').setAttribute('data-theme', theme);   
+        }
+
+    </script>
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 

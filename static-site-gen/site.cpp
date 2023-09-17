@@ -44,7 +44,28 @@ R"(
     <link rel="stylesheet" href="/dwarf.css">
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     </head>
+    <script>
+        
+        function toggleNight() {
+            document.body.classList.toggle("night");
+            const val = document.body.classList.contains("night");
+            localStorage.setItem('theme', val);
+            console.log(val);
+        }
+    
+    window.onload = function() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'true') {
+            document.body.classList.add('night');
+        }
+        full_path = location.href.split('#')[0];
+        Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
+            .filter(l => l.href.split("#")[0] == full_path)
+            .forEach(l => l.className += " current");
+    }    
+    </script>
     <body>
+
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 
@@ -73,26 +94,7 @@ str FOOTER = strl(R"(
     </tr></table>
     <p><br><br><br></p>
     </nav>
-    <script>
     
-    function toggleNight() {
-        document.body.classList.toggle("night");
-        const val = document.body.classList.contains("night");
-        localStorage.setItem('theme', val);
-        console.log(val);
-    }
-
-window.onload = function() {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'true') {
-        document.body.classList.add('night');
-    }
-    full_path = location.href.split('#')[0];
-    Array.from(document.getElementById("nav-links").getElementsByTagName("a"))
-        .filter(l => l.href.split("#")[0] == full_path)
-        .forEach(l => l.className += " current");
-}    
-    </script>
     </div>
     </html>)");
 
@@ -319,7 +321,8 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     printf("%.*s \"%.*s\" ", str_PRINTF_ARGS(filename.str), str_PRINTF_ARGS(page->title));
 
     switch_to_dir(&deploy);
-    ASSERT(os_WriteFile(build_dir(tempa), html));
+    str file = build_dir(tempa);
+    ASSERT(os_WriteFile(file, html));
 
     printf("> %.*s%.*s\n", str_PRINTF_ARGS(page->base_href), str_PRINTF_ARGS(page->filename));
 

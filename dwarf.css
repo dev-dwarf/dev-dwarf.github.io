@@ -38,9 +38,6 @@ body {
     --deep: var(--purple);
     --low: var(--bone);
     --high: var(--yellow);
-
-    -webkit-transition: .2s;
-    transition: .2s;
 }
 
 body[data-theme="night"] {

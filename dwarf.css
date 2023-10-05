@@ -71,6 +71,7 @@ body {
     max-width: 700px;
     /* margin-left: 2rem; */
     margin: auto;
+    text-align: justify;
 }
 
 .project img {

@@ -71,7 +71,12 @@ body {
     max-width: 700px;
     /* margin-left: 2rem; */
     margin: auto;
+}
+
+p {
     text-align: justify;
+    text-justify: distribute;
+    hyphens: auto;
 }
 
 .project img {

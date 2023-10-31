@@ -232,7 +232,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     }
     if (str_eq(block->id, strl("index"))) {
         str base_href = block->content.first->str;
-        StrList_push(tempa, front, strl("<table><tr><td>Date</td><td>Title</td><td></td></tr>"));
+        StrList_push(tempa, front, strl("<table><tr><td>Date</td><td>Title</td></tr>"));
         for (Page *p = allPages.first; p != 0; p = p->next) {
             if (str_eq(p->base_href, base_href) && str_not_empty(p->title)) {
                 StrList_pushv(tempa, front, strl("<tr><td><code>"),
@@ -244,11 +244,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
                              strl("html'>"),
                              p->title,
                              strl("</a>"),
-                             strl("</td><td><a class='centered btn' href='"),
-                             p->base_href,
-                             str_cut(p->filename,2),
-                             strl("html'>"),
-                             strl("Read →</a></td></tr>"));
+                              strl("</td></tr>"));
             }
         }
         StrList_push(tempa, front, strl("</table>"));

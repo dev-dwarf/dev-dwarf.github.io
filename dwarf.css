@@ -75,7 +75,6 @@ body {
 
 p {
     text-align: justify;
-    text-justify: distribute;
     hyphens: auto;
 }
 
@@ -126,7 +125,7 @@ blockquote {
     padding-right: 2rem;
 }
 
-xmp {
+pre {
     border-left: 2px solid var(--high);
     margin: 1rem 1rem;
     padding: 1rem 1rem;
@@ -366,6 +365,7 @@ body[data-theme="night"] .night { display: none; }
 
 
     pre {
+        font-size: 10px; 
         margin: 1rem 0px;
     }
 }

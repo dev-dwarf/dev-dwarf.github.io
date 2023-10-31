@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 <!-- GENERATED -->
-<html>
+<html lang="en-US">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,7 +39,7 @@
     <div class="wrapper">
     <main class="page-content" aria-label="Content">
 
-	<title>LCF/DD:Upgrading A Static Site Generator</title>
+	<title>Upgrading A Static Site Generator</title>
 <div style='clear: both'><h1>Upgrading A Static Site Generator</h1><h3>09 Jun 2023</h3></div>
 <ul class='sections'>
 <li><a href='#introd'>Introduction</a></li>
@@ -57,128 +57,128 @@
 It's been a while since my first post, but I'm hoping to actually use this blog now that I've graduated and have a bit more time. I think a good way to continue would be walking through more of my site generator. When I left off <a href='/writing/making-a-ssg1.html'>last time</a>, the main thing missing from my site was a way to handle special elements, like an index for articles on the <a href='/writing.html'>writing page</a>.<br><br>In this post I'll walk through how adding one simple feature to my markdown parser lets me handle these cases in my site specific code easily. In most static site generators I see special cases like this implemented using a templating language, like <a href='https://shopify.github.io/liquid/'>Liquid</a> which is recommended by the Jekyll documentation. In my experience these templates enedd up scattered around my website code, adding yet another underpowered language to the already overpopulated web-dev stack. My approach allow templates to be made in C just like the rest of my site, with full access to all the existing data structures for the website pages.<br></p>
 <h2 id='special'>The Special Block</h2><p>
 So instead of writing an interpreter for some crappy template language, here's how the markdown compiler has been updated to handle special templates (<code>md_to_html.cpp</code>):</p>
-<xmp id=''>/* in parse()... */
-} else if (c[0] == '@' && c[1] == '{') {
+<code id=''><pre>/* in parse()... */
+} else if (c[0] == '@' &amp&amp c[1] == '{') {
 PUSH_BLOCK(); /* Immediately end the previous block. */
 line = str_skip(line, 2);
 /* Mark this block as special, save first arg as .id */
 next.type = Block::SPECIAL;
-next.id = str_pop_at_first_delimiter(&line, strl(",}"));
+next.id = str_pop_at_first_delimiter(&ampline, strl(",}"));
 /* Push remaining args to .content */
 str_iter_pop_delimiter(line, strl(",}")) {
     /* NOTE(lcf): optionally allow space in args list */
     if (str_char_location(sub, ' ') == 0) {
         sub = str_skip(sub, 1);
     }
-    StrList_push(arena, &next.content, sub);
+    StrList_push(arena, &ampnext.content, sub);
 }
 /* End the special block */
 PUSH_BLOCK();
 }
-</xmp>
+</pre></code>
 <p>
 That's it. There's no additional rendering code or anything else in the markdown compiler, it just packages up arguments into the Block data structure and then is done. All the remaining work of handling the special templates is in the site specific code (<code>site.cpp</code>).<br>So now in <code>site.cpp:compile_page()</code>, instead of:</p>
-<xmp id=''>/* ... snip ... */
-Block* blocks = parse(tempa, page->content);
+<code id=''><pre>/* ... snip ... */
+Block* blocks = parse(tempa, page-&gtcontent);
 StrList md = {0};
-for (Block* b = blocks; b->type != Block::NIL; b = b->next) {
+for (Block* b = blocks; b-&gttype != Block::NIL; b = b-&gtnext) {
     md = render_block(tempa, b);
-    StrList_append(&html, md);
+    StrList_append(&amphtml, md);
 }
 /* ... snip ... */
-</xmp>
+</pre></code>
 <p>
 <br>I now have:</p>
-<xmp id=''>/* ... snip ... */
-Block* blocks = parse(tempa, page->content);
+<code id=''><pre>/* ... snip ... */
+Block* blocks = parse(tempa, page-&gtcontent);
 StrList md = {0};
-for (Block* b = blocks; b->type != Block::NIL; b = b->next) {
-    if (b->type != Block::SPECIAL) {
+for (Block* b = blocks; b-&gttype != Block::NIL; b = b-&gtnext) {
+    if (b-&gttype != Block::SPECIAL) {
         md = render_block(tempa, b);
-        StrList_append(&html, md);
+        StrList_append(&amphtml, md);
     } else {
-        render_special_block(longa, tempa, page, &html, &back, blocks, b);
+        render_special_block(longa, tempa, page, &amphtml, &ampback, blocks, b);
     }
 }
 /* ... snip ... */
-</xmp>
+</pre></code>
 <p>
 Where <code>render_special_block()</code> contains the code to handle each special node. That's all fine, but really I haven't done anything useful yet, so lets look at some examples of templates that I've implemented for the site so far.<br></p>
 <h2 id='examples'>Example Special Blocks</h2><h3 id='article'>@{article}</h3><p>
 The markdown for <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/src/technical/making-a-ssg2.md'>this page</a> starts off with the <code>@{article}</code> special block, which just puts a short message at the end of the page. This code is even slightly more complicated than it needs to be at the moment, because in the future when I have more articles I will make the link take you back to the part of the index page where the link for the current article is.</p>
-<xmp id=''>if (str_eq(block->id, strl("article"))) {
-    str link_ref = StrList_join(tempa, page->base_dir, {strl("#"), strl("/  "), {}});
+<code id=''><pre>if (str_eq(block-&gtid, strl("article"))) {
+    str link_ref = StrList_join(tempa, page-&gtbase_dir, {strl("#"), strl("/  "), {}});
     StrList_pushv(tempa, back,
-                  strl("<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman  .com</code> </p>"),
-                  strl("<a class='btn' href='/writing.html"),
+                  strl("&lthr&gt&ltp class='centert'&gt Feel free to message me with any comments about this article! &ltbr&gt Email: &ltcode&gtcontact@loganforman  .com&lt/code&gt &lt/p&gt"),
+                  strl("&lta class='btn' href='/writing.html"),
                   link_ref,
-                  strl("'>←  back to index</a>"));
+                  strl("'&gt←  back to index&lt/a&gt"));
 }
-</xmp>
+</pre></code>
 <h3 id='sections'>@{sections}</h3><p>
 A <code>@{sections}</code> block will make a list of clickable links to headers on the page. This node is a bit bigger than the others as it handles a few special cases like headers in expandable sections and different levels of indentation for different sizes of header. The code iterates through the block list for the page, searching for headings with a non-empty id (the id is used to create the link url, and so indicates that it can be linked to at all). Additional list levels are created or ended based on the difference of size between the previous and next heading.</p>
-<xmp id=''>if (str_eq(block->id, strl("sections"))) {
-    StrList_push(tempa, front, strl("<ul class='sections'>\n"));
+<code id=''><pre>if (str_eq(block-&gtid, strl("sections"))) {
+    StrList_push(tempa, front, strl("&ltul class='sections'&gt\n"));
     u32 n = 0; u32 nfirst = 0;
-    for (Block* b = block; b->type != Block::NIL; b = b->next) {
-        if ((b->type == Block::HEADING || b->type == Block::EXPAND)
-           && str_not_empty(b->id)) {
+    for (Block* b = block; b-&gttype != Block::NIL; b = b-&gtnext) {
+        if ((b-&gttype == Block::HEADING || b-&gttype == Block::EXPAND)
+           &amp&amp str_not_empty(b-&gtid)) {
             if (n == 0) {
-                n = b->num;
+                n = b-&gtnum;
                 nfirst = n;
             }
-            for (; n < b->num; n++) {
-                StrList_push(tempa, front, strl("<ul class='sections'>\n"));
+            for (; n &lt b-&gtnum; n++) {
+                StrList_push(tempa, front, strl("&ltul class='sections'&gt\n"));
             }
-            for (; n > b->num; n--) {
-                StrList_push(tempa, front, strl("</ul>\n"));
+            for (; n &gt b-&gtnum; n--) {
+                StrList_push(tempa, front, strl("&lt/ul&gt\n"));
             }
-            n = b->num;
+            n = b-&gtnum;
         }
-        if (b->type == Block::HEADING && str_not_empty(b->id)) {
-            StrList_pushv(tempa, front, strl("<li><a href='#"), b->id, strl("'>"));
-            StrList_append(front, render_text(tempa, b->text));
-            StrList_push(tempa, front, strl("</a></li>\n"));
+        if (b-&gttype == Block::HEADING &amp&amp str_not_empty(b-&gtid)) {
+            StrList_pushv(tempa, front, strl("&ltli&gt&lta href='#"), b-&gtid, strl("'&gt"));
+            StrList_append(front, render_text(tempa, b-&gttext));
+            StrList_push(tempa, front, strl("&lt/a&gt&lt/li&gt\n"));
         }
-        if (b->type == Block::EXPAND && str_not_empty(b->id)) {
-            StrList_pushv(tempa, front, strl("<li><a href='#"),
-                        b->id,
-                        strl("'>"),
-                        b->title,
-                        strl("</a></li>\n"));
+        if (b-&gttype == Block::EXPAND &amp&amp str_not_empty(b-&gtid)) {
+            StrList_pushv(tempa, front, strl("&ltli&gt&lta href='#"),
+                        b-&gtid,
+                        strl("'&gt"),
+                        b-&gttitle,
+                        strl("&lt/a&gt&lt/li&gt\n"));
         }
     }
-    for (; n >= nfirst; n--) {
-        StrList_push(tempa, front, strl("</ul>\n"));
+    for (; n &gt= nfirst; n--) {
+        StrList_push(tempa, front, strl("&lt/ul&gt\n"));
     }
 }
-</xmp>
+</pre></code>
 <h3 id='index'>@{index}</h3><p>
 The original inspiration for designing the special block feature this way was to create an index of pages. Implementing this feature requires some metadata about other pages that exist in the site, as well as the ability to iterate over these pages. An index special block will be written as <code>@{index, /dir/}</code>, where <code>dir</code> is the directory containing the pages to index. The code for this special block simply accesses the list of all the pages in the site, and checks for those which are in the directory specified by the parameter. For each of these pages, it adds an entry to a table with the title of the page (which itself is set by a title special block).<br></p>
-<xmp id=''>if (str_eq(block->id, strl("index"))) {
-    str base_href = block->content.first->str;
-    StrList_push(tempa, front, strl("<table><tr><td>Date</td><td>Title</td><td></td></tr>"));
-    for (Page *p = allPages.first; p != 0; p = p->next) {
-        if (str_eq(p->base_href, base_href) && str_not_empty(p->title)) {
-            StrList_pushv(tempa, front, strl("<tr><td><code>"),
-                         p->date,
-                         strl("</code></td><td>"),
-                         strl("<a href='"),
-                         p->base_href,
-                         str_cut(p->filename,2),
-                         strl("html'>"),
-                         p->title,
-                         strl("</a>"),
-                         strl("</td><td><a class='centered btn' href='"),
-                         p->base_href,
-                         str_cut(p->filename,2),
-                         strl("html'>"),
-                         strl("Read →</a></td></tr>"));
+<code id=''><pre>if (str_eq(block-&gtid, strl("index"))) {
+    str base_href = block-&gtcontent.first-&gtstr;
+    StrList_push(tempa, front, strl("&lttable&gt&lttr&gt&lttd&gtDate&lt/td&gt&lttd&gtTitle&lt/td&gt&lttd&gt&lt/td&gt&lt/tr&gt"));
+    for (Page *p = allPages.first; p != 0; p = p-&gtnext) {
+        if (str_eq(p-&gtbase_href, base_href) &amp&amp str_not_empty(p-&gttitle)) {
+            StrList_pushv(tempa, front, strl("&lttr&gt&lttd&gt&ltcode&gt"),
+                         p-&gtdate,
+                         strl("&lt/code&gt&lt/td&gt&lttd&gt"),
+                         strl("&lta href='"),
+                         p-&gtbase_href,
+                         str_cut(p-&gtfilename,2),
+                         strl("html'&gt"),
+                         p-&gttitle,
+                         strl("&lt/a&gt"),
+                         strl("&lt/td&gt&lttd&gt&lta class='centered btn' href='"),
+                         p-&gtbase_href,
+                         str_cut(p-&gtfilename,2),
+                         strl("html'&gt"),
+                         strl("Read →&lt/a&gt&lt/td&gt&lt/tr&gt"));
         }
     }
-    StrList_push(tempa, front, strl("</table>"));
+    StrList_push(tempa, front, strl("&lt/table&gt"));
 }
-</xmp>
+</pre></code>
 <h2 id='other'>Other Updates</h2><p>
 I've added some additional features to the markdown compiler, such as text with an explanation on hover, expandable sections, and tables. I made a <a href='/splat.html'>splat page</a> to play around with the various features. You can see tables and other things in action on various pages of the site now. There is also an RSS feed now, which is generated in a similar way to the index node above. <br>I covered all of the list of features I wanted from last time (except for automatically compiling pages on save which I think is not very valuable actually), but as always there is more I want to do now that I have finished that. However my first priority with the site is going to be writing some more posts covering topics that aren't this project, so I'll only add features as needed for that. There might be a part 3 eventually though!</p>
 <hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p><a class='btn' href='/writing.html#writing'>←  back to index</a>

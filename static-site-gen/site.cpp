@@ -308,7 +308,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
 
     /* Header and Footer */
     StrList head = {0};
-    StrList_pushv(tempa, &head, HEADER, strl("\t<title>LCF/DD:"), page->title, strl("</title>\n"));
+    StrList_pushv(tempa, &head, HEADER, strl("\t<title>"), page->title, strl("</title>\n"));
     StrList_push(tempa, &back, FOOTER);
     StrList_prepend(&html, head);
     StrList_append(&html, back);

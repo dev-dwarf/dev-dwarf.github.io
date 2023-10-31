@@ -308,7 +308,24 @@ StrList render_text(Arena* arena, Text* root) {
             StrList_pushv(arena, &out, s[t->end], t->text);
         } break;
         case Text::CODE_BLOCK: {
-            StrList_pushv(arena, &out, t->text, str_NEWLINE);
+            str s = t->text;
+            str_iter(s) { /* HTML char escapes */
+                switch (c) {
+                case '<': {
+                    StrList_pushv(arena, &out, str_first(s, i), strl("&lt"));
+                    s = str_skip(s, i+1); i = -1;
+                } break;
+                case '>': {
+                    StrList_pushv(arena, &out, str_first(s, i), strl("&gt"));
+                    s = str_skip(s, i+1); i = -1;
+                } break;
+                case '&': {
+                    StrList_pushv(arena, &out, str_first(s, i), strl("&amp"));
+                    s = str_skip(s, i+1); i = -1;
+                } break;
+                }
+            }
+            StrList_pushv(arena, &out, s, str_NEWLINE);
         } break;
         case Text::LINK: {
             if (!t->end) {
@@ -425,9 +442,9 @@ StrList render_block(Arena *arena, Block *block) {
         StrList_push(arena, &out, strl("\n</ul>\n"));
     } break;
     case Block::CODE:  {
-        StrList_pushv(arena, &out, strl("<xmp id='"), block->id, strl("'>"));
+        StrList_pushv(arena, &out, strl("<code id='"), block->id, strl("'><pre>"));
         StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</xmp>\n"));
+        StrList_push(arena, &out, strl("</pre></code>\n"));
     } break;
     case Block::RULE:  {
         StrList_push(arena, &out, strl("<hr>\n"));

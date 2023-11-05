@@ -1,3 +1,4 @@
+
 /* colors */
 :root {
     --purple:   #230C45;
@@ -83,6 +84,12 @@ p {
     border: 2px solid var(--text);
     /* border-radius: 2px; */
     float: right;
+}
+
+td img {
+    margin: auto;
+    width: 64px;
+    height: 64px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -210,6 +217,7 @@ tr {
 td {
     padding: 0.3rem 0.2rem;
     border-right: solid 2px var(--low);
+    position: relative;
 }
 
 tr:nth-of-type(1) {

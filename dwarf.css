@@ -210,13 +210,13 @@ table {
 }
 
 tr {
-    /* border: solid 2px var(--low);     */
+    border: solid 1px var(--low);
 }
 
 
 td {
     padding: 0.3rem 0.2rem;
-    /* border-right: solid 2px var(--low); */
+    border-right: solid 1px var(--low);
     position: relative;
 }
 

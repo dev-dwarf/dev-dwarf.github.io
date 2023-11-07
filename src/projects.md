@@ -1,78 +1,39 @@
-##center Programming
----
-##engine Custom Game Engine (very WIP)
-Custom game engine codebase built in C++ with minimal libraries.
+###center Projects
 
+!|projtable | <h2> 2023 </h2> || | 
+!|| **!(/assets/icons/imp.png)** || **Immediate Mode Plotting (IMP)
+!|| || An immediate-mode api for data plotting and visualization. |
+!|| **!(/assets/icons/crabjuice.png)** || **@(https://dev-dwarf.itch.io/crabjuice Crabjuice )(GMTK Gamejam 2023)
+!|| || Our action-packed golf game that won 4th in the jam!
+!|| **!(/assets/icons/gputracer.png)** || **@(https://github.com/dev-dwarf/PathTracerGPU GPU Pathtracer)** | 
+!|| || Unnamed GPU pathtracer project, deserves more attention sometime! |
+!|| **!(/assets/dd.png)** || **Custom Game Engine** |
+!|| || Working on a small engine to use for my games. More to say about this later... |
 
-Not much to say about this yet except that I have been deep-diving into Platform APIs for Windowing, Input, Rendering, Sound, and seemingly endless other topics. Once I duct-tape some games together with this I'll have more to say!
+!|projtable |  <h2> 2022 </h2> || |
+!| | **!(/assets/icons/handmademath.png)** || **@(https://github.com/HandmadeMath/HandmadeMath/pull/149 Handmade Math Contributions)** |
+!|| || Brought library to v2.0 milestone. Active maintainer since then. |
+!|| **!(/assets/icons/site.png)** || **@(/writing/making-a-ssg1.html Static Site Generator)** |
+!|| || Used to make this website, made to practice string handling in C using lcf. |
+!|| **!(/assets/dd.png)** || **@(https://github.com/dev-dwarf/lcf LCF)** |
+!|| || My personal @(http://nothings.org/stb.h stb)/@(https://www.rfleury.com/ rjf) style standard libary for my C/C++ projects. |
+!|| **!(/assets/icons/saloon.png)** || ** @(https://mmatt-ugh.itch.io/the-saloon The Saloon )(GMTK Gamejam)
+!|| || Small survivors-ish game made with usual friends. |
 
-## Static Site Generator (WIP)
-A Static Site Generator used to make this website, made in (C-like) C++. 
-Features:
-* Compile a Markdown-like language to html.
-* Add html boilerplate for each page automatically.
-* Easily customizeable, Small Codebase (<1000 LOC).
-Source on @(https://github.com/dev-dwarf/dev-dwarf.github.io Github). 
-Read my posts about making this @(/writing.html#making-a-ssg1.html here).
+!|projtable |  <h2> 2021 </h2> || |
+!|| **!(/assets/icons/fewar.png)** || **@(https://store.steampowered.com/app/1769510/FEWARDVD/ FEWAR-DVD)** |
+!|| || Speedrunning arcade game with maze-like procedural levels and eclectic visual style. |
+!|| **!(/assets/icons/self.png)** || **@(https://dev-dwarf.itch.io/self SELF)** |
+!|| || Platformer with precise controls and a cool mechanic. What more do you need? |
 
-## Handmade Math 2.0
-I was hired to bring HandmadeMath, A single-file C/C++ library implementing math useful for 3d graphics and games, to its 2.0 milestone as described in this @(https://github.com/HandmadeMath/HandmadeMath/issues/147 github issue). You can see my changes in one @(https://github.com/HandmadeMath/HandmadeMath/pull/149 big pull request). A summary:
-- Implemented 2x2 and 3x3 matrices, with basic operations.
-- Implemented determinants and inverses for all matrices, with several fast paths for common types of 4x4 matrices. 
-- Created a portable tool in C to update user's code to the new version, to help with the many breaking changes that were made to the API. 
-The code for the update tool can be found in a seperate @(https://github.com/dev-dwarf/HMM2.0UpdateTool github repository).
-
-## LCF (WIP)
-My personal @(http://nothings.org/stb.h stb)/@(https://www.rfleury.com/ rjf) style standard libary for my C/C++ projects. Features:
-* Shorter type names and macros for commonly used functionality.
-* Arena-oriented memory management library.
-* Length-based string library (composes with Arena library).
-Source on @(https://github.com/dev-dwarf/lcf Github). 
-
-##center Large Games
----
-@{project, FEWAR-DVD, December 2021, https://store.steampowered.com/app/1769510/FEWARDVD/, /assets/FewarDVD.png}
-Speedrunning arcade game with maze-like procedurally generated levels and eclectic visual style. Positive reviews on steam.
-> A rapid arcade game. Avoid the swords. Find the key. Enter the portal. It's a migraine.
-> 
-> 
-> “Every run is short enough that you think 'Ok, just one more go' and before you know it you've been acupunctured to oblivion. ... This is a surreal arcade game that you should experience.” 
-> -- *PC Gamer UK*
-> 
-> "Here’s a great game: a scratchy, noisy, ridiculously tough arcade game that I can’t stop one-more-trying."
-> 
-> -- *@(https://buried-treasure.org/2022/01/quicky-fewar-dvd/ Buried Treasure)*
-@{project-end}
-
-@{project, SELF, February 2021, https://dev-dwarf.itch.io/self, /assets/SELF.gif}
-2D Platforming game with precise controls. 100,000+ players, licensed by
-Cool Math Games and Armor Games. Featured on @(https://superraregames.com/products/srg-mixtape-volume-4 Super Rare Mixtape Vol 4).
-> who are you
-> 
-> SELF is a short game about a lost soul
-> 
-> recover the fragments of your SELF
-> 
-> be touched by the higher being
-@{project-end}
-
-@{project, Lianthus, September 2020, https://dev-dwarf.itch.io/lianthus, /assets/Lianthus.png}
-3D adventure game with unique graphical style. 5000+ downloads on itch.io. Featured on @(https://superraregames.com/products/srg-mixtape-volume-1 Super Rare Mixtape Vol 1).
-> A small adventure game with sunflowers, magic, and skeletons. After the darkness is unleashed, journey through the light and dark worlds, rediscover your powers, and seal the dark away.
-@{project-end}
-
-##center Jam Games
----
-Every so often I get together with some friends and do a game jam! You can find them all on @(https://dev-dwarf.itch.io itch.io). 
-
-Here are some screenshots:
-<div class="project">
-<div class="project-text">
-@(https://mmatt-ugh.itch.io/the-saloon !(/assets/the-saloon.gif))
-@(https://dev-dwarf.itch.io/blood-and-voltz !(/assets/blood-and-voltz1.gif))
-</div>
-<div class="project-image">
-@(https://dev-dwarf.itch.io/ld47 !(/assets/fear-of-gears.gif))
-@(https://dev-dwarf.itch.io/c-co !(/assets/control-co1.gif))
-</div>
-</div>
+!|projtable | <h2> 2020 </h2> || |
+!|| **!(/assets/icons/lianthus.png)** || **@(https://dev-dwarf.itch.io/lianthus Lianthus)
+!|| || Small adventure game with sunflowers, magic, and skeletons, and a unique 3d aesthetic. |
+!|| **!(/assets/icons/fearofgears.png)** || **@(https://dev-dwarf.itch.io/ld47 Fear Of Gears )(Ludum Dare 47)
+!|| || Our action-packed infinitely looping arena battle game, won 29th in the jam! |
+!|| **!(/assets/icons/bloodandvoltz.png)** || **@(https://dev-dwarf.itch.io/blood-and-volts Blood and Voltz )(Ludum Dare 46)
+!|| || Conquer a small alien world using your turrets and some elbow grease! |
+!|| **!(/assets/icons/rawfe.png)** || **@(https://dev-dwarf.itch.io/rawfe-dvd FEWAR-DVD )(Jam Version)
+!|| || Unsettling, procedurally-generated, speedrunning arcade game. |
+!|| **!(/assets/icons/controlco.png)** || **@(https://dev-dwarf.itch.io/c-co Control Co )(GMTK Jam)
+!|| || Keep the production line going as things break down! |

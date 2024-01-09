@@ -79,7 +79,7 @@ for (;;) { /* Event/Game loop */
 }
 </pre></code>
 <p>
-At the core of the undo system are the <code>Delta</code> structs which are the basic primitives for constructing commits,which together comprise an undo/redo action that can be surfaced to the user. </p>
+At the core of the undo system are the <code>Delta</code> structs which are the basic primitives for constructing commits, which together comprise an undo/redo action that can be surfaced to the user. </p>
 <code id=''><pre>typedef struct {
     s64 size;
     u8* copy;
@@ -87,8 +87,8 @@ At the core of the undo system are the <code>Delta</code> structs which are the 
 } Delta;
 </pre></code>
 <p>
-The <code>Undo</code> struct holds all the Deltas and other information needed for the overall Undo system. The copy arenawill hold the copies of all the data pointed to by the deltas. For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
-However you can easily switch over to passing the Undo struct explicitly. 
+The <code>Undo</code> struct holds all the Deltas and other information needed for the overall Undo system. The copy arena will hold the copies of all the data pointed to by the deltas. For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
+You can easily switch over to passing the Undo struct explicitly if needed. 
 </p>
 <code id=''><pre>#define UNDO_MEMORY MB(10)
 #define MAX_UNDOS 0x10000 /* ~3 MB of undos, 7 MB for copied state */
@@ -106,8 +106,8 @@ Undo *UNDO;
 </pre></code>
 <p>
 Following rxi's recommendations, the undo, redo, and temp state are stored in 3 stacks. However in my implementation all of these stacks live in the same 
-<code>Undo->delta</code> array, where the undo stack is elements [0, undo), redo is [undo, redo),and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacksthemselves, but will vary in size according to the data. 
-<br><br>The <code>undo_push</code> and <code>undo_commit</code> functions are the core of the api. <code>undo_push</code> marks regions that may change by pushing them onto the temp stack. <code>undo_commit</code> then checks each currently marked region for any changes. The copies for changed regionsare moved so that they are next to previous undo information, overwriting any redo information.</p>
+<code>Undo->delta</code> array, where the undo stack is elements [0, undo), redo is [undo, redo),and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks themselves, but will vary in size according to the data. 
+<br><br>The <code>undo_push</code> and <code>undo_commit</code> functions are the core of the api. <code>undo_push</code> marks regions that may change by pushing them onto the temp stack. <code>undo_commit</code> then checks each currently marked region for any changes. The copies for changed regions are moved so that they are next to previous undo information, overwriting any redo information.</p>
 <code id=''><pre>void undo_push(void* source, s64 size) {
     u8* copy = Arena_take(UNDO-&gtcopy, size);
     memcpy(copy, source, size);
@@ -260,7 +260,7 @@ end_color.a = LERP(end_color.a, 0, 0.05);
 This gif of the demo shows how the undo stack is built up with commits, can be undone/redone, and how redo history is overwritten with new changes:
 <br><br><img src='/assets/coloredcubes.gif'><br></p>
 <h2 id='problems'>Problems </h2><p>
-In the simple example given above, there is only one type of edit action happening at any time. However in my more complicated level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
+In the simple example given above, there is only one type of edit action happening at any time. In my more complicated level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
 temp stack. This was simple to add, by wrapping relevant code with an additional check, 
 <code>undo_begin</code>:</p>
 <code id=''><pre>#define undo_begin() undo_begin_ex(__LINE__)

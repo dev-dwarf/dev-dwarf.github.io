@@ -53,7 +53,7 @@ for (;;) { /* Event/Game loop */
   draw();
 }
 ```
-At the core of the undo system are the `Delta` structs which are the basic primitives for constructing commits,
+At the core of the undo system are the `Delta` structs which are the basic primitives for constructing commits, 
 which together comprise an undo/redo action that can be surfaced to the user. 
 ```
 typedef struct {
@@ -62,10 +62,10 @@ typedef struct {
     u8* source;
 } Delta;
 ```
-The `Undo` struct holds all the Deltas and other information needed for the overall Undo system. The copy arena
+The `Undo` struct holds all the Deltas and other information needed for the overall Undo system. The copy arena 
 will hold the copies of all the data pointed to by the deltas. 
 For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
-However you can easily switch over to passing the Undo struct explicitly. 
+You can easily switch over to passing the Undo struct explicitly if needed. 
 ```
 #define UNDO_MEMORY MB(10)
 #define MAX_UNDOS 0x10000 /* ~3 MB of undos, 7 MB for copied state */
@@ -83,12 +83,12 @@ Undo *UNDO;
 ```
 Following rxi's recommendations, the undo, redo, and temp state are stored in 3 stacks. However in my implementation 
 all of these stacks live in the same `Undo->delta` array, where the undo stack is elements [0, undo), redo is [undo, redo),
-and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks
+and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks 
 themselves, but will vary in size according to the data. 
 
 
 The `undo_push` and `undo_commit` functions are the core of the api. `undo_push` marks regions that may change by pushing 
-them onto the temp stack. `undo_commit` then checks each currently marked region for any changes. The copies for changed regions
+them onto the temp stack. `undo_commit` then checks each currently marked region for any changes. The copies for changed regions 
 are moved so that they are next to previous undo information, overwriting any redo information.
 ```
 void undo_push(void* source, s64 size) {
@@ -257,7 +257,7 @@ overwritten with new changes:
 
 !(/assets/coloredcubes.gif)
 ##problems Problems 
-In the simple example given above, there is only one type of edit action happening at any time. However in my more complicated 
+In the simple example given above, there is only one type of edit action happening at any time. In my more complicated 
 level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
 temp stack. This was simple to add, by wrapping relevant code with an additional check, `undo_begin`:
 ```

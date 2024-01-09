@@ -1,0 +1,384 @@
+
+<!DOCTYPE html>
+<!-- GENERATED -->
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="/assets/dd.png" />
+    <link rel="canonical" href="http://loganforman.com/" />
+    <meta property="og:url" content="http://loganforman.com/"/>
+    <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta property="twitter:title" content="Logan Forman" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
+    <link rel="stylesheet" href="/dwarf.css">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    </head>
+    
+    <body>
+    <script>
+        var theme = localStorage.getItem('theme') || 'light';
+
+        // window.onload = function() {
+           document.querySelector('body').setAttribute('data-theme', theme);
+        // }
+
+        function toggleNight() {
+            console.log('toggle');
+            theme = (theme == 'light')? 'night' : 'light';
+            localStorage.setItem('theme', theme);
+            document.querySelector('body').setAttribute('data-theme', theme);   
+        }
+
+    </script>
+    <div class="wrapper">
+    <main class="page-content" aria-label="Content">
+
+	<title>Implementing A Simple Undo System</title>
+<div style='clear: both'><h1>Implementing A Simple Undo System</h1><h3>7 Jan 2024</h3></div>
+<ul class='sections'>
+<li><a href='#intro'>Introduction</a></li>
+<li><a href='#impl'>Implementation </a></li>
+<li><a href='#problems'>Problems </a></li>
+<li><a href='#potential'>Potential Upgrades </a></li>
+</ul>
+<hr>
+<h2 id='intro'>Introduction</h2><p>
+Recently I've been implementing a level editor for my game engine, and I'd been dreading adding undo/redo support to it. In the past I've usually skipped it altogether, even though it's great 
+to have. When I have implemented it, I usually used a command-pattern style approach, where for
+each type of action the user can do there is a method to (re)do and undo the action. 
+This resulted in quite a lot of repetitive code for various types of actions, and slowed down 
+my ability to add more.
+<br><br>However, a great article by rxi offers a <a href='https://rxi.github.io/a_simple_undo_system.html'>simple alternative</a>. The system described offers a lower-level perspective that handles things generically not at a data-type level, instead targeting the more foundational binary representation of the data involved. It reminds me of similar 
+sentiment from 
+<a href='https://www.rfleury.com/p/emergence-and-composition'>Ryan Fleury's posts</a>. Many techniques I've learned from following Ryan are implemented at this low level of abstraction, chiefly <a href='https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator'>Arenas</a>. Programming this way has opened my eyes to the leverage against problems and composability you can get from a <b>data-generic</b>, rather than <b>type-generic</b> approach.<br><br>rxi's article is great at explaining the system and resultant immediate-mode undo api, but is open-ended on implementation. In the rest of this article I'll walk through how I implemented the system using arena allocators, and how I used 
+and added to the system for my games. Here's some footage of the final result in my editor:
+<br><br><video width="100%" controls>    <source src="/assets/editorpreview.mp4" type="video/mp4">
+</video>
+<br></p>
+<h2 id='impl'>Implementation </h2><p>
+My desired API is roughly the same as rxi's:</p>
+<code id=''><pre>void undo_push(void *source, s64 size); /* Mark regions that will potentially change */
+void undo_commit(); /* Check marked regions and finalize action or discard regions. */
+void undo();
+void redo();
+<br>/* Usage */
+for (;;) { /* Event/Game loop */
+  handle_events();
+<br>  if (mouse.is_pressed) {
+    undo_push(bitmap, sizeof(bitmap))
+    set_pixel(bitmap, mouse.x, mouse.y);
+  }
+<br>  if (!mouse.is_pressed) { undo_commit(); }
+<br>  draw();
+}
+</pre></code>
+<p>
+At the core of the undo system are the <code>Delta</code> structs which are the basic primitives for constructing commits,which together comprise an undo/redo action that can be surfaced to the user. </p>
+<code id=''><pre>typedef struct {
+    s64 size;
+    u8* copy;
+    u8* source;
+} Delta;
+</pre></code>
+<p>
+The <code>Undo</code> struct holds all the Deltas and other information needed for the overall Undo system. The copy arenawill hold the copies of all the data pointed to by the deltas. For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
+However you can easily switch over to passing the Undo struct explicitly. 
+</p>
+<code id=''><pre>#define UNDO_MEMORY MB(10)
+#define MAX_UNDOS 0x10000 /* ~3 MB of undos, 7 MB for copied state */
+typedef struct {
+    Arena* copy;
+    Delta delta[MAX_UNDOS];
+    s32 undo;
+    s32 redo; /* &gt= undo */
+    s32 temp; /* &gt= redo */
+    u8 *copy_redo_start;
+    u8 *copy_temp_start;
+    s32 tag;
+} Undo;
+Undo *UNDO;
+</pre></code>
+<p>
+Following rxi's recommendations, the undo, redo, and temp state are stored in 3 stacks. However in my implementation all of these stacks live in the same 
+<code>Undo->delta</code> array, where the undo stack is elements [0, undo), redo is [undo, redo),and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacksthemselves, but will vary in size according to the data. 
+<br><br>The <code>undo_push</code> and <code>undo_commit</code> functions are the core of the api. <code>undo_push</code> marks regions that may change by pushing them onto the temp stack. <code>undo_commit</code> then checks each currently marked region for any changes. The copies for changed regionsare moved so that they are next to previous undo information, overwriting any redo information.</p>
+<code id=''><pre>void undo_push(void* source, s64 size) {
+    u8* copy = Arena_take(UNDO-&gtcopy, size);
+    memcpy(copy, source, size);
+    UNDO-&gtdelta[UNDO-&gttemp] = (Delta){
+        .size = size,
+        .copy = copy,
+        .source = source,
+    };
+    UNDO-&gttemp++;
+}
+<br>void undo_commit() {
+    UNDO-&gttag = 0; /* Ignore for now : ) */
+<br>    s32 changes = 0;
+    u8* new_pos = UNDO-&gtcopy_temp_start;
+    
+    for (s32 i = UNDO-&gtredo; i &lt UNDO-&gttemp; i++) {
+        Delta c = UNDO-&gtdelta[i];
+        if (memcmp(c.copy, c.source, c.size)) {
+            if (changes == 0 &amp&amp UNDO-&gtredo != UNDO-&gtundo) {
+                /* Set pos to overwrite redos */
+                new_pos = UNDO-&gtcopy_redo_start;
+            }
+        
+            c.copy = memcpy(new_pos, c.copy, c.size);
+            UNDO-&gtdelta[UNDO-&gtundo++] = c;
+            new_pos += c.size;
+            changes++;
+        }
+    }
+    
+    if (changes) { /* Add header for commit */
+        UNDO-&gtdelta[UNDO-&gtundo++] = (Delta){ 
+            .size = changes,
+            .copy = ((u8*)UNDO-&gtcopy) + UNDO-&gtcopy-&gtpos,
+            .source = 0, /* null source identifies headers */
+        };
+        UNDO-&gtredo = UNDO-&gtundo; 
+    } 
+<br>    UNDO-&gttemp = UNDO-&gtredo;
+    Arena_resetp(UNDO-&gtcopy, new_pos);
+    UNDO-&gtcopy_temp_start = new_pos;
+}
+</pre></code>
+<p>
+Given a stack of undo information built this way, the implementation of undo is straightforward. The amount of deltas for the commit is identified using the header delta, and then those are looped over and swap their copy with what is currently
+at the source. 
+</p>
+<code id=''><pre>void swap_delta(Delta d) {
+    for (s64 j = 0; j &lt d.size; j++) {
+        u8 temp = *d.copy;
+        *d.copy++ = *d.source;
+        *d.source++ = temp;
+    }
+}
+void undo() {
+    if (UNDO-&gtundo &gt 0) {
+        s32 N = UNDO-&gtundo-1;
+        Delta header = UNDO-&gtdelta[N];
+        s32 changes = header.size;
+        s32 n = N - changes;
+        for (s32 i = N-1; i &gt= n; i--) {
+            swap_delta(UNDO-&gtdelta[i]);
+        }
+<br>        Delta first = UNDO-&gtdelta[n];
+        UNDO-&gtcopy_redo_start = first.copy;
+        UNDO-&gtundo = n;
+    }
+}
+</pre></code>
+<p>
+The swap in the undo is important, as these same deltas now can be used to redo by swapping again. The redo function needs to scan to find its header, but otherwise is quite dual to undo as you would expect:
+</p>
+<code id=''><pre>void redo() {
+    if (UNDO-&gtredo - UNDO-&gtundo &gt 0) {
+        /* Do not redo while temp stack has delta 
+           this could be fine if they touch disjoint memory, but if 
+           there is overlap things will break!
+        */
+        ASSERT(UNDO-&gtredo == UNDO-&gttemp);
+        /* Find header for first change */
+        s32 N = UNDO-&gtundo;
+        for (; N &lt UNDO-&gtredo; N++) {
+            Delta c = UNDO-&gtdelta[N];
+            if (!c.source) {
+                break;
+            }
+        }
+        
+        Delta header = UNDO-&gtdelta[N];
+        s32 changes = header.size;
+        s32 n = N - changes;
+        for (s32 i = n; i &lt N; i++) {
+            swap_delta(UNDO-&gtdelta[i]);
+        }
+<br>        UNDO-&gtcopy_redo_start = header.copy;
+        UNDO-&gtundo = N+1;
+    }
+}
+</pre></code>
+<p>
+And that's it for the basic API implementation! In the following sections I'll show some other additions to this core that I made asI added the functionality to my editor. But first a larger example code showing the API in use: 
+</p>
+<code id=''><pre>#define NSQUARES 10
+static Color squares[NSQUARES];
+static b32 changed[NSQUARES];
+static Color text_color = {.r=0xFF, .g=0xFF, .b=0xFF, .a=0xFF};
+static Color end_color = {0};
+static char* message = "";
+<br>Rectangle r = { .width = 16, .height = 16 };
+for (s32 i = 0; i &lt NSQUARES; i++) {
+    b32 selected = 0;
+    if (CheckCollisionPointRec(G-&gtmouse, r)) {
+        selected = 1;
+<br>        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &amp&amp !changed[i]) {
+            changed[i] = 1;
+            undo_push(squares+i, sizeof(Color));
+            squares[i].r = randu32(&ampG-&gtrng);
+            squares[i].g = randu32(&ampG-&gtrng);
+            squares[i].b = randu32(&ampG-&gtrng);
+            text_color = HYELLOW;
+        }
+    }
+<br>    Color c = squares[i]; c.a = 0xFF;
+    DrawRectangleRec(r, c);
+    DrawRectangleLinesEx(r, 2, (selected)? HBLUE : (changed[i])? HGREEN : HDBLUE);
+    r.x += r.width+2;
+}
+<br>if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+    undo_commit(HBLUE); 
+    memset(changed, 0, sizeof(changed));
+    end_color = text_color = HYELLOW; message = "Commit!";
+}
+<br>if (IsKeyDown(KEY_LEFT_CONTROL) &amp&amp IsKeyPressed(KEY_Z)) {
+    if (!IsKeyDown(KEY_LEFT_SHIFT)) {
+        undo(); 
+        end_color = text_color = HRED; message = "Undo!";
+    } else {
+        redo(); 
+        end_color = text_color = HBLUE; message = "Redo!";
+    }
+}
+<br>char buf[128];
+stbsp_sprintf(buf, "%d &lt= %d &lt= %d", UNDO-&gtundo, UNDO-&gtredo, UNDO-&gttemp);
+DrawText(buf, 32, 32, 13, text_color);
+DrawText(message, 32, 64, 13, end_color);
+<br>text_color = LERP_COLOR(text_color, HFF, 0.2);
+end_color.a = LERP(end_color.a, 0, 0.05);
+</pre></code>
+<p>
+This gif of the demo shows how the undo stack is built up with commits, can be undone/redone, and how redo history is overwritten with new changes:
+<br><br><img src='/assets/coloredcubes.gif'><br></p>
+<h2 id='problems'>Problems </h2><p>
+In the simple example given above, there is only one type of edit action happening at any time. However in my more complicated level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
+temp stack. This was simple to add, by wrapping relevant code with an additional check, 
+<code>undo_begin</code>:</p>
+<code id=''><pre>#define undo_begin() undo_begin_ex(__LINE__)
+b32 undo_begin_ex(s32 tag) {
+    b32 can_initiate = UNDO-&gtredo == UNDO-&gttemp || UNDO-&gttag == tag;
+    if (can_initiate) UNDO-&gttag = tag;
+    return can_initiate;
+}
+</pre></code>
+<p>
+The tag is reset by a commit:</p>
+<code id=''><pre>void undo_commit() {
+    UNDO-&gttag = 0; /* Remember this? */
+<br>    /* .. snip .. */
+}
+</pre></code>
+<p>
+And the usage code looks like:</p>
+<code id=''><pre>for (;;) { /* event loop */
+<br>    if (undo_begin()) { /* Action 1 */
+        if (IsMouseDown(MOUSE_BUTTON_LEFT)) {
+            undo_push(..., ...);
+<br>            // Do action
+        } else if (IsMouseReleased(MOUSE_BUTTON_LEFT)) {
+            undo_commit();
+        }
+    }
+<br>    if (undo_begin()) { /* Action 1 */
+        if (IsMouseDown(MOUSE_BUTTON_RIGHT)) {
+            undo_push(..., ...);
+<br>            // Do action
+        } else if (IsMouseReleased(MOUSE_BUTTON_RIGHT)) {
+            undo_commit();
+        }
+    }
+<br>}
+</pre></code>
+<p>
+Both of these actions can progress across multiple frames, but because of the "locking" provided by <code>undo_begin</code> they will never be in progress at the same time. <br><br>A more troublesome issue is that sometimes entity state used by the editor would be changed by other code for the game (In my engine the user can swap back and forth between the editor and engine). This would cause the undo state targeting the same memory 
+to become invalid, meaning the user's expected undo or redo would not work. There are a few ways I thought of to fix this,
+with varying levels of complexity. The easiest to implement in my case is to keep another copy of the relevant state when 
+switching to the game, and then swap it back when the editor is opened. 
+<br><br>In a more complicated situation, it may be better to add a layer on top of the simple undo system that allows for more serialized undo/redo commands. Regardless, I think for these more complex situations that the simple api will provide 
+a great foundation for the more complex implementation. 
+<br></p>
+<h2 id='potential'>Potential Upgrades </h2><p>
+Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
+</p>
+<code id=''><pre>void undo_commit(Color c) {
+    /* ... */
+    if (changes) { /* Add header for commit */
+        UNDO-&gtdelta[UNDO-&gtundo++] = (Delta){ 
+            .size = changes,
+            .copy = ((u8*)UNDO-&gtcopy) + UNDO-&gtcopy-&gtpos,
+            .source = 0, /* null source identifies headers */
+            .cursor_color = c,
+            .cursor_rect  = UNDO-&gttemp_rect,
+        };
+        UNDO-&gtredo = UNDO-&gtundo; 
+    } 
+    /* ... */
+}
+void undo() {
+    if (UNDO-&gtundo &gt 0) {
+        /* ... */
+<br>        cursor_color = header.cursor_color;
+        cursor_rect = header.cursor_rect;
+        cursor_lerp = 0; cursor_lerp_reset = 3;
+        /* Invert add/delete colors for undos */
+        Color c = HRED;
+        if (!memcmp(&ampcursor_color, &ampc, sizeof(Color))) {
+            cursor_color = HBLUE;
+        } else {
+            Color c = HBLUE; 
+            if (!memcmp(&ampcursor_color, &ampc, sizeof(Color))) cursor_color = HRED;
+        }
+    }
+}
+<br>void redo() {
+    if (UNDO-&gtredo - UNDO-&gtundo &gt 0) {
+        /* ... */
+        
+        cursor_color = header.cursor_color;
+        cursor_rect = header.cursor_rect;
+        cursor_lerp = 0; cursor_lerp_reset = 3;
+    }
+}
+</pre></code>
+<p>
+<br><video width="100%" controls>    <source src="/assets/undoingyourmom.mp4" type="video/mp4">
+</video>
+<br><br>There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller chunks and only committing what has actually changed. Even better might be applying general purpose compression to the copies.
+But for me the simple implementation has great performance for my application and has been great to use! I hope this write up 
+gives you a good starting point for doing your own implementation of a simple undo system.
+</p>
+<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p><a class='btn' href='/writing.html#writing'>←  back to index</a>
+    </main> 
+    </div>
+    </body>
+    <div>
+    <hr>
+    <nav>
+    <table class="w33 left"><tr>
+    <td><a href="/index.html">home</a></td>
+    <td><a href="/projects.html">projects</a></td>
+    <td><a href="/writing.html">writing</a></td>
+    <td><a style="text-decoration-color: #EE802F !important" href='/rss.xml'>rss</a></td>
+    </tr></table>
+
+    <table class="w33 right"><tr>
+    <td><a href="https://github.com/dev-dwarf">github</a></td>
+    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
+    <td><a href="https://dev-dwarf.itch.io">games</a></td>
+    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
+    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
+    </tr></table>
+    <p><br><br><br></p>
+    </nav>
+    
+    </div>
+    </html>

@@ -18,19 +18,20 @@ instead targeting the more foundational binary representation of the data involv
 sentiment from @(https://www.rfleury.com/p/emergence-and-composition Ryan Fleury's posts). Many techniques I've 
 learned from following Ryan are implemented at this low level of abstraction, chiefly 
 @(https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator Arenas). Programming this way has 
-opened my eyes to the leverage against problems and composability you can get from a data-generic, 
-rather than type-generic approach.
+opened my eyes to the leverage against problems and composability you can get from a **data-generic**, 
+rather than **type-generic** approach.
 
 
 rxi's article is great at explaining the system and resultant immediate-mode undo api, but is open-ended on implementation. 
-In the rest of this article I'll' walk through how I implemented the system using arena allocators, and how I used 
+In the rest of this article I'll walk through how I implemented the system using arena allocators, and how I used 
 and added to the system for my games. Here's some footage of the final result in my editor:
 
 
-// TODO preview video
+<video width="100%" controls>
+    <source src="/assets/editorpreview.mp4" type="video/mp4">
+</video>
 
 ##impl Implementation 
-
 My desired API is roughly the same as rxi's:
 ```
 void undo_push(void *source, s64 size); /* Mark regions that will potentially change */
@@ -84,6 +85,7 @@ Following rxi's recommendations, the undo, redo, and temp state are stored in 3 
 all of these stacks live in the same `Undo->delta` array, where the undo stack is elements [0, undo), redo is [undo, redo),
 and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks
 themselves, but will vary in size according to the data. 
+
 
 The `undo_push` and `undo_commit` functions are the core of the api. `undo_push` marks regions that may change by pushing 
 them onto the temp stack. `undo_commit` then checks each currently marked region for any changes. The copies for changed regions
@@ -255,9 +257,8 @@ overwritten with new changes:
 
 !(/assets/coloredcubes.gif)
 ##problems Problems 
-
 In the simple example given above, there is only one type of edit action happening at any time. However in my more complicated 
-level editor I wanted to make sure that two different actions aren't in progress simultaneously, as this could corrupt the
+level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
 temp stack. This was simple to add, by wrapping relevant code with an additional check, `undo_begin`:
 ```
 #define undo_begin() undo_begin_ex(__LINE__)
@@ -301,23 +302,74 @@ for (;;) { /* event loop */
 
 }
 ```
-Both of these actions can progress across multiple frames, but because of the "locking" provided by `undo_begin` they
-will never happen at the same time. 
+Both of these actions can progress across multiple frames, but because of the "locking" provided by `undo_begin` they 
+will never be in progress at the same time. 
 
 
-Multiple commands (undo_begin)
+A more troublesome issue is that sometimes entity state used by the editor would be changed by other code for the game (In my engine 
+the user can swap back and forth between the editor and engine). This would cause the undo state targeting the same memory 
+to become invalid, meaning the user's expected undo or redo would not work. There are a few ways I thought of to fix this,
+with varying levels of complexity. The easiest to implement in my case is to keep another copy of the relevant state when 
+switching to the game, and then swap it back when the editor is opened. 
 
-Stuff outside the system editing the state
 
-Could potentially fix with more copies, or by adding optional more
-
-advanced commands.
-
-Mention that the described system is a good base layer for building
-
-extra on top
+In a more complicated situation, it may be better to add a layer on top of the simple undo system that allows for more 
+serialized undo/redo commands. Regardless, I think for these more complex situations that the simple api will provide 
+a great foundation for the more complex implementation. 
 
 ##potential Potential Upgrades 
-Adding other information (cursor stuff)
+Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 
+about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
+```
+void undo_commit(Color c) {
+    /* ... */
+    if (changes) { /* Add header for commit */
+        UNDO->delta[UNDO->undo++] = (Delta){ 
+            .size = changes,
+            .copy = ((u8*)UNDO->copy) + UNDO->copy->pos,
+            .source = 0, /* null source identifies headers */
+            .cursor_color = c,
+            .cursor_rect  = UNDO->temp_rect,
+        };
+        UNDO->redo = UNDO->undo; 
+    } 
+    /* ... */
+}
+void undo() {
+    if (UNDO->undo > 0) {
+        /* ... */
 
-Compressing deltas
+        cursor_color = header.cursor_color;
+        cursor_rect = header.cursor_rect;
+        cursor_lerp = 0; cursor_lerp_reset = 3;
+        /* Invert add/delete colors for undos */
+        Color c = HRED;
+        if (!memcmp(&cursor_color, &c, sizeof(Color))) {
+            cursor_color = HBLUE;
+        } else {
+            Color c = HBLUE; 
+            if (!memcmp(&cursor_color, &c, sizeof(Color))) cursor_color = HRED;
+        }
+    }
+}
+
+void redo() {
+    if (UNDO->redo - UNDO->undo > 0) {
+        /* ... */
+        
+        cursor_color = header.cursor_color;
+        cursor_rect = header.cursor_rect;
+        cursor_lerp = 0; cursor_lerp_reset = 3;
+    }
+}
+```
+
+<video width="100%" controls>
+    <source src="/assets/undoingyourmom.mp4" type="video/mp4">
+</video>
+
+
+There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller 
+chunks and only committing what has actually changed. Even better might be applying general purpose compression to the copies.
+But for me the simple implementation has great performance for my application and has been great to use! I hope this write up 
+gives you a good starting point for doing your own implementation of a simple undo system.

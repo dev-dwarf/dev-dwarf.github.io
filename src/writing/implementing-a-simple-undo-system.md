@@ -321,6 +321,11 @@ a great foundation for the more complex implementation.
 Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 
 about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
 ```
+void undo_push(void* source, s64 size) {
+    /* ... */
+    UNDO->temp_rect = RectangleGrow(UNDO->temp_rect, cursor_rect);
+}
+
 void undo_commit(Color c) {
     /* ... */
     if (changes) { /* Add header for commit */

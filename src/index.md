@@ -3,7 +3,7 @@
 !|w100| Personal Info || |
 !|| Occupation || Programming, Applied Mathematics |
 !|| Location || Albuquerque, New Mexico <img style="display: inline-block" src='/assets/zia.png'> |
-!|| Employment || Embedded Software Engineer <br> @(https://www.ideas-tek.com/ Ideas-Tek) |
+!|| Employment || Simulation Software Engineer <br> @(https://www.sceye.com/ Sceye) |
 !|| Education || BS. Applied Mathematics <br> @(https://nmt.edu/ New Mexico Institute of Mining and Technology) | 
 
 

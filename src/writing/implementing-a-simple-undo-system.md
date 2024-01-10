@@ -4,10 +4,10 @@
 @{sections}
 ---
 ##intro Introduction
-Recently I've been implementing a level editor for my game engine, and I'd been dreading adding 
-undo/redo support to it. In the past I've usually skipped it altogether, even though it's great 
+Recently I've been implementing a level editor for my game engine, and I'd been dreading adding
+undo/redo support to it. In the past I've usually skipped it altogether, even though it's great
 to have. When I have implemented it, I usually used a command-pattern style approach, where for
-each type of action the user can do there is a method to (re)do and undo the action. 
+each type of action the user can do there is a method to (re)do and undo the action.
 This resulted in quite a lot of repetitive code for various types of actions, and slowed down 
 my ability to add more.
 
@@ -195,7 +195,7 @@ void redo() {
     }
 }
 ```
-And that's it for the basic API implementation! In the following sections I'll show some other additions to this core that I made as
+And that's it for the basic API implementation! In the following sections I'll show some other additions to this core that I made as 
 I added the functionality to my editor. But first a larger example code showing the API in use: 
 ```
 #define NSQUARES 10

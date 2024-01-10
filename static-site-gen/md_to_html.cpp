@@ -156,7 +156,8 @@ Block* parse(Arena *arena, str s) {
     
     str_iter_pop_line(s) {
         /* Remove windows newline encoding (\r\n) */
-        line = str_trim_suffix(line, strl("\r"));
+        line = str_trim_suffix(line, strl("\n"));
+        if (line.str[line.len-1] == '\r') { line.len--; }
         if (line.len == 0) {
             if (next.type == Block::TABLE_ROW) {
                 PUSH_BLOCK();
@@ -358,9 +359,7 @@ StrList render_text(Arena* arena, Text* root) {
         } break;
         case Text::TEXT: {
             StrList_push(arena, &out, t->text);
-            if (prev->type == Text::TEXT) {
-                StrList_push(arena, &out, str_NEWLINE);
-            }
+            StrList_push(arena, &out, str_NEWLINE);
         } break;
         default: {
             ASSERTM(0,"Forgot to push a case in render_text!");

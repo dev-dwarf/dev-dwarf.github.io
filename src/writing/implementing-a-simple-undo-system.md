@@ -13,8 +13,8 @@ my ability to add more.
 
 
 However, a great article by rxi offers a @(https://rxi.github.io/a_simple_undo_system.html simple alternative). 
-The system described offers a lower-level perspective that handles things generically not at a data-type level, 
-instead targeting the more foundational binary representation of the data involved. It reminds me of similar 
+The system described offers a lower-level perspective that handles things generically not at a type level, 
+instead targeting the less structured binary representation of the data being changed. It reminds me of similar 
 sentiment from @(https://www.rfleury.com/p/emergence-and-composition Ryan Fleury's posts). Many techniques I've 
 learned from following Ryan are implemented at this low level of abstraction, chiefly 
 @(https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator Arenas). Programming this way has 
@@ -315,7 +315,8 @@ switching to the game, and then swap it back when the editor is opened.
 
 In a more complicated situation, it may be better to add a layer on top of the simple undo system that allows for more 
 serialized undo/redo commands. Regardless, I think for these more complex situations that the simple api will provide 
-a great foundation for the more complex implementation. 
+a great foundation for the more complex implementation. It's easier to add structure on top of something formless than 
+to try and handle formless situations with structure. 
 
 ##potential Potential Upgrades 
 Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 

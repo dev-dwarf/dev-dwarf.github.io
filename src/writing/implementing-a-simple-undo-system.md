@@ -318,7 +318,7 @@ serialized undo/redo commands. Regardless, I think for these more complex situat
 a great foundation for the more complex implementation. It's easier to add structure on top of something formless than 
 to try and handle formless situations with structure. 
 
-##potential Potential Upgrades 
+##potential Upgrades 
 Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 
 about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
 ```

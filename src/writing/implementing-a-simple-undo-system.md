@@ -18,7 +18,7 @@ instead targeting the less structured binary representation of the data being ch
 sentiment from @(https://www.rfleury.com/p/emergence-and-composition Ryan Fleury's posts). Many techniques I've 
 learned from following Ryan are implemented at this low level of abstraction, chiefly 
 @(https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator Arenas). Programming this way has 
-opened my eyes to the leverage against problems and composability you can get from a **data-generic**, 
+opened my eyes to the composability and leverage against problems you can get from a **data-generic**, 
 rather than **type-generic** approach.
 
 

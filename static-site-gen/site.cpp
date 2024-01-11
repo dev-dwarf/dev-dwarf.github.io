@@ -30,7 +30,7 @@ R"(
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
+    <meta property="og:title" content="Logan Forman" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="/assets/dd.png" />
     <link rel="canonical" href="http://loganforman.com/" />

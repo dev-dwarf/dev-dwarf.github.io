@@ -85,10 +85,15 @@ p {
 }
 
 .projtable img {
-    margin: auto;
+    margin-left: 4px;
+    margin-right: 4px;
     width: 64px;
     height: 64px;
     max-width: 64px;
+}
+
+.projtable td:nth-child(odd) {
+    width: 72px;
 }
 
 h1, h2, h3, h4, h5, h6 {

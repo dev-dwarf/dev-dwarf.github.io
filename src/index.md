@@ -21,7 +21,7 @@
 ---
 ## Brief
 I'm Logan Forman, a programmer and mathemetician from New Mexico. I've been playing games as long as I can remember and programming them since I was 11. 
-Later on I broadend my horizons and picked up more general programming and math skills. Since graduating from NMT I've been working in New Mexico's Aerospace Industry. 
+Later on I broadened my horizons and picked up more general programming and math skills. Since graduating from NMT I've been working in New Mexico's Aerospace Industry. 
 
 
 I love observing the emergent consequences of complex programs; Seeing how systems react when pushed on in unintended ways. 

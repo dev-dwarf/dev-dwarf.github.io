@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Logan Forman" />
+    <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="/assets/dd.png" />
     <link rel="canonical" href="http://loganforman.com/" />
@@ -42,45 +42,27 @@
 	<title>Implementing A Simple Undo System</title>
 <div style='clear: both'><h1>Implementing A Simple Undo System</h1><h3>8 Jan 2024</h3></div>
 <ul class='sections'>
-<li><a href='#intro'>Introduction
-</a></li>
-<li><a href='#impl'>Implementation 
-</a></li>
-<li><a href='#problems'>Problems 
-</a></li>
-<li><a href='#potential'>Upgrades 
-</a></li>
+<li><a href='#intro'>Introduction</a></li>
+<li><a href='#impl'>Implementation </a></li>
+<li><a href='#problems'>Problems </a></li>
+<li><a href='#potential'>Upgrades </a></li>
 </ul>
 <hr>
-<h2 id='intro'>Introduction
-</h2><p>
-Recently I've been implementing a level editor for my game engine, and I'd been dreading adding
-undo/redo support to it. In the past I've usually skipped it altogether, even though it's great
+<h2 id='intro'>Introduction</h2><p>
+Recently I've been implementing a level editor for my game engine, and I'd been dreading addingundo/redo support to it. In the past I've usually skipped it altogether, even though it's great
 to have. When I have implemented it, I usually used a command-pattern style approach, where for
 each type of action the user can do there is a method to (re)do and undo the action.
 This resulted in quite a lot of repetitive code for various types of actions, and slowed down 
 my ability to add more.
-<br><br>However, a great article by rxi offers a 
-<a href='https://rxi.github.io/a_simple_undo_system.html'>simple alternative
-</a>. The system described offers a lower-level perspective that handles things generically not at a type level, 
-instead targeting the less structured binary representation of the data being changed. It reminds me of similar 
+<br><br>However, a great article by rxi offers a <a href='https://rxi.github.io/a_simple_undo_system.html'>simple alternative</a>. The system described offers a lower-level perspective that handles things generically not at a type level, instead targeting the less structured binary representation of the data being changed. It reminds me of similar 
 sentiment from 
-<a href='https://www.rfleury.com/p/emergence-and-composition'>Ryan Fleury's posts
-</a>. Many techniques I've learned from following Ryan are implemented at this low level of abstraction, chiefly 
-<a href='https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator'>Arenas
-</a>. Programming this way has opened my eyes to the composability and leverage against problems you can get from a 
-<b>data-generic</b>, rather than 
-<b>type-generic</b> approach.<br><br>rxi's article is great at explaining the system and resultant immediate-mode undo api, but is open-ended on implementation. 
-In the rest of this article I'll walk through how I implemented the system using arena allocators, and how I used 
+<a href='https://www.rfleury.com/p/emergence-and-composition'>Ryan Fleury's posts</a>. Many techniques I've learned from following Ryan are implemented at this low level of abstraction, chiefly <a href='https://www.rfleury.com/p/untangling-lifetimes-the-arena-allocator'>Arenas</a>. Programming this way has opened my eyes to the composability and leverage against problems you can get from a <b>data-generic</b>, rather than <b>type-generic</b> approach.<br><br>rxi's article is great at explaining the system and resultant immediate-mode undo api, but is open-ended on implementation. In the rest of this article I'll walk through how I implemented the system using arena allocators, and how I used 
 and added to the system for my games. Here's some footage of the final result in my editor:
-<br><br><video width="100%" controls>
-    <source src="/assets/editorpreview.mp4" type="video/mp4">
+<br><br><video width="100%" controls>    <source src="/assets/editorpreview.mp4" type="video/mp4">
 </video>
 <br></p>
-<h2 id='impl'>Implementation 
-</h2><p>
-My desired API is roughly the same as rxi's:
-</p>
+<h2 id='impl'>Implementation </h2><p>
+My desired API is roughly the same as rxi's:</p>
 <code id=''><pre>void undo_push(void *source, s64 size); /* Mark regions that will potentially change */
 void undo_commit(); /* Check marked regions and finalize action or discard regions. */
 void undo();
@@ -97,9 +79,7 @@ for (;;) { /* Event/Game loop */
 }
 </pre></code>
 <p>
-At the core of the undo system are the 
-<code>Delta</code> structs which are the basic primitives for constructing commits, which together comprise an undo/redo action that can be surfaced to the user. 
-</p>
+At the core of the undo system are the <code>Delta</code> structs which are the basic primitives for constructing commits, which together comprise an undo/redo action that can be surfaced to the user. </p>
 <code id=''><pre>typedef struct {
     s64 size;
     u8* copy;
@@ -107,9 +87,7 @@ At the core of the undo system are the
 } Delta;
 </pre></code>
 <p>
-The 
-<code>Undo</code> struct holds all the Deltas and other information needed for the overall Undo system. The copy arena will hold the copies of all the data pointed to by the deltas. 
-For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
+The <code>Undo</code> struct holds all the Deltas and other information needed for the overall Undo system. The copy arena will hold the copies of all the data pointed to by the deltas. For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
 You can easily switch over to passing the Undo struct explicitly if needed. 
 </p>
 <code id=''><pre>#define UNDO_MEMORY MB(10)
@@ -127,14 +105,9 @@ typedef struct {
 Undo *UNDO;
 </pre></code>
 <p>
-Following rxi's recommendations, the undo, redo, and temp state are stored in 3 stacks. However in my implementation 
-all of these stacks live in the same 
-<code>Undo->delta</code> array, where the undo stack is elements [0, undo), redo is [undo, redo),and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks 
-themselves, but will vary in size according to the data. 
-<br><br>The 
-<code>undo_push</code> and <code>undo_commit</code> functions are the core of the api. <code>undo_push</code> marks regions that may change by pushing them onto the temp stack. 
-<code>undo_commit</code> then checks each currently marked region for any changes. The copies for changed regions are moved so that they are next to previous undo information, overwriting any redo information.
-</p>
+Following rxi's recommendations, the undo, redo, and temp state are stored in 3 stacks. However in my implementation all of these stacks live in the same 
+<code>Undo->delta</code> array, where the undo stack is elements [0, undo), redo is [undo, redo),and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks themselves, but will vary in size according to the data. 
+<br><br>The <code>undo_push</code> and <code>undo_commit</code> functions are the core of the api. <code>undo_push</code> marks regions that may change by pushing them onto the temp stack. <code>undo_commit</code> then checks each currently marked region for any changes. The copies for changed regions are moved so that they are next to previous undo information, overwriting any redo information.</p>
 <code id=''><pre>void undo_push(void* source, s64 size) {
     u8* copy = Arena_take(UNDO-&gtcopy, size);
     memcpy(copy, source, size);
@@ -179,8 +152,7 @@ themselves, but will vary in size according to the data.
 }
 </pre></code>
 <p>
-Given a stack of undo information built this way, the implementation of undo is straightforward. The amount of deltas for 
-the commit is identified using the header delta, and then those are looped over and swap their copy with what is currently
+Given a stack of undo information built this way, the implementation of undo is straightforward. The amount of deltas for the commit is identified using the header delta, and then those are looped over and swap their copy with what is currently
 at the source. 
 </p>
 <code id=''><pre>void swap_delta(Delta d) {
@@ -206,8 +178,7 @@ void undo() {
 }
 </pre></code>
 <p>
-The swap in the undo is important, as these same deltas now can be used to redo by swapping again. The redo function needs to 
-scan to find its header, but otherwise is quite dual to undo as you would expect:
+The swap in the undo is important, as these same deltas now can be used to redo by swapping again. The redo function needs to scan to find its header, but otherwise is quite dual to undo as you would expect:
 </p>
 <code id=''><pre>void redo() {
     if (UNDO-&gtredo - UNDO-&gtundo &gt 0) {
@@ -237,8 +208,7 @@ scan to find its header, but otherwise is quite dual to undo as you would expect
 }
 </pre></code>
 <p>
-And that's it for the basic API implementation! In the following sections I'll show some other additions to this core that I made as 
-I added the functionality to my editor. But first a larger example code showing the API in use: 
+And that's it for the basic API implementation! In the following sections I'll show some other additions to this core that I made as I added the functionality to my editor. But first a larger example code showing the API in use: 
 </p>
 <code id=''><pre>#define NSQUARES 10
 static Color squares[NSQUARES];
@@ -287,13 +257,10 @@ DrawText(message, 32, 64, 13, end_color);
 end_color.a = LERP(end_color.a, 0, 0.05);
 </pre></code>
 <p>
-This gif of the demo shows how the undo stack is built up with commits, can be undone/redone, and how redo history is 
-overwritten with new changes:
+This gif of the demo shows how the undo stack is built up with commits, can be undone/redone, and how redo history is overwritten with new changes:
 <br><br><img src='/assets/coloredcubes.gif'><br></p>
-<h2 id='problems'>Problems 
-</h2><p>
-In the simple example given above, there is only one type of edit action happening at any time. In my more complicated 
-level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
+<h2 id='problems'>Problems </h2><p>
+In the simple example given above, there is only one type of edit action happening at any time. In my more complicated level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
 temp stack. This was simple to add, by wrapping relevant code with an additional check, 
 <code>undo_begin</code>:</p>
 <code id=''><pre>#define undo_begin() undo_begin_ex(__LINE__)
@@ -304,16 +271,14 @@ b32 undo_begin_ex(s32 tag) {
 }
 </pre></code>
 <p>
-The tag is reset by a commit:
-</p>
+The tag is reset by a commit:</p>
 <code id=''><pre>void undo_commit() {
     UNDO-&gttag = 0; /* Remember this? */
 <br>    /* .. snip .. */
 }
 </pre></code>
 <p>
-And the usage code looks like:
-</p>
+And the usage code looks like:</p>
 <code id=''><pre>for (;;) { /* event loop */
 <br>    if (undo_begin()) { /* Action 1 */
         if (IsMouseDown(MOUSE_BUTTON_LEFT)) {
@@ -334,22 +299,16 @@ And the usage code looks like:
 <br>}
 </pre></code>
 <p>
-Both of these actions can progress across multiple frames, but because of the "locking" provided by 
-<code>undo_begin</code> they will never be in progress at the same time. 
-<br><br>A more troublesome issue is that sometimes entity state used by the editor would be changed by other code for the game (In my engine 
-the user can swap back and forth between the editor and engine). This would cause the undo state targeting the same memory 
+Both of these actions can progress across multiple frames, but because of the "locking" provided by <code>undo_begin</code> they will never be in progress at the same time. <br><br>A more troublesome issue is that sometimes entity state used by the editor would be changed by other code for the game (In my engine the user can swap back and forth between the editor and engine). This would cause the undo state targeting the same memory 
 to become invalid, meaning the user's expected undo or redo would not work. There are a few ways I thought of to fix this,
 with varying levels of complexity. The easiest to implement in my case is to keep another copy of the relevant state when 
 switching to the game, and then swap it back when the editor is opened. 
-<br><br>In a more complicated situation, it may be better to add a layer on top of the simple undo system that allows for more 
-serialized undo/redo commands. Regardless, I think for these more complex situations that the simple api will provide 
+<br><br>In a more complicated situation, it may be better to add a layer on top of the simple undo system that allows for more serialized undo/redo commands. Regardless, I think for these more complex situations that the simple api will provide 
 a great foundation for the more complex implementation. It's easier to add structure on top of something formless than 
 to try and handle formless situations with structure. 
 <br></p>
-<h2 id='potential'>Upgrades 
-</h2><p>
-Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 
-about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
+<h2 id='potential'>Upgrades </h2><p>
+Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
 </p>
 <code id=''><pre>void undo_push(void* source, s64 size) {
     /* ... */
@@ -396,11 +355,9 @@ void undo() {
 }
 </pre></code>
 <p>
-<br><video width="100%" controls>
-    <source src="/assets/undoingyourmom.mp4" type="video/mp4">
+<br><video width="100%" controls>    <source src="/assets/undoingyourmom.mp4" type="video/mp4">
 </video>
-<br><br>There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller 
-chunks and only committing what has actually changed. Even better might be applying general purpose compression to the copies.
+<br><br>There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller chunks and only committing what has actually changed. Even better might be applying general purpose compression to the copies.
 But for me the simple implementation has great performance for my application and has been great to use! I hope this write up 
 gives you a good starting point for doing your own implementation of a simple undo system.
 </p>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Logan Forman" />
+    <meta property="og:title" content="Logan Forman / Dev-Dwarf" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="/assets/dd.png" />
     <link rel="canonical" href="http://loganforman.com/" />
@@ -42,36 +42,21 @@
 	<title>Upgrading A Static Site Generator</title>
 <div style='clear: both'><h1>Upgrading A Static Site Generator</h1><h3>09 Jun 2023</h3></div>
 <ul class='sections'>
-<li><a href='#introd'>Introduction
-</a></li>
-<li><a href='#special'>The Special Block
-</a></li>
-<li><a href='#examples'>Example Special Blocks
-</a></li>
+<li><a href='#introd'>Introduction</a></li>
+<li><a href='#special'>The Special Block</a></li>
+<li><a href='#examples'>Example Special Blocks</a></li>
 <ul class='sections'>
-<li><a href='#article'>@{article}
-</a></li>
-<li><a href='#sections'>@{sections}
-</a></li>
-<li><a href='#index'>@{index}
-</a></li>
+<li><a href='#article'>@{article}</a></li>
+<li><a href='#sections'>@{sections}</a></li>
+<li><a href='#index'>@{index}</a></li>
 </ul>
-<li><a href='#other'>Other Updates
-</a></li>
+<li><a href='#other'>Other Updates</a></li>
 </ul>
 <hr>
-<h2 id='introd'>Introduction
-</h2><p>
-It's been a while since my first post, but I'm hoping to actually use this blog now that I've graduated and have a bit more time. I think a good way to continue would be walking through more of my site generator. When I left off 
-<a href='/writing/making-a-ssg1.html'>last time
-</a>, the main thing missing from my site was a way to handle special elements, like an index for articles on the <a href='/writing.html'>writing page
-</a>.<br><br>In this post I'll walk through how adding one simple feature to my markdown parser lets me handle these cases in my site specific code easily. In most static site generators I see special cases like this implemented using a templating language, like 
-<a href='https://shopify.github.io/liquid/'>Liquid
-</a> which is recommended by the Jekyll documentation. In my experience these templates enedd up scattered around my website code, adding yet another underpowered language to the already overpopulated web-dev stack. My approach allow templates to be made in C just like the rest of my site, with full access to all the existing data structures for the website pages.<br></p>
-<h2 id='special'>The Special Block
-</h2><p>
-So instead of writing an interpreter for some crappy template language, here's how the markdown compiler has been updated to handle special templates (
-<code>md_to_html.cpp</code>):</p>
+<h2 id='introd'>Introduction</h2><p>
+It's been a while since my first post, but I'm hoping to actually use this blog now that I've graduated and have a bit more time. I think a good way to continue would be walking through more of my site generator. When I left off <a href='/writing/making-a-ssg1.html'>last time</a>, the main thing missing from my site was a way to handle special elements, like an index for articles on the <a href='/writing.html'>writing page</a>.<br><br>In this post I'll walk through how adding one simple feature to my markdown parser lets me handle these cases in my site specific code easily. In most static site generators I see special cases like this implemented using a templating language, like <a href='https://shopify.github.io/liquid/'>Liquid</a> which is recommended by the Jekyll documentation. In my experience these templates enedd up scattered around my website code, adding yet another underpowered language to the already overpopulated web-dev stack. My approach allow templates to be made in C just like the rest of my site, with full access to all the existing data structures for the website pages.<br></p>
+<h2 id='special'>The Special Block</h2><p>
+So instead of writing an interpreter for some crappy template language, here's how the markdown compiler has been updated to handle special templates (<code>md_to_html.cpp</code>):</p>
 <code id=''><pre>/* in parse()... */
 } else if (c[0] == '@' &amp&amp c[1] == '{') {
 PUSH_BLOCK(); /* Immediately end the previous block. */
@@ -92,9 +77,7 @@ PUSH_BLOCK();
 }
 </pre></code>
 <p>
-That's it. There's no additional rendering code or anything else in the markdown compiler, it just packages up arguments into the Block data structure and then is done. All the remaining work of handling the special templates is in the site specific code (
-<code>site.cpp</code>).<br>So now in 
-<code>site.cpp:compile_page()</code>, instead of:</p>
+That's it. There's no additional rendering code or anything else in the markdown compiler, it just packages up arguments into the Block data structure and then is done. All the remaining work of handling the special templates is in the site specific code (<code>site.cpp</code>).<br>So now in <code>site.cpp:compile_page()</code>, instead of:</p>
 <code id=''><pre>/* ... snip ... */
 Block* blocks = parse(tempa, page-&gtcontent);
 StrList md = {0};
@@ -105,8 +88,7 @@ for (Block* b = blocks; b-&gttype != Block::NIL; b = b-&gtnext) {
 /* ... snip ... */
 </pre></code>
 <p>
-<br>I now have:
-</p>
+<br>I now have:</p>
 <code id=''><pre>/* ... snip ... */
 Block* blocks = parse(tempa, page-&gtcontent);
 StrList md = {0};
@@ -121,14 +103,9 @@ for (Block* b = blocks; b-&gttype != Block::NIL; b = b-&gtnext) {
 /* ... snip ... */
 </pre></code>
 <p>
-Where 
-<code>render_special_block()</code> contains the code to handle each special node. That's all fine, but really I haven't done anything useful yet, so lets look at some examples of templates that I've implemented for the site so far.<br></p>
-<h2 id='examples'>Example Special Blocks
-</h2><h3 id='article'>@{article}
-</h3><p>
-The markdown for 
-<a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/src/technical/making-a-ssg2.md'>this page
-</a> starts off with the <code>@{article}</code> special block, which just puts a short message at the end of the page. This code is even slightly more complicated than it needs to be at the moment, because in the future when I have more articles I will make the link take you back to the part of the index page where the link for the current article is.</p>
+Where <code>render_special_block()</code> contains the code to handle each special node. That's all fine, but really I haven't done anything useful yet, so lets look at some examples of templates that I've implemented for the site so far.<br></p>
+<h2 id='examples'>Example Special Blocks</h2><h3 id='article'>@{article}</h3><p>
+The markdown for <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/src/technical/making-a-ssg2.md'>this page</a> starts off with the <code>@{article}</code> special block, which just puts a short message at the end of the page. This code is even slightly more complicated than it needs to be at the moment, because in the future when I have more articles I will make the link take you back to the part of the index page where the link for the current article is.</p>
 <code id=''><pre>if (str_eq(block-&gtid, strl("article"))) {
     str link_ref = StrList_join(tempa, page-&gtbase_dir, {strl("#"), strl("/  "), {}});
     StrList_pushv(tempa, back,
@@ -138,10 +115,8 @@ The markdown for
                   strl("'&gt←  back to index&lt/a&gt"));
 }
 </pre></code>
-<h3 id='sections'>@{sections}
-</h3><p>
-A 
-<code>@{sections}</code> block will make a list of clickable links to headers on the page. This node is a bit bigger than the others as it handles a few special cases like headers in expandable sections and different levels of indentation for different sizes of header. The code iterates through the block list for the page, searching for headings with a non-empty id (the id is used to create the link url, and so indicates that it can be linked to at all). Additional list levels are created or ended based on the difference of size between the previous and next heading.</p>
+<h3 id='sections'>@{sections}</h3><p>
+A <code>@{sections}</code> block will make a list of clickable links to headers on the page. This node is a bit bigger than the others as it handles a few special cases like headers in expandable sections and different levels of indentation for different sizes of header. The code iterates through the block list for the page, searching for headings with a non-empty id (the id is used to create the link url, and so indicates that it can be linked to at all). Additional list levels are created or ended based on the difference of size between the previous and next heading.</p>
 <code id=''><pre>if (str_eq(block-&gtid, strl("sections"))) {
     StrList_push(tempa, front, strl("&ltul class='sections'&gt\n"));
     u32 n = 0; u32 nfirst = 0;
@@ -178,10 +153,8 @@ A
     }
 }
 </pre></code>
-<h3 id='index'>@{index}
-</h3><p>
-The original inspiration for designing the special block feature this way was to create an index of pages. Implementing this feature requires some metadata about other pages that exist in the site, as well as the ability to iterate over these pages. An index special block will be written as 
-<code>@{index, /dir/}</code>, where <code>dir</code> is the directory containing the pages to index. The code for this special block simply accesses the list of all the pages in the site, and checks for those which are in the directory specified by the parameter. For each of these pages, it adds an entry to a table with the title of the page (which itself is set by a title special block).<br></p>
+<h3 id='index'>@{index}</h3><p>
+The original inspiration for designing the special block feature this way was to create an index of pages. Implementing this feature requires some metadata about other pages that exist in the site, as well as the ability to iterate over these pages. An index special block will be written as <code>@{index, /dir/}</code>, where <code>dir</code> is the directory containing the pages to index. The code for this special block simply accesses the list of all the pages in the site, and checks for those which are in the directory specified by the parameter. For each of these pages, it adds an entry to a table with the title of the page (which itself is set by a title special block).<br></p>
 <code id=''><pre>if (str_eq(block-&gtid, strl("index"))) {
     str base_href = block-&gtcontent.first-&gtstr;
     StrList_push(tempa, front, strl("&lttable&gt&lttr&gt&lttd&gtDate&lt/td&gt&lttd&gtTitle&lt/td&gt&lttd&gt&lt/td&gt&lt/tr&gt"));
@@ -206,12 +179,8 @@ The original inspiration for designing the special block feature this way was to
     StrList_push(tempa, front, strl("&lt/table&gt"));
 }
 </pre></code>
-<h2 id='other'>Other Updates
-</h2><p>
-I've added some additional features to the markdown compiler, such as text with an explanation on hover, expandable sections, and tables. I made a 
-<a href='/splat.html'>splat page
-</a> to play around with the various features. You can see tables and other things in action on various pages of the site now. There is also an RSS feed now, which is generated in a similar way to the index node above. <br>I covered all of the list of features I wanted from last time (except for automatically compiling pages on save which I think is not very valuable actually), but as always there is more I want to do now that I have finished that. However my first priority with the site is going to be writing some more posts covering topics that aren't this project, so I'll only add features as needed for that. There might be a part 3 eventually though!
-</p>
+<h2 id='other'>Other Updates</h2><p>
+I've added some additional features to the markdown compiler, such as text with an explanation on hover, expandable sections, and tables. I made a <a href='/splat.html'>splat page</a> to play around with the various features. You can see tables and other things in action on various pages of the site now. There is also an RSS feed now, which is generated in a similar way to the index node above. <br>I covered all of the list of features I wanted from last time (except for automatically compiling pages on save which I think is not very valuable actually), but as always there is more I want to do now that I have finished that. However my first priority with the site is going to be writing some more posts covering topics that aren't this project, so I'll only add features as needed for that. There might be a part 3 eventually though!</p>
 <hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p><a class='btn' href='/writing.html#writing'>←  back to index</a>
     </main> 
     </div>

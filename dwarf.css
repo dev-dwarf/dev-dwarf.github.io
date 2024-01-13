@@ -60,6 +60,12 @@ img {
     margin: auto;
 }
 
+video {
+    max-width: 100%;
+    display: block;
+    margin: auto;
+}
+
 body {
     color: var(--text);
     background-color: var(--bg);

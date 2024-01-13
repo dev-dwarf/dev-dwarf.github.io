@@ -27,9 +27,7 @@ In the rest of this article I'll walk through how I implemented the system using
 and added to the system for my games. Here's some footage of the final result in my editor:
 
 
-<video width="100%" controls>
-    <source src="/assets/editorpreview.mp4" type="video/mp4">
-</video>
+!(/assets/editorpreview.mp4)
 
 ##impl Implementation 
 My desired API is roughly the same as rxi's:
@@ -370,10 +368,7 @@ void redo() {
 }
 ```
 
-<video width="100%" controls>
-    <source src="/assets/undoingyourmom.mp4" type="video/mp4">
-</video>
-
+!(/assets/undoingyourmom.mp4)
 
 There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller 
 chunks and only committing what has actually changed. Even better might be applying general purpose compression to the copies.

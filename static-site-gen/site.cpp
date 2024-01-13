@@ -1,6 +1,5 @@
 /*
   TODO(lcf, July 18, 2023):
-  - Update projects page to be more table oriented and have seperate pages for each.
   - <sup> and <sub> formatting, possibly for math formulas.
   
  */

@@ -344,7 +344,12 @@ StrList render_text(Arena* arena, Text* root) {
         } break;
         case Text::IMAGE: {
             /* TODO alt text, styles, etc */
-            StrList_pushv(arena, &out, strl("<img src='"), t->text, strl("'>"));
+            str mp4 = strl(".mp4");
+            if (str_has_suffix(t->text, mp4)) {
+                StrList_pushv(arena, &out, strl("<video controls><source src='"), t->text, strl("' type='video/mp4'></video>"));
+            } else {
+                StrList_pushv(arena, &out, strl("<img src='"), t->text, strl("'>"));
+            }
         } break;
         case Text::TABLE_CELL: {
             str s[2] = {strl("<td>"), strl("</td>\n")};

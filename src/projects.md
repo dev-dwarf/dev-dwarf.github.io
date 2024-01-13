@@ -2,7 +2,7 @@
 
 !|projtable | <h2> WIP </h2> || | 
 !|| !(/assets/dd.png) || **Custom Game Engine** |
-!|| || Working on a small engine to use for my games. Small preview in @(/writing/implementing-a-simple-undo-system.html this post). |
+!|| || Working on a small engine to use for my games. Small preview in @(/writing/implementing-a-simple-undo-system.html this post.) |
 !|| !(/assets/icons/imp.png) || **IMP: Immediate Mode Plotting** |
 !|| || An immediate-mode api for data plotting and visualization. |
 

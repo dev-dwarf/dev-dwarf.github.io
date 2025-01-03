@@ -40,7 +40,7 @@
     <main class="page-content" aria-label="Content">
 
 	<title>Implementing A Simple Undo System</title>
-<div style='clear: both'><h1>Implementing A Simple Undo System</h1><h3>8 Jan 2024</h3></div>
+<div style='clear: both'><h1>Implementing A Simple Undo System</h1><h3>08 Jan 2024</h3></div>
 <ul class='sections'>
 <li><a href='#intro'>Introduction
 </a></li>
@@ -73,7 +73,7 @@ sentiment from
 <b>type-generic</b> approach.<br><br>rxi's article is great at explaining the system and resultant immediate-mode undo api, but is open-ended on implementation. 
 In the rest of this article I'll walk through how I implemented the system using arena allocators, and how I used 
 and added to the system for my games. Here's some footage of the final result in my editor:
-<br><br><video controls><source src='/assets/editorpreview.mp4' type='video/mp4'></video><br></p>
+<br><br><img src='/assets/editorpreview.mp4'><br><br></p>
 <h2 id='impl'>Implementation 
 </h2><p>
 My desired API is roughly the same as rxi's:
@@ -393,7 +393,7 @@ void undo() {
 }
 </pre></code>
 <p>
-<br><video controls><source src='/assets/undoingyourmom.mp4' type='video/mp4'></video><br><br>There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller 
+<br><img src='/assets/undoingyourmom.mp4'><br><br>There are also performance enhancements that could be implemented in the base layer, such as scanning the changes in smaller 
 chunks and only committing what has actually changed. Even better might be applying general purpose compression to the copies.
 But for me the simple implementation has great performance for my application and has been great to use! I hope this write up 
 gives you a good starting point for doing your own implementation of a simple undo system.

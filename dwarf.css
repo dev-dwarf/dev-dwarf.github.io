@@ -10,7 +10,7 @@
     --blue:     #2CE8F5;
     --grey:     #797366;
     --bone:     #EFEFE0;
-    --dblue: #192669;
+    --dblue:    #192669;
 }
 @font-face {
     font-family: 'Text';
@@ -70,9 +70,9 @@ body {
     color: var(--text);
     background-color: var(--bg);
     font-family: "Text", sans-serif;
-    font-size: 15px;
-    font-stretch: 90%;
-    line-height: 1.2rem;
+    font-size: 14px;
+    font-stretch: 80%;
+    line-height: 1.1rem;
     overflow-wrap: break-word;
     max-width: 850px;
     margin: auto;
@@ -106,12 +106,10 @@ h1, h2, h3, h4, h5, h6 {
     width:100%;
     line-height: 2.0rem;
     font-family: "Code", mono;
-    font-stretch: 90%;
     color: var(--text);
     text-decoration: underline 2px;
     text-underline-offset: 0.25rem;
     text-decoration-color: var(--high);
-    font-weight: bold;
 }
 
 .project-image {
@@ -150,14 +148,12 @@ pre {
     font-family: 'Code', monospace;
     font-size: 12px;
     line-height: 1.0rem;
-    font-weight: 625;
     word-wrap: break-word;
 }
 code {
     font-family: 'Code', monospace;
     font-size: 12px;
     line-height: 1.0rem;
-    font-weight: 625;
     word-wrap: break-word;       
 }
 
@@ -225,7 +221,7 @@ tr {
 
 
 td {
-    padding: 0.3rem 0.2rem;
+    padding: 0.15rem 0.15rem;
     border-right: solid 1px var(--low);
     position: relative;
 }
@@ -238,7 +234,7 @@ tr:nth-of-type(1) {
 }
 
 th {
-    padding: 0.3rem 0.3rem;
+    padding: 0.15rem 0.15rem;
 }
 
 tr:nth-of-type(1) td {
@@ -266,13 +262,13 @@ nav {
     font-family: "Code", mono;
     display: block;
     width: 100%;
-    padding-bottom: 1rem;
+    padding-bottom: 0.5rem;
 }
 
 details {
     border-left: 0.5rem solid var(--low);
-    margin: 0rem 1rem;
-    padding: 1rem 1rem;
+    margin: 0rem 0.5rem;
+    padding: 0.5rem 0.5rem;
 }
 
 details summary {

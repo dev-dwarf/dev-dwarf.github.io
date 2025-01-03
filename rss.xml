@@ -5,6 +5,11 @@
     <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
     <description>Journey to the competence.</description>
 <item>
+<title>Implementing A Simple Undo System</title>
+<description>Details about a nice undo system I implemented recently. </description>
+<link>https://loganforman.com//writing/implementing-a-simple-undo-system.html</link><guid isPermaLink='true'>https://loganforman.com//writing/implementing-a-simple-undo-system.</guid>
+<pubDate>08 Jan 2024, 08 Jan 2024 08:00:00 MST</pubDate>
+</item><item>
 <title>Upgrading A Static Site Generator</title>
 <description>It's been a while! See how I've upgraded the site with the 'special' node.</description>
 <link>https://loganforman.com//writing/making-a-ssg2.html</link><guid isPermaLink='true'>https://loganforman.com//writing/making-a-ssg2.</guid>
@@ -14,11 +19,6 @@
 <description>First post! A brief walkthrough of how I made the SSG for my personal website.</description>
 <link>https://loganforman.com//writing/making-a-ssg1.html</link><guid isPermaLink='true'>https://loganforman.com//writing/making-a-ssg1.</guid>
 <pubDate>Sun, 18 Dec 2022 08:00:00 MST</pubDate>
-</item><item>
-<title>Implementing A Simple Undo System</title>
-<description>Details about a nice undo system I implemented recently. </description>
-<link>https://loganforman.com//writing/implementing-a-simple-undo-system.html</link><guid isPermaLink='true'>https://loganforman.com//writing/implementing-a-simple-undo-system.</guid>
-<pubDate>08 Jan 2024, 08 Jan 2024 08:00:00 MST</pubDate>
 </item>
   </channel>
 </rss>

@@ -1,5 +1,5 @@
 @{article}
-@{title, Implementing A Simple Undo System, 8 Jan 2024}
+@{title, Implementing A Simple Undo System, 08 Jan 2024}
 @{desc, Details about a nice undo system I implemented recently. }
 @{sections}
 ---

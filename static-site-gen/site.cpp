@@ -1,7 +1,10 @@
-/*
-  TODO(lcf, July 18, 2023):
-  - <sup> and <sub> formatting, possibly for math formulas.
-  
+/* TODO(lcf, Jan 01 2025)
+    * Get code compiling on latest lcf
+        * cleanup string stuff with new primitives
+    * Implement math expressions using mathml
+        * Browsers now have support
+        * Fallback: https://github.com/fred-wang/mathml.css
+        * Just make a little custom lang for this, can fallback to mathml if needed :vomit:
  */
 
 #include "../../lcf/lcf.h"

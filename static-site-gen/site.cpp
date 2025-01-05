@@ -1,10 +1,21 @@
 /* TODO(lcf, Jan 01 2025)
     * Get code compiling on latest lcf
         * cleanup string stuff with new primitives
+    * Fix article index sorting
+        * Uses file creation times atm, this info is not saved by git
+        * Just give articles a number and sort by that?
     * Implement math expressions using mathml
         * Browsers now have support
         * Fallback: https://github.com/fred-wang/mathml.css
         * Just make a little custom lang for this, can fallback to mathml if needed :vomit:
+    
+    TODO(lcf, Jan 04 2025)
+    * change footer
+        - move light/night switch to left bar (left = site internal, right = external links)
+        - add to right bar
+            - bluesky https://bsky.app/profile/dev-dwarf.itch.io
+            - steam https://store.steampowered.com/developer/dd
+    * update projects page for 2025
  */
 
 #include "../../lcf/lcf.h"
@@ -24,76 +35,68 @@ global StrNode wildcard = {0, strl("*.md")};
 global StrNode filename = {};
 global PageList allPages = {};
 
-str HEADER = strl(
-R"(
-<!DOCTYPE html>
-<!-- GENERATED -->
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Logan Forman" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="/assets/dd.png" />
-    <link rel="canonical" href="http://loganforman.com/" />
-    <meta property="og:url" content="http://loganforman.com/"/>
-    <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Logan Forman" />
-    <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
-    <link rel="stylesheet" href="/dwarf.css">
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    </head>
-    
-    <body>
-    <script>
-        var theme = localStorage.getItem('theme') || 'light';
+str HEADER = strl("" 
+"<!DOCTYPE html\n"
+"<!-- GENERATED --\n"
+"<html lang='en-US'\n"
+  "<head\n"
+    "<meta charset='utf-8'\n"
+    "<meta name='viewport' content='width=device-width, initial-scale=1.0'\n"
+    "<meta property='og:title' content='Logan Forman' /\n"
+    "<meta property='og:locale' content='en_US' /\n"
+    "<meta property='og:image' content='/assets/dd.png' /\n"
+    "<link rel='canonical' href='http://loganforman.com/' /\n"
+    "<meta property='og:url' content='http://loganforman.com/'/\n"
+    "<meta property='og:site_name' content='Logan Forman / Dev-Dwarf' /\n"
+    "<meta property='og:type' content='website' /\n"
+    "<meta name='twitter:card' content='summary' /\n"
+    "<meta property='twitter:title' content='Logan Forman' /\n"
+    "<script type='application/ld+json'\n"
+      "{'@context':'https://schema.org','@type':'WebSite','headline':'Logan Forman / Dev-Dwarf','name':'Logan Forman / Dev-Dwarf','url':'http://loganforman.com/'}</script\n"
+    "<link rel='stylesheet' href='/dwarf.css'\n"
+    "<link rel='icon' type='image/x-icon' href='/assets/favicon.ico'\n"
+    "</head\n"
+    "<body\n"
+    "<script\n"
+        "var theme = localStorage.getItem('theme') || 'light'\n"
+        "// window.onload = function() \n"
+           "document.querySelector('body').setAttribute('data-theme', theme)\n"
+        "// \n"
+        "function toggleNight() {\n"
+            "console.log('toggle')\n"
+            "theme = (theme == 'light')? 'night' : 'light'\n"
+            "localStorage.setItem('theme', theme)\n"
+            "document.querySelector('body').setAttribute('data-theme', theme);  \n"
+        "}\n"
+    "</script\n"
+    "<div class='wrapper'\n"
+    "<main class='page-content' aria-label='Content'\n"
+);
 
-        // window.onload = function() {
-           document.querySelector('body').setAttribute('data-theme', theme);
-        // }
-
-        function toggleNight() {
-            console.log('toggle');
-            theme = (theme == 'light')? 'night' : 'light';
-            localStorage.setItem('theme', theme);
-            document.querySelector('body').setAttribute('data-theme', theme);   
-        }
-
-    </script>
-    <div class="wrapper">
-    <main class="page-content" aria-label="Content">
-
-)");
-
-str FOOTER = strl(R"(
-    </main> 
-    </div>
-    </body>
-    <div>
-    <hr>
-    <nav>
-    <table class="w33 left"><tr>
-    <td><a href="/index.html">home</a></td>
-    <td><a href="/projects.html">projects</a></td>
-    <td><a href="/writing.html">writing</a></td>
-    <td><a style="text-decoration-color: #EE802F !important" href='/rss.xml'>rss</a></td>
-    </tr></table>
-
-    <table class="w33 right"><tr>
-    <td><a href="https://github.com/dev-dwarf">github</a></td>
-    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
-    <td><a href="https://dev-dwarf.itch.io">games</a></td>
-    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
-    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
-    </tr></table>
-    <p><br><br><br></p>
-    </nav>
-    
-    </div>
-    </html>)");
+str FOOTER = strl(""
+    "</main>\n"
+    "</div\n"
+    "</body\n"
+    "<div\n"
+    "<hr\n"
+    "<nav\n"
+    "<table class='w33 left'><tr\n"
+    "<td><a href='/index.html'>home</a></td\n"
+    "<td><a href='/projects.html'>projects</a></td\n"
+    "<td><a href='/writing.html'>writing</a></td\n"
+    "<td><a style='text-decoration-color: #EE802F !important' href='/rss.xml'>rss</a></td\n"
+    "</tr></table\n"
+    "<table class='w33 right'><tr\n"
+    "<td><a href='https://github.com/dev-dwarf'>github</a></td\n"
+    "<td><a href='https://twitter.com/dev_dwarf'>twitter</a></td\n"
+    "<td><a href='https://dev-dwarf.itch.io'>games</a></td\n"
+    "<td class='light'><a class='light' onClick='toggleNight()'>light</a></td\n"
+    "<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>\n"
+    "</tr></table\n"
+    "<p><br><br><br></p\n"
+    "</nav\n"
+    "</div\n"
+    "</html>\n");
 
 /* Swap between 'src' and 'deploy' folders of project directory. */
 void switch_to_dir(StrNode *new_folder_node) {
@@ -324,17 +327,18 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     StrList_pop(&dir, page->base_dir.count);
 }
 
-global str RSS_HEADER = strl(R"(<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Logan Forman</title>
-    <link>http://loganforman.com/</link>
-    <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
-    <description>Journey to the competence.</description>
-)");
-global str RSS_FOOTER = strl(R"(
-  </channel>
-</rss>
-)");
+global str RSS_HEADER = strl(
+"<rss version='2.0' xmlns:atom='http://www.w3.org/2005/Atom'\n"
+  "<channel\n"
+    "<title>Logan Forman</title\n"
+    "<link>http://loganforman.com/</link\n"
+    "<atom:link href='http://loganforman.com/rss.xml' rel='self' type='application/rss+xml' /\n"
+    "<description>Journey to the competence.</description\n"
+);
+global str RSS_FOOTER = strl(
+  "</channel\n"
+"</rss\n"
+);
 void compile_feeds(Arena *arena, PageList pages) {
     printf("RSS Feed:\n");
     StrList rss = {0};

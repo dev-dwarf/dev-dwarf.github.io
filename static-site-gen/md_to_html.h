@@ -1,39 +1,38 @@
 #include "../../lcf/lcf.h"
 
-struct Text {
-    Text *next;
-    
-    enum Types { 
-        NIL = 0,
-        TEXT,
-        BOLD, ITALIC, STRUCK, CODE_INLINE, 
-        LINK, IMAGE, EXPLAIN,
-        TABLE_CELL,
-        LIST_ITEM, CODE_BLOCK,
-        BREAK,
-    } type;
-    b32 end;
-    
-    str text;
+enum TextTypes { 
+    NIL = 0,
+    TEXT,
+    BOLD, ITALIC, STRUCK, CODE_INLINE, 
+    LINK, IMAGE, EXPLAIN,
+    TABLE_CELL,
+    LIST_ITEM, CODE_BLOCK,
+    BREAK,
 };
 
-struct Block {
-    Block *next;
+typedef struct Text {
+    struct Text *next;
+    enum TextTypes type;
+    s32 end;
+    str text;
+} Text;
 
-    enum { 
-        NIL = 0,
-        PARAGRAPH,
-        HEADING, RULE, CODE,
-        TABLE_ROW, TABLE_END,
-        QUOTE, ORD_LIST, UN_LIST,
-        EXPAND,
-        SPECIAL, /* Let caller deal with these */
-    } type;
+enum BlockTypes { 
+    PARAGRAPH,
+    HEADING, RULE, CODE,
+    TABLE_ROW, TABLE_END,
+    QUOTE, ORD_LIST, UN_LIST,
+    EXPAND,
+    SPECIAL, /* Let caller deal with these */
+};
 
+typedef struct Block {
+    struct Block *next;
+    enum BlockTypes type;
     u32 num;
     str id;
     str title;
     StrList content;
     Text* text;
-};
+} Block;
 

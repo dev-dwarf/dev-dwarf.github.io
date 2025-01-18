@@ -28,27 +28,27 @@ Text *new_text(Arena *a, str text, enum TextTypes type) {
     return out;
 }
 
-static s32 parse_start(Arena *a, Text *text, Text* next, str *s, enum TextTypes type, str open, str close) {
+static s32 parse_start(Arena *a, Text *text, str *s, enum TextTypes type, str open, str close) {
     if (str_has_prefix(*s, open)) {
-        next->text = str_from_pointer_range(next->text.str, (*s).str);
+        text->last_child->text = str_from_pointer_range(text->last_child->text.str, (*s).str);
         *s = str_skip(*s, open.len);
-        if (next->text.len) {
-            next->next = new_text(a, *s, type);
-            next = next->next;
+        if (text->last_child->text.len) {
+            text->last_child->next = new_text(a, *s, type);
+            text->last_child = text->last_child->next;
         } else {
-            *next = (Text) { .type = type, .text = *s};
+            *text->last_child = (Text) { .type = type, .text = *s};
         }
-        str parsed = parse_inline(a, next);
+        str parsed = parse_inline(a, text->last_child);
         *s = parsed;
         return 1;
     } 
     return 0;
 }
 
-static s32 parse_end(Arena *a, Text *text, Text* next, str *s, enum TextTypes type, str open, str close) {
+static s32 parse_end(Arena *a, Text *text, str *s, enum TextTypes type, str open, str close) {
     if (text->type == type && str_has_prefix(*s, close)) {
-        if (next->text.str + next->text.len >= (*s).str) {
-            next->text = str_from_pointer_range(next->text.str, (*s).str);
+        if (text->last_child->text.str + text->last_child->text.len >= (*s).str) {
+            text->last_child->text = str_from_pointer_range(text->last_child->text.str, (*s).str);
         }
         text->text = str_from_pointer_range(text->text.str, (*s).str);
         *s = str_skip(*s, close.len);
@@ -60,30 +60,29 @@ static s32 parse_end(Arena *a, Text *text, Text* next, str *s, enum TextTypes ty
 // returns remaining string to parse
 str parse_inline(Arena *a, Text *text) {
     str s = text->text;
-    text->child = new_text(a, s, TEXT);
-    Text *next = text->child;
+    text->last_child = text->child = new_text(a, s, TEXT);
     for (;;) {
         while ((s.len > 0) && (char_is_whitespace(*s.str) || char_is_alpha(*s.str) || char_is_num(*s.str))) {
             s.str++; s.len--;
         }
 
         if (0) {}
-        else if (parse_end(a, text, next, &s, ITALIC, strl("*"), strl("*"))) { break; }
-        else if (parse_end(a, text, next, &s, BOLD, strl("**"), strl("**"))) { break; } 
-        else if (parse_end(a, text, next, &s, STRUCK, strl("~~"), strl("~~"))) { break; } 
-        else if (parse_end(a, text, next, &s, LINK, strl("@("), strl(")"))) { break; }
-        else if (parse_start(a, text, next, &s, BOLD, strl("**"), strl("**"))) {} 
-        else if (parse_start(a, text, next, &s, ITALIC, strl("*"), strl("*"))) {}
-        else if (parse_start(a, text, next, &s, STRUCK, strl("~~"), strl("~~"))) {} 
-        else if (parse_start(a, text, next, &s, LINK, strl("@("), strl(")"))) {}
+        else if (parse_end(a, text, &s, ITALIC, strl("*"), strl("*"))) { break; }
+        else if (parse_end(a, text, &s, BOLD, strl("**"), strl("**"))) { break; } 
+        else if (parse_end(a, text, &s, STRUCK, strl("~~"), strl("~~"))) { break; } 
+        else if (parse_end(a, text, &s, LINK, strl("@("), strl(")"))) { break; }
+        else if (parse_start(a, text, &s, BOLD, strl("**"), strl("**"))) {} 
+        else if (parse_start(a, text, &s, ITALIC, strl("*"), strl("*"))) {}
+        else if (parse_start(a, text, &s, STRUCK, strl("~~"), strl("~~"))) {} 
+        else if (parse_start(a, text, &s, LINK, strl("@("), strl(")"))) {}
         else if (s.len > 0) {
             s.str++; s.len--;
         }
 
         if (s.len > 0) {
-            if (next->type != TEXT) {
-                next->next = new_text(a, s, TEXT);
-                next = next->next;
+            if (text->last_child->type != TEXT) {
+                text->last_child->next = new_text(a, s, TEXT);
+                text->last_child = text->last_child->next;
             }
         } else {
             break;

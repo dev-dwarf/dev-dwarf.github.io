@@ -15,6 +15,7 @@ typedef struct Text {
     str text;
     enum TextTypes type;
     struct Text *child;
+    struct Text *last_child;
     struct Text *next;
     s32 end;
 } Text;

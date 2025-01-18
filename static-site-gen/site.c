@@ -390,7 +390,7 @@ int main() {
 
     // TODO test code
     Text *t = &(Text){
-        .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) *")
+        .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) more italic*")
     };
     parse_inline(tempa, t);
     print_tree(t);

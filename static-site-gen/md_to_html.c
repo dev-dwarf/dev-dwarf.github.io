@@ -5,7 +5,7 @@
 Text* parse_text(Arena *arena, Block *block) {
     Text *text = block->text;
     Text *curr = text;
-    Text pre_filler = {curr, NIL, 0};
+    Text pre_filler = (Text){.next=curr, .type=NIL};
     Text *pre = &pre_filler;
 
     s32 ignore_next = false;
@@ -289,7 +289,7 @@ Block* parse(Arena *arena, str s) {
 /* render linked list of Text* to html tags */
 StrList render_text(Arena* arena, Text* root) {
     StrList out = {0};
-    Text prev_filler = {root, NIL, 0};
+    Text prev_filler = {.next=root, .type=NIL};
     for (Text* t = root, *prev = &prev_filler; t->type != NIL; prev = t, t = t->next) {
         switch (t->type) {
         case BOLD: {

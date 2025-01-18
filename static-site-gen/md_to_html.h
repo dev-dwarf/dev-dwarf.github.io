@@ -11,10 +11,12 @@ enum TextTypes {
 };
 
 typedef struct Text {
-    struct Text *next;
-    enum TextTypes type;
-    s32 end;
+    str data;
     str text;
+    enum TextTypes type;
+    struct Text *child;
+    struct Text *next;
+    s32 end;
 } Text;
 
 enum BlockTypes { 

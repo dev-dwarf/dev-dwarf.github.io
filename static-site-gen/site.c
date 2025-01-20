@@ -391,7 +391,22 @@ int main() {
         .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) more italic* * escape \\* asterisk *")
     };
     parse_inline(tempa, t);
-    print_tree(t);
+    StrList output_list = render_text_inline(tempa, t->child);
+    str output = StrList_join(tempa, output_list, (StrJoin){0});
+    printf("%.*s", (s32) output.len, output.str);
+    // print_tree(t);
+
+    // parse_md(tempa, strl(
+    //     "# Header 1\n"
+    //     "paragraph p1\n"
+    //     "paragraph p2\n"
+    //     "\n"
+    //     "New paragraph\n"
+    //     "## Header 2\n"
+    //     "New paragraph\n"
+    //     "New paragraph continued\n"
+    // ));
+    
     return;
     /*
 

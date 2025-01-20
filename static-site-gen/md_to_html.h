@@ -21,7 +21,7 @@ typedef struct Text {
 } Text;
 
 enum BlockTypes { 
-    PARAGRAPH,
+    PARAGRAPH = 1,
     HEADING, RULE, CODE,
     TABLE_ROW, TABLE_END,
     QUOTE, ORD_LIST, UN_LIST,

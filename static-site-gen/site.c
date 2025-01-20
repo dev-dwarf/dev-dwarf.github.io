@@ -27,8 +27,6 @@
 #include "md_to_html.c"
 #include "md_to_html2.c"
 
-
-
 #define MAX_FILEPATH 512
 
 global StrList dir;
@@ -390,7 +388,7 @@ int main() {
 
     // TODO test code
     Text *t = &(Text){
-        .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) more italic*")
+        .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) more italic* * escape \\* asterisk *")
     };
     parse_inline(tempa, t);
     print_tree(t);

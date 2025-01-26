@@ -3,7 +3,6 @@
         * Browsers now have support
         * Fallback: https://github.com/fred-wang/mathml.css
         * Just make a little custom lang for this, can fallback to mathml if needed :vomit:
-    *  optional ids for code blocks (like headers) + line numbers that can be linked to
  */
 
 #include <stdio.h>

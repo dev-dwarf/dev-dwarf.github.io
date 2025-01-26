@@ -321,7 +321,6 @@ void render_wrap_block(Arena *a, Block *b, StrList *out, WrapBlock params) {
     }
     
     if (b->type == params.type) {
-
         StrList rendered = (StrList){0};
         for (Text *t = b->text; t; t = t->next) {
             StrList r = render_text_inline(a, t);
@@ -334,12 +333,12 @@ void render_wrap_block(Arena *a, Block *b, StrList *out, WrapBlock params) {
             }
         }
 
-        if (b->type == RULE || rendered.total_len > 0) {
+        if (b->type == PARAGRAPH && rendered.total_len == 0) {
+            StrList_push(a, out, strl("<br>\n"));
+        } else {
             StrList_push(a, out, params.open);
             StrList_append(out, rendered);
             StrList_push(a, out, params.close);
-        } else {
-            StrList_push(a, out, strl("<br>\n"));
         }
     }
 }
@@ -356,12 +355,10 @@ StrList render_block(Arena *a, Block *b) {
     
     render_wrap_block(a, b, out, (WrapBlock) { ORD_LIST, strl("<ol>\n"), strl("</ol>\n"), strl("<li>"), strl("</li>\n")});
     render_wrap_block(a, b, out, (WrapBlock) { UN_LIST, strl("<ul>\n"), strl("</ul>\n"), strl("<li>"), strl("</li>\n")});
-
     render_wrap_block(a, b, out, (WrapBlock) { TABLE, strf(a, "<table class=\"%.*s\">\n", str_PRINTF_ARGS(b->id)), strl("</table>\n"), strl("<tr>"), strl("</tr>\n")});
     
     render_wrap_block(a, b, out, (WrapBlock) { RULE, strl("<hr>\n")});
-    
-    render_wrap_block(a, b, out, (WrapBlock) { 0, strl("<br>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { 0, strl("\n")});
 
     render_wrap_block(a, b, out, (WrapBlock) { EXPAND, strf(a, "<details>\n<summary>%.*s</summary>\n<p>", (s32) b->title.len, b->title.str), strl("</p>\n</details>\n")});
     

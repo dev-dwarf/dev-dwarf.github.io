@@ -6,9 +6,9 @@
 ##introd Introduction
 It's been a while since my first post, but I'm hoping to actually use this blog now that I've graduated and have a bit more time. I think a good way to continue would be walking through more of my site generator. When I left off @(/writing/making-a-ssg1.html last time), the main thing missing from my site was a way to handle special elements, like an index for articles on the @(/writing.html writing page).
 
-
 In this post I'll walk through how adding one simple feature to my markdown parser lets me handle these cases in my site specific code easily. In most static site generators I see special cases like this implemented using a templating language, like @(https://shopify.github.io/liquid/ Liquid) which is recommended by the Jekyll documentation. In my experience these templates enedd up scattered around my website code, adding yet another underpowered language to the already overpopulated web-dev stack. My approach allow templates to be made in C just like the rest of my site, with full access to all the existing data structures for the website pages.
 
+---
 ##special The Special Block
 So instead of writing an interpreter for some crappy template language, here's how the markdown compiler has been updated to handle special templates (`md_to_html.cpp`):
 ```
@@ -44,7 +44,6 @@ for (Block* b = blocks; b->type != Block::NIL; b = b->next) {
 }
 /* ... snip ... */
 ```
-
 I now have:
 ```
 /* ... snip ... */
@@ -61,7 +60,7 @@ for (Block* b = blocks; b->type != Block::NIL; b = b->next) {
 /* ... snip ... */
 ```
 Where `render_special_block()` contains the code to handle each special node. That's all fine, but really I haven't done anything useful yet, so lets look at some examples of templates that I've implemented for the site so far.
-
+---
 ##examples Example Special Blocks
 ###article @{article}
 The markdown for @(https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/src/technical/making-a-ssg2.md this page) starts off with the `@{article}` special block, which just puts a short message at the end of the page. This code is even slightly more complicated than it needs to be at the moment, because in the future when I have more articles I will make the link take you back to the part of the index page where the link for the current article is.
@@ -116,7 +115,6 @@ if (str_eq(block->id, strl("sections"))) {
 ```
 ###index @{index}
 The original inspiration for designing the special block feature this way was to create an index of pages. Implementing this feature requires some metadata about other pages that exist in the site, as well as the ability to iterate over these pages. An index special block will be written as `@{index, /dir/}`, where `dir` is the directory containing the pages to index. The code for this special block simply accesses the list of all the pages in the site, and checks for those which are in the directory specified by the parameter. For each of these pages, it adds an entry to a table with the title of the page (which itself is set by a title special block).
-
 ```
 if (str_eq(block->id, strl("index"))) {
     str base_href = block->content.first->str;
@@ -142,6 +140,7 @@ if (str_eq(block->id, strl("index"))) {
     StrList_push(tempa, front, strl("</table>"));
 }
 ```
+---
 ##other Other Updates
 I've added some additional features to the markdown compiler, such as text with an explanation on hover, expandable sections, and tables. I made a @(/splat.html splat page) to play around with the various features. You can see tables and other things in action on various pages of the site now. There is also an RSS feed now, which is generated in a similar way to the index node above. 
 

@@ -11,7 +11,6 @@ each type of action the user can do there is a method to (re)do and undo the act
 This resulted in quite a lot of repetitive code for various types of actions, and slowed down 
 my ability to add more.
 
-
 However, a great article by rxi offers a @(https://rxi.github.io/a_simple_undo_system.html simple alternative). 
 The system described offers a lower-level perspective that handles things generically not at a type level, 
 instead targeting the less structured binary representation of the data being changed. It reminds me of similar 
@@ -21,14 +20,12 @@ learned from following Ryan are implemented at this low level of abstraction, ch
 opened my eyes to the composability and leverage against problems you can get from a **data-generic**, 
 rather than **type-generic** approach.
 
-
 rxi's article is great at explaining the system and resultant immediate-mode undo api, but is open-ended on implementation. 
 In the rest of this article I'll walk through how I implemented the system using arena allocators, and how I used 
 and added to the system for my games. Here's some footage of the final result in my editor:
 
-
 !(/assets/editorpreview.mp4)
-
+---
 ##impl Implementation 
 My desired API is roughly the same as rxi's:
 ```
@@ -83,7 +80,6 @@ Following rxi's recommendations, the undo, redo, and temp state are stored in 3 
 all of these stacks live in the same `Undo->delta` array, where the undo stack is elements [0, undo), redo is [undo, redo),
 and temp is [redo, temp). The copies allocated for deltas corresponding to each stack will have the same order as the stacks 
 themselves, but will vary in size according to the data. 
-
 
 The `undo_push` and `undo_commit` functions are the core of the api. `undo_push` marks regions that may change by pushing 
 them onto the temp stack. `undo_commit` then checks each currently marked region for any changes. The copies for changed regions 
@@ -252,8 +248,8 @@ end_color.a = LERP(end_color.a, 0, 0.05);
 This gif of the demo shows how the undo stack is built up with commits, can be undone/redone, and how redo history is 
 overwritten with new changes:
 
-
 !(/assets/coloredcubes.gif)
+---
 ##problems Problems 
 In the simple example given above, there is only one type of edit action happening at any time. In my more complicated 
 level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
@@ -303,19 +299,16 @@ for (;;) { /* event loop */
 Both of these actions can progress across multiple frames, but because of the "locking" provided by `undo_begin` they 
 will never be in progress at the same time. 
 
-
 A more troublesome issue is that sometimes entity state used by the editor would be changed by other code for the game (In my engine 
 the user can swap back and forth between the editor and engine). This would cause the undo state targeting the same memory 
 to become invalid, meaning the user's expected undo or redo would not work. There are a few ways I thought of to fix this,
 with varying levels of complexity. The easiest to implement in my case is to keep another copy of the relevant state when 
 switching to the game, and then swap it back when the editor is opened. 
 
-
 In a more complicated situation, it may be better to add a layer on top of the simple undo system that allows for more 
 serialized undo/redo commands. Regardless, I think for these more complex situations that the simple api will provide 
-a great foundation for the more complex implementation. It's easier to add structure on top of something formless than 
-to try and handle formless situations with structure. 
-
+a great foundation for the more complex implementation.
+---
 ##potential Upgrades 
 Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 
 about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:

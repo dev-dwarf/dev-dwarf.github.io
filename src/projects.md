@@ -6,6 +6,10 @@
 !|| !(/assets/icons/imp.png) || **IMP: Immediate Mode Plotting** 
 !|| || An immediate-mode api for data plotting and visualization. 
 
+!|projtable | <h2> 2024 </h2> || | 
+!|| !(/assets/icons/babel.png) || **@(https://dev-dwarf.itch.io/babel Babel) (GMTK Gamejam 2024)** 
+!|| || Short puzzle game about guiding a blind man to his fall. 
+
 !|projtable | <h2> 2023 </h2> || | 
 !|| !(/assets/icons/crabjuice.png) || **@(https://dev-dwarf.itch.io/crabjuice Crabjuice )(GMTK Gamejam 2023)** 
 !|| || Our action-packed golf game that won 4th in the jam! 

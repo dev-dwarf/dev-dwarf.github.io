@@ -1,6 +1,4 @@
-/*
-    * Get code compiling on latest lcf
-        * cleanup string stuff with new primitives
+/* TODO
     * Fix article index sorting
         * Uses file creation times atm, this info is not saved by git
         * Just give articles a number and sort by that?
@@ -8,14 +6,6 @@
         * Browsers now have support
         * Fallback: https://github.com/fred-wang/mathml.css
         * Just make a little custom lang for this, can fallback to mathml if needed :vomit:
-    
-    TODO(lcf, Jan 04 2025)
-    * change footer
-        - move light/night switch to left bar (left = site internal, right = external links)
-        - add to right bar
-            - bluesky https://bsky.app/profile/dev-dwarf.itch.io
-            - steam https://store.steampowered.com/developer/dd
-    * update projects page for 2025
  */
 
 #include <stdio.h>
@@ -85,13 +75,16 @@ str FOOTER = strc(""
     "<td><a href='/projects.html'>projects</a></td>\n"
     "<td><a href='/writing.html'>writing</a></td>\n"
     "<td><a style='text-decoration-color: #EE802F !important' href='/rss.xml'>rss</a></td>\n"
+    "<td class='light'><a class='light' onClick='toggleNight()'>light</a></td>\n"
+    "<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>\n"
     "</tr></table>\n"
     "<table class='w33 right'><tr>\n"
     "<td><a href='https://github.com/dev-dwarf'>github</a></td>\n"
     "<td><a href='https://twitter.com/dev_dwarf'>twitter</a></td>\n"
-    "<td><a href='https://dev-dwarf.itch.io'>games</a></td>\n"
-    "<td class='light'><a class='light' onClick='toggleNight()'>light</a></td>\n"
-    "<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>\n"
+    "<td><a href='https://bsky.app/profile/dev-dwarf.itch.io'>bluesky</a></td>\n"
+    "<td><a href='https://store.steampowered.com/developer/dd'>steam</a></td>\n"
+    "<td><a href='https://dev-dwarf.itch.io'>itch.io</a></td>\n"
+    
     "</tr></table>\n"
     "<p><br><br><br></p>\n"
     "</nav>\n"
@@ -228,12 +221,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
         page->desc = StrList_join(longa, block->content, (StrJoin){(str){0}, strc(" "), (str){0}});
     }
     if (str_eq(block->id, strl("article"))) {
-        str link_ref = StrList_join(tempa, page->base_dir, (StrJoin){strc("#"), strc("/  "), (str){0}});
-        StrList_pushv(tempa, back,
-                      strl("<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p>"),
-                      strl("<a class='btn' href='/writing.html"),
-                      link_ref,
-                      strl("'>←  back to index</a>"));
+        StrList_push(tempa, back, strl("<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p>"));
     }
     if (str_eq(block->id, strl("index"))) {
         str base_href = block->content.first->str;

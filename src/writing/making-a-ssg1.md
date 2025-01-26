@@ -6,7 +6,6 @@
 ##introd Introduction
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring. The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
 
-
 I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
 1. Easily extendable. Do exactly what I want, quickly.
 1. Markup language to write pages/articles in.
@@ -14,7 +13,6 @@ I've been working on building my understanding of text-handling in low-level lan
 ---
 ##parse Parsing Markdown
 I started by making a compiler for a simple markup language. *Markdown* is probably the most popular markup language on the web today. There is a specification called CommonMark that I *think* is the canonical version of Markdown, with a reference implementation @(https://github.com/commonmark/cmark cmark), clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the @(https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis 17 rules) for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
-
 
 Taking a hint from the Markdown spec, I implemented my language as a composition of `Block` and `Text` structures:
 ```
@@ -89,7 +87,6 @@ str_iter_pop_line(str) {
 
 ```
 Each of these cases has some additional semantics, such as ending the previous block, parsing out any extra needed information (for example, `HEADING` counts the number of # characters to determine the size of the heading, and `LINK` needs to grab the url), but for the most part they are fairly straight-forward and can be tweaked. The main idea is that each case will either add more Text to the current Block, or end the previous block and start a new one.
-
 
 Each Text node at first has a `NIL` type, to represent that they are unparsed. After all the blocks are parsed, their Text is parsed as well:
 ```

@@ -1,473 +1,452 @@
-
 #include "md_to_html.h"
 
-/* Take list of Text nodes with undecided type, parse and return typed list */
-Text* parse_text(Arena *arena, Block *block) {
-    Text *text = block->text;
-    Text *curr = text;
-    Text pre_filler = (Text){.next=curr, .type=NIL};
-    Text *pre = &pre_filler;
+void print_tree(Text *text) {
+    if (!text) return;
+    switch (text->type) {
+        case TEXT: { printf("%.*s", (s32) text->text.len, text->text.str); } break;
+        case BOLD: { printf("**"); } break;
+        case ITALIC: { printf("*"); } break;
+        case STRUCK: { printf("~~"); } break;
+        case LINK: { printf("@("); } break;
+    }
+    print_tree(text->child);
+    switch (text->type) {
+        case BOLD: { printf("**"); } break;
+        case ITALIC: { printf("*"); } break;
+        case STRUCK: { printf("~~"); } break;
+        case LINK: { printf(")"); } break;
+    }
+    print_tree(text->next);
+}
+
+str parse_inline(Arena *a, Text *text);
+
+static Text *new_text(Arena *a, str text, enum TextTypes type) {
+    Text *out = Arena_take_struct(a, Text);
+    *out = (Text) { .type = type, .text = text };
+    return out;
+}
+
+static s32 parse_start(Arena *a, Text *text, str *s, enum TextTypes type, str open) {
+    if (str_has_prefix(*s, open)) {
+        text->last_child->text = str_from_pointer_range(text->last_child->text.str, (*s).str);
+        *s = str_skip(*s, open.len);
+
+        if (text->last_child->text.len) {
+            text->last_child->next = new_text(a, *s, type);
+            text->last_child = text->last_child->next;
+        } else {
+            *text->last_child = (Text) { .type = type, .text = *s};
+        }
+        
+        str parsed = parse_inline(a, text->last_child);
+        *s = parsed;
+        return 1;
+    } 
+    return 0;
+}
+
+static s32 parse_end(Arena *a, Text *text, str *s, enum TextTypes type, str close) {
+    if (text->type == type && (str_has_prefix(*s, close) || s->len == 0)) {
+        if (text->last_child->text.str + text->last_child->text.len >= (*s).str) {
+            text->last_child->text = str_from_pointer_range(text->last_child->text.str, (*s).str);
+        }
+        text->text = str_from_pointer_range(text->text.str, (*s).str);
+        *s = str_skip(*s, close.len);
+        return 1;
+    }
+    return 0;
+}
+
+// returns remaining string to parse
+str parse_inline(Arena *a, Text *text) {
+    // Grab data for certain elements
+    if (text->type == LINK) {
+        s64 loc = str_char_location(text->text, ' ');
+        ASSERT(loc);
+        text->data = str_first(text->text, loc);
+        text->text = str_skip(text->text, loc+1);
+    } else if (text->type == IMAGE) {
+        s64 loc = str_char_location(text->text, ')'); ASSERT(loc >= 0);
+        text->data = str_first(text->text, loc);
+    } else if (text->type == EXPLAIN) {
+        s64 loc = str_char_location(text->text, ',');
+        ASSERT(loc);
+        text->data = str_first(text->text, loc);
+        text->text = str_skip(text->text, loc+1);
+    }
+    
+    str s = text->text;
+    text->last_child = text->child = new_text(a, s, TEXT);
 
     s32 ignore_next = false;
-    s32 inside = 0;
-    enum TextTypes paren_stack[32];
-    u32 paren_stacki = 0;
-
-#define PUSH_TEXT(TYPE, END, SKIP) {                                    \
-        if (END == 0 &&                                                 \
-            curr->type == TEXT) {                                 \
-            curr->type = TYPE;                                          \
-            curr->text = str_skip(curr->text, (SKIP));                 \
-            curr = pre; /* overwrite current node */                    \
-        } else {                                                        \
-            Text* temp = curr->next;                                    \
-            curr->next = Arena_take_struct_zero(arena, Text);          \
-            curr->next->type = TYPE;                                    \
-            curr->next->text = str_skip(curr->text, (END) + (SKIP));   \
-            curr->next->next = temp;                                    \
-            curr->text = str_first(curr->text, (END));                 \
-        }                                                               \
-        if (TEST_FLAG(inside, FLAG(TYPE))) {                            \
-            curr->next->end = true;                                     \
-        }                                                               \
-        TOGGLE_FLAG(inside, FLAG(TYPE));                                \
-        REM_FLAG(inside, FLAG(TEXT));                             \
-        REM_FLAG(inside, FLAG(BREAK));                            \
-    }
-
-    for (; curr->next != 0; pre = curr, curr = curr->next) {
-        str s = curr->text;
-        if ((curr->type == LIST_ITEM)
-            || (curr->type == CODE_BLOCK)
-            || (curr->type == BREAK)) {
-            continue;
+    for (;;) {
+        while ((s.len > 0) && (char_is_whitespace(*s.str) || char_is_alpha(*s.str) || char_is_num(*s.str))) {
+            s.str++; s.len--;
         }
-        if (curr->type == NIL) {
-            curr->type = TEXT;
+
+        if (s.str[0] == '\\') {
+            text->last_child->text = str_from_pointer_range(text->last_child->text.str, s.str);
+            s = str_skip(s, 1); /* skip \ */
+            text->last_child->next = new_text(a, s, TEXT);
+            text->last_child = text->last_child->next;
+            s = str_skip(s, 1); // dont parse next char
+        } 
+        else if (parse_end(a, text, &s, CODE_INLINE, strl("`"))) { break; }
+        else if (parse_end(a, text, &s, ITALIC, strl("*"))) { break; }
+        else if (parse_end(a, text, &s, BOLD, strl("**"))) { break; } 
+        else if (parse_end(a, text, &s, STRUCK, strl("~~"))) { break; } 
+        else if (parse_end(a, text, &s, LINK, strl(")"))) { break; }
+        else if (parse_end(a, text, &s, IMAGE, strl(")"))) { break; }
+        else if (parse_end(a, text, &s, EXPLAIN, strl(")"))) { break; }
+        else if (parse_end(a, text, &s, TABLE_CELL, strl("|"))) { break; }
+
+        else if (parse_start(a, text, &s, CODE_INLINE, strl("`"))) {}
+        else if (parse_start(a, text, &s, BOLD, strl("**"))) {} 
+        else if (parse_start(a, text, &s, ITALIC, strl("*"))) {}
+        else if (parse_start(a, text, &s, STRUCK, strl("~~"))) {} 
+        else if (parse_start(a, text, &s, LINK, strl("@("))) {}
+        else if (parse_start(a, text, &s, IMAGE, strl("!("))) {}
+        else if (parse_start(a, text, &s, EXPLAIN, strl("?("))) {} 
+        else if (parse_start(a, text, &s, TABLE_CELL, strl("|"))) {}
+        else if (s.len > 0) {
+            s.str++; s.len--;
         }
-        if (s.len == 0) {
-            if (curr->type == TEXT) {
-                curr->type = BREAK;
-            } else if (curr->type != TABLE_CELL) {
-                PUSH_TEXT(BREAK, 0, 1);
-            }
-            continue;
-        }
-        char c[3]; 
-        c[1] = s.str[0];
-        c[2] = (s.len > 1)? s.str[1] : 0;
-        str_iter(s, i, _unused) {
-            c[0] = c[1];
-            c[1] = c[2];
-            c[2] = ((s64) s.len > i+2)? s.str[i+2] : 0;
-            
-            if (ignore_next) {
-                PUSH_TEXT(TEXT, i-1, 1);
-                ignore_next = false;
-            } else if (c[0] == '`') {
-                PUSH_TEXT(CODE_INLINE, i, 1);
-                break;
-            } else if (curr->type == CODE_INLINE && !curr->end) {
-                /* Do nothing, do not parse stuff inside code */
-            } else if (c[0] == '|') {
-                PUSH_TEXT(TABLE_CELL, i, 1);
-                break;
-            } else if (c[0] == '|' && c[1] == ' ') {
-                PUSH_TEXT(TABLE_CELL, i, 2);
-                break;
-            } else if (c[0] == '*' && c[1] == '*') {
-                PUSH_TEXT(BOLD, i, 2);
-                break;
-            } else if (c[0] == '*') {
-                PUSH_TEXT(ITALIC, i, 1);
-                break;
-            } else if (c[0] == '~' && c[1] == '~') {
-                PUSH_TEXT(STRUCK, i, 2);
-                break;
-            } else if (c[0] == '@' && c[1] == '(') {
-                PUSH_TEXT(LINK, i, 2);
-                curr = curr->next;
-                s64 sentinel = str_char_location(curr->text, ' ');
-                ASSERT(sentinel != LCF_STRING_NO_MATCH);
-                PUSH_TEXT(TEXT, sentinel, 1);
-                paren_stack[paren_stacki++] = LINK;
-                break;
-            } else if (c[0] == '!' && c[1] == '(') {
-                PUSH_TEXT(IMAGE, i, 2);
-                curr = curr->next;
-                s64 sentinel = str_char_location(curr->text, ')');
-                ASSERT(sentinel != LCF_STRING_NO_MATCH);
-                PUSH_TEXT(TEXT, sentinel, 1);
-                break;
-            } else if (c[0] == '?' && c[1] == '(') {
-                PUSH_TEXT(EXPLAIN, i, 2);
-                curr = curr->next;
-                s64 sentinel = str_char_location(curr->text, ',');
-                ASSERT(sentinel != LCF_STRING_NO_MATCH);
-                PUSH_TEXT(TEXT, sentinel, 2);
-                paren_stack[paren_stacki++] = EXPLAIN;
-                break;
-            } else if (c[0] == ')') {
-                if (paren_stacki > 0) {
-                    enum TextTypes t = paren_stack[--paren_stacki];
-                    PUSH_TEXT(t, i, 1);
-                }
-                break;
-            } else if (c[0] == '\\') {
-                ignore_next = true;
-            }
-        } /* end str_iter */
-        ASSERTM(pre == &pre_filler || pre->type != NIL, "Must not leave NIL nodes in Text linked-list!");
-    }
 
-    return text;
-}
-
-/* Take str, return tree of blocks representing markdown structure */
-Block* parse(Arena *arena, str s) {
-    Block* root = Arena_take_struct_zero(arena, Block);
-    Block* curr = root;
-    Block next = {0};
-    next.text = Arena_take_struct_zero(arena, Text);
-    Text* end = next.text;
-        
-    u64 next_len = 0;
-
-#define PUSH_STR(str) {                                     \
-        end->text = str;                                    \
-        end->next = Arena_take_struct_zero(arena, Text);        \
-        end = end->next;                                    \
-}
-
-#define PUSH_BLOCK() if (next.type != NIL) {     \
-    *curr = next;                                       \
-    curr->next =  Arena_take_struct_zero(arena, Block);     \
-    curr = curr->next;                                  \
-    next = (Block){0};                                  \
-    next.text = Arena_take_struct_zero(arena, Text);    \
-    end = next.text;                                    \
-}
-
-#define BREAK_BLOCK_IF_NOT(TYPE) {                      \
-    if (next.type != TYPE) {                            \
-        PUSH_BLOCK();                                   \
-    }                                                   \
-}
-    
-    str_iter_line(s, line) {
-        /* Remove windows newline encoding (\r\n) */
-        line = str_trim_suffix(line, strl("\n"));
-        if (line.str[line.len-1] == '\r') { line.len--; }
-        if (line.len == 0) {
-            if (next.type == TABLE_ROW) {
-                PUSH_BLOCK();
-                next.type = TABLE_END;
+        if (s.len > 0) {
+            if (text->last_child->type != TEXT) {
+                text->last_child->next = new_text(a, s, TEXT);
+                text->last_child = text->last_child->next;
             }
-            PUSH_STR(line);
-            if (!(next.type == CODE || next.type == PARAGRAPH)) {
-                PUSH_BLOCK();
-            }
-            continue;
-        }
-        char c[3];
-        c[0] = line.str[0];
-        c[1] = (line.len > 1)? line.str[1] : 0;
-        c[2] = (line.len > 2)? line.str[2] : 0;
-        if (c[0] == '`' && c[1] == '`' && c[2] == '`') {
-            if (next.type != CODE) {
-                PUSH_BLOCK();
-                next.type = CODE;
-                next.id = str_skip(line, 3);
-            } else {
-                PUSH_BLOCK();                
-            }
-        } else if (next.type == CODE) {
-            end->type = CODE_BLOCK;
-            PUSH_STR(line);
-        } else if (c[0] == '#') {
-            PUSH_BLOCK();
-            u32 n = 1;
-            for (; n < line.len && line.str[n] == '#'; n++)
-                ;
-            next.type = HEADING;
-            next.num = n;
-            str rem = str_skip(line, n);
-            next.id = rem;
-            next.id.len = str_char_location(rem, ' ');
-            
-            PUSH_STR(str_skip(rem, next.id.len+1));
-            PUSH_BLOCK();
-            
-        } else if (c[0] == '!' && c[1] == '|') {
-            PUSH_BLOCK();
-            line = str_skip(line, 2);
-            next.id = line;
-            next.id.len = str_char_location(line, '|');
-            line = str_skip(line, next.id.len);
-            next.type = TABLE_ROW;
-            PUSH_STR(line);
-        } else if (c[0] == '>' && c[1] == ' ') {
-            BREAK_BLOCK_IF_NOT(QUOTE);
-            next.type = QUOTE;
-            PUSH_STR(str_skip(line, 2));
-        } else if (c[0] == '[' && c[1] == ' ')  {
-            if (next.type != EXPAND) {
-                PUSH_BLOCK();
-                next.type = EXPAND;
-                str rem = str_skip(line, 2);
-                u32 n = 0;
-                for (; n < rem.len && rem.str[n] == '#'; n++)
-                    ;
-                rem = str_skip(rem, n);
-                if (n > 0) {
-                    next.id = rem;
-                    next.id.len = str_char_location(rem, ' ');
-                    rem = str_skip(rem, next.id.len+1);
-                }
-                next.title = rem;
-                next.num = n;
-            } else {
-                PUSH_STR(str_skip(line, 2));
-            }
-        } else if (c[0] >= '1' && c[0] <= '9' && c[1] == '.' && c[2] == ' ') {
-            BREAK_BLOCK_IF_NOT(ORD_LIST);
-            next.type = ORD_LIST;
-            end->type = LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
-            end = end->next;
-            PUSH_STR(str_skip(line, 2));
-            end->type = LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
-            end->end = true;
-            end = end->next;
-        } else if ((c[0] == '*' || c[0] == '-') && c[1] == ' ') {
-            BREAK_BLOCK_IF_NOT(UN_LIST);
-            next.type = UN_LIST;
-            end->type = LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
-            end = end->next;
-            PUSH_STR(str_skip(line, 2));
-            end->type = LIST_ITEM;
-            end->next = Arena_take_struct_zero(arena, Text);
-            end->end = true;
-            end = end->next;
-        } else if (c[0] == '@' && c[1] == '{') {
-            PUSH_BLOCK();
-            line = str_skip(line, 2);
-            next.type = SPECIAL;
-            next.id = str_pop_at_first_delimiter(&line, strl(",}"));
-            str_iter_delimiter(line, strl(",}"), sub) {
-                /* NOTE(lcf): optionally allow space in args list */
-                if (str_char_location(sub, ' ') == 0) {
-                    sub = str_skip(sub, 1);
-                }
-                StrList_push(arena, &next.content, sub);
-            }
-            PUSH_BLOCK();
-        } else if (c[0] == '-' && c[1] == '-' && c[2] == '-') {
-            PUSH_BLOCK();
-            next.type = RULE;
-            PUSH_BLOCK();
         } else {
-            if (next.type != PARAGRAPH && next.type != CODE) {
-                PUSH_BLOCK();
-                next.type = PARAGRAPH;
-            }
-
-            PUSH_STR(line);
+            break;
         }
     }
-    PUSH_BLOCK();
 
-    for (curr = root; curr->type != NIL; curr = curr->next) {
-        curr->text = parse_text(arena, curr);
+    return s;
+}    
+
+static void push_text(Arena *a, Block *b, str line) {
+    Text *t = Arena_take_struct_zero(a, Text);
+    t->text = line;
+
+    Text *last_text = b->text;
+    if (!last_text) {
+        b->text = t;
+    } else {
+        while (last_text->next) {
+            last_text = last_text->next;
+        }
+        last_text->next = t;
     }
     
-    return root;
+    if (b->type != CODE) {
+        parse_inline(a, t);
+    } 
 }
 
-/* render linked list of Text* to html tags */
-StrList render_text(Arena* arena, Text* root) {
-    StrList out = {0};
-    Text prev_filler = {.next=root, .type=NIL};
-    for (Text* t = root, *prev = &prev_filler; t->type != NIL; prev = t, t = t->next) {
-        switch (t->type) {
-        case BOLD: {
-            str s[2] = {strl("<b>"), strl("</b>")};
-            StrList_pushv(arena, &out, s[t->end], t->text);
-        } break;
-        case ITALIC: {
-            str s[2] = {strl("<em>"), strl("</em>")};
-            StrList_pushv(arena, &out, s[t->end], t->text);
-        } break;
-        case STRUCK: {
-            str s[2] = {strl("<s>"), strl("</s>")};
-            StrList_pushv(arena, &out, s[t->end], t->text);
-        } break;
-        case CODE_INLINE: {
-            str s[2] = {strl("<code>"), strl("</code>")};
-            StrList_pushv(arena, &out, s[t->end], t->text);
-        } break;
-        case CODE_BLOCK: {
+static s32 new_block_if_not(Arena *a, Block **curr, enum BlockTypes type) {
+    if ((*curr)->type != type) {
+        if ((*curr)->type != 0) {
+            (*curr) = (*curr)->next = Arena_take_struct_zero(a, Block);
+        }
+        (*curr)->type = type;
+        return 1;
+    }
+    return 0;
+}
+
+static s32 code_block_number;
+Block* parse_md(Arena *a, str s) {
+    Block *first = Arena_take_struct_zero(a, Block);
+    Block *curr = first;
+
+    code_block_number = 0;
+
+    str_iter_line(s, line) {
+        str line_raw = line;
+        line = str_trim_suffix(line, strl("\n"));
+        line = str_trim_suffix(line, strl("\r"));
+        line = str_trim_whitespace_front(line);
+
+        char c[3] = {0}; memcpy(c, line.str, MIN(3, line.len));
+        if (str_has_prefix(line, strl("```"))) {
+            if (curr->type == CODE) {
+                curr = curr->next = Arena_take_struct_zero(a, Block);
+            } else {
+                curr = curr->next = Arena_take_struct(a, Block);
+                *curr = (Block){ .type = CODE, .id = str_trim_whitespace(str_skip(line, 3)) };
+                if (curr->id.len == 0) {
+                    curr->id = strf(a, "code%03d", code_block_number);
+                }
+                code_block_number++;
+            }
+        } else if (curr->type == CODE) {
+            push_text(a, curr, line_raw);
+            continue;
+        } else if (line.len == 0) {
+            curr = curr->next = Arena_take_struct_zero(a, Block); 
+        } else if (c[0] >= '0' && c[0] <= '9' && c[1] == '.') {
+            new_block_if_not(a, &curr, ORD_LIST);
+            line = str_skip(line, 2);
+            push_text(a, curr, line);
+        } else if ((c[0] == '*' || c[0] == '-') && c[1] == ' ') {
+            new_block_if_not(a, &curr, UN_LIST);
+            line = str_skip(line, 2);
+            push_text(a, curr, line);
+        } else if (c[0] == '-' && c[1] == '-' && c[2] == '-') {
+            curr = curr->next = Arena_take_struct_zero(a, Block);
+            curr->type = RULE;
+            curr = curr->next = Arena_take_struct_zero(a, Block);
+        } else if (c[0] == '>' && c[1] == ' ') {
+            new_block_if_not(a, &curr, QUOTE);
+            line = str_skip(line, 2);
+            push_text(a, curr, line);
+        } else if (c[0] == '[' && c[1] == ' ') {
+            line = str_skip(line, 2);
+            if (new_block_if_not(a, &curr, EXPAND)) {
+                curr->title = line;
+            } else {
+                push_text(a, curr, line);
+            }
+        } else if (c[0] == '!' && c[1] == '|') {
+            line = str_skip(line, 2);
+            s64 loc = str_char_location(line, '|'); ASSERT(loc >= 0);
+            if (new_block_if_not(a, &curr, TABLE)) {
+                curr->id = str_first(line, loc);
+            }
+            line = str_skip(line, loc);
+            push_text(a, curr, line);
+        } else if (c[0] == '@' && c[1] == '{') {
+            line = str_skip(line, 2);
+            curr = curr->next = Arena_take_struct_zero(a, Block);
+            curr->type = SPECIAL;
+            curr->id = str_pop_at_first_delimiter(&line, strl(",}"));
+            str_iter_delimiter(line, strl(",}"), sub) {
+                StrList_push(a, &curr->content, str_trim_whitespace(sub));
+            }
+        } else if (c[0] == '#') {
+            s32 n = 1;
+            while (n < line.len && line.str[n] == '#') {
+                n++;
+            }
+            line = str_skip(line, n);
+
+            curr = curr->next = Arena_take_struct_zero(a, Block);
+            curr->type = HEADING;
+            curr->num = n;
+            curr->id = line;
+            curr->id.len = str_char_location(line, ' ');
+            
+            push_text(a, curr, str_skip(line, curr->id.len));
+        } else {
+            new_block_if_not(a, &curr, PARAGRAPH);
+            push_text(a, curr, line);
+        }
+    }
+
+    return first;
+}
+
+StrList render_text_inline(Arena *a, Text* first);
+
+StrList render_text_inline_loop(Arena *a, Text *first) {
+    StrList o = {0};
+    for (Text *t = first; t; t = t->next) {
+        StrList_append(&o, render_text_inline(a, t));
+    }
+    return o;
+}
+
+static void render_wrap_text(Arena *a, StrList *out, Text *t, enum TextTypes type, str open, str close)  {
+    if (t->type == type) {
+        StrList_push(a, out, open);
+        StrList_append(out, render_text_inline_loop(a, t->child));
+        StrList_push(a, out, close);
+    }
+}
+
+// Render text on the same line
+StrList render_text_inline(Arena *a, Text* first) {
+    StrList o = {0};
+    StrList *out = &o;
+
+    Text *t = first;
+    if (t) {
+        render_wrap_text(a, out, t, BOLD, strl("<b>"), strl("</b>"));
+        render_wrap_text(a, out, t, ITALIC, strl("<em>"), strl("</em>"));
+        render_wrap_text(a, out, t, STRUCK, strl("<s>"), strl("</s>"));
+        render_wrap_text(a, out, t, CODE_INLINE, strl("<code>"), strl("</code>"));
+        render_wrap_text(a, out, t, TABLE_CELL, strl("<td>"), strl("</td>"));
+        
+        if (t->type == IMAGE) {
+            if (str_has_suffix(t->data, strl(".mp4"))) {
+                StrList_pushv(a, out, strl("<video controls><source src='"), t->data, strl("' type='video/mp4'></video>"));
+            } else {
+                StrList_pushv(a, out, strl("<img src='"), t->data, strl("'>"));
+            }
+        }
+
+        if (t->type == EXPLAIN) {
+            StrList_pushv(a, out, strl("<abbr title='"), t->data, strl("'>"));
+            StrList_append(out, render_text_inline_loop(a, t->child));
+            StrList_push(a, out, strl("</abbr>"));
+        }
+
+        if (t->type == LINK) {
+            StrList_pushv(a, out, strl("<a href='"), t->data, strl("'>"));
+            StrList_append(out, render_text_inline_loop(a, t->child));
+            StrList_push(a, out, strl("</a>"));
+        }
+
+        if (t->type == TEXT) {
+            StrList_push(a, out, t->text);
+        }
+
+        if (t->type == 0) {
+            if (t->child) {
+                StrList_append(out, render_text_inline_loop(a, t->child));
+            }
+        }
+    }
+
+    return o;
+}
+
+typedef struct WrapBlock {
+    enum BlockTypes type;
+    str open;
+    str close;
+    str open_line;
+    str close_line;
+} WrapBlock;
+
+void render_wrap_block(Arena *a, Block *b, StrList *out, WrapBlock params) {
+    if (params.close_line.len == 0) {
+        params.close_line = strl("\n");
+    }
+    
+    if (b->type == params.type) {
+        StrList rendered = (StrList){0};
+        for (Text *t = b->text; t; t = t->next) {
+            StrList r = render_text_inline(a, t);
+            if (r.total_len > 0) {
+                if (params.open_line.len) {
+                    StrList_push(a, &rendered, params.open_line);
+                }
+                StrList_append(&rendered, r);    
+                StrList_push(a, &rendered, params.close_line);
+            }
+        }
+
+        if (b->type == PARAGRAPH && rendered.total_len == 0) {
+            StrList_push(a, out, strl("<br>\n"));
+        } else {
+            StrList_push(a, out, params.open);
+            StrList_append(out, rendered);
+            StrList_push(a, out, params.close);
+        }
+    }
+}
+
+StrList render_block(Arena *a, Block *b) {
+    StrList o = {0};
+    StrList *out = &o;
+
+    render_wrap_block(a, b, out, (WrapBlock) { PARAGRAPH, strl("<p>\n"), strl("</p>\n") });
+    render_wrap_block(a, b, out, (WrapBlock) { QUOTE, strl("<blockquote><p>\n"), strl("</p></blockquote>\n")});
+
+    str open = (b->id.len > 0)? strf(a, "<h%d id='%.*s'>\n", (s32) b->num, str_PRINTF_ARGS(b->id)) : strf(a, "<h%d>\n", (s32) b->num);
+    render_wrap_block(a, b, out, (WrapBlock) { HEADING, open, strf(a, "</h%d>\n", (s32) b->num)});
+    
+    render_wrap_block(a, b, out, (WrapBlock) { ORD_LIST, strl("<ol>\n"), strl("</ol>\n"), strl("<li>"), strl("</li>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { UN_LIST, strl("<ul>\n"), strl("</ul>\n"), strl("<li>"), strl("</li>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { TABLE, strf(a, "<table class=\"%.*s\">\n", str_PRINTF_ARGS(b->id)), strl("</table>\n"), strl("<tr>"), strl("</tr>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { EXPAND, strf(a, "<details>\n<summary>%.*s</summary>\n<p>", (s32) b->title.len, b->title.str), strl("</p>\n</details>\n")});
+    
+    render_wrap_block(a, b, out, (WrapBlock) { RULE, strl("<hr>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { 0, strl("\n")});
+    
+    if (b->type == CODE) {
+        StrList_pushv(a, out, strl("<code id='"), b->id, strl("'><pre>\n"));
+        s32 line = 1;
+
+        s32 in_comment = 0;
+        str comment_span = strc("<span style='color: var(--comment);'>");
+        for (Text *t = b->text; t; t = t->next, line++) {
+            str line_id = strf(a, "%.*s-%d", b->id.len, b->id.str, line);
+            StrList_pushv(a, out, strl("<span id='"), line_id, strl("'>"));
+            StrList_pushv(a, out, strl("<a href='#"), line_id, strl("' aria-hidden='true'></a>"));
+
+            if (in_comment == 2) {
+                StrList_push(a, out, comment_span);
+            }
+            
+            char in_string = 0;
             str s = t->text;
-            str_iter(s, i, c) { /* HTML char escapes */
+            char pc = 0;
+            str_iter(s, i, c) { /* Escape HTML characters in code blocks */
+
+                if (str_has_prefix(str_skip(s, i), strl("//"))) {
+                    in_comment = 1;
+                    StrList_pushv(a, out, str_first(s, i), comment_span);
+                    s = str_skip(s, i); i = 2;
+                }
+                
+                if (str_has_prefix(str_skip(s, i), strl("/*"))) {
+                    in_comment = 2;
+                    StrList_pushv(a, out, str_first(s, i), comment_span);
+                    s = str_skip(s, i); i = 2;
+                } else if (in_comment == 2 && str_has_prefix(str_skip(s, i), strl("*/"))) {
+                    in_comment = 0;
+                    StrList_pushv(a, out, str_first(s, i), strl("*/</span>"));
+                    s = str_skip(s, i+2); i = -1;
+                }
+
                 switch (c) {
                 case '<': {
-                    StrList_pushv(arena, &out, str_first(s, i), strl("&lt"));
+                    StrList_pushv(a, out, str_first(s, i), strl("&lt;"));
                     s = str_skip(s, i+1); i = -1;
                 } break;
                 case '>': {
-                    StrList_pushv(arena, &out, str_first(s, i), strl("&gt"));
+                    StrList_pushv(a, out, str_first(s, i), strl("&gt;"));
                     s = str_skip(s, i+1); i = -1;
                 } break;
                 case '&': {
-                    StrList_pushv(arena, &out, str_first(s, i), strl("&amp"));
+                    StrList_pushv(a, out, str_first(s, i), strl("&amp;"));
                     s = str_skip(s, i+1); i = -1;
                 } break;
+                case '\'': 
+                case '"': {
+                    if (in_comment == 0) {
+                        s64 loc = str_char_location(str_skip(s, i+1), c);
+                        if (in_string == 0 && loc >= 0) {
+                            in_string = c;
+                            StrList_pushv(a, out, str_first(s, i), strl("<span style='color: var(--red);'>"));
+                            s = str_skip(s, i); i = 0;
+                        } else if (in_string == c) {
+                            in_string = 0;
+                            StrList_pushv(a, out, str_first(s, i+1), strl("</span>"));
+                            s = str_skip(s, i+1); i = 0;
+                        }
+                    }
+                } break;
                 }
+
+                pc = c;
             }
-            StrList_pushv(arena, &out, s, str_NEWLINE);
-        } break;
-        case LINK: {
-            if (!t->end) {
-                StrList_pushv(arena, &out, strl("<a href='"), t->text, strl("'>"));
-            } else {
-                StrList_pushv(arena, &out, strl("</a>"), t->text);
+
+            StrList_push(a, out, s);
+            if (in_comment > 0) {
+                if (in_comment == 1) {
+                    in_comment = 0;
+                }
+                StrList_push(a, out, strl("</span>"));
             }
-        } break;
-        case EXPLAIN: {
-            if (!t->end) {
-                StrList_pushv(arena, &out, strl("<abbr title='"), t->text, strl("'>"));
-            } else {
-                StrList_pushv(arena, &out, strl("</abbr>"), t->text);
-            }
-        } break;
-        case IMAGE: {
-            /* TODO alt text, styles, etc */
-            str mp4 = strl(".mp4");
-            if (str_has_suffix(t->text, mp4)) {
-                StrList_pushv(arena, &out, strl("<video controls><source src='"), t->text, strl("' type='video/mp4'></video>"));
-            } else {
-                StrList_pushv(arena, &out, strl("<img src='"), t->text, strl("'>"));
-            }
-        } break;
-        case TABLE_CELL: {
-            str s[2] = {strl("<td>"), strl("</td>\n")};
-            StrList_pushv(arena, &out, s[t->end], t->text);
-        } break;
-        case BREAK: {
-            StrList_pushv(arena, &out, strl("<br>"), t->text);
-        } break;
-        case LIST_ITEM: {
-            const str s[2] = {strl("<li>"), strl("</li>\n")};
-            StrList_pushv(arena, &out, s[t->end], t->text);
-        } break;
-        case TEXT: {
-            StrList_push(arena, &out, t->text);
-            StrList_push(arena, &out, str_NEWLINE);
-        } break;
-        default: {
-            ASSERTM(0,"Forgot to push a case in render_text!");
-        } break;
+            StrList_push(a, out, strl("</span>"));
         }
+        StrList_pushv(a, out, strl("</pre></code>\n"));
     }
 
-    return out;
-}
-
-/* take fully parsed markdown blocks and render as html tags */
-StrList render_block_old(Arena *arena, Block *block) {
-    StrList out = {0};
-    switch (block->type) {
-    case HEADING: {
-        str h = str_create_size(arena, 2);
-        h.str[0] = 'h';
-        h.str[1] = '0' + (u8) block->num;
-        StrList_pushv(arena, &out, strl("<"), h);
-        if (block->id.len > 0) {
-            static const str center = strc("center");
-            static const str right = strc("right");
-            if (str_has_prefix(block->id, center)) {
-                block->id = str_skip(block->id, center.len+1);
-                StrList_push(arena, &out, strl(" style='text-align:center'"));
-            } else if (str_eq(block->id, right)) {
-                block->id = str_skip(block->id, right.len+1);
-                StrList_push(arena, &out, strl(" style='text-align:right'"));
-            }
-            StrList_pushv(arena, &out, strl(" id='"), block->id, strl("'"));
-        }
-        StrList_push(arena, &out, strl(">"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_pushv(arena, &out, strl("</"), h, strl(">"));
-
-    } break;
-    case TABLE_ROW: {
-        StrList_push(arena, &out, strl("<tr>"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</tr>\n"));
-        if (block->next->type != TABLE_ROW) {
-            StrList_push(arena, &out, strl("</table>\n"));
-        }
-    } break;
-    case TABLE_END: {
-    } break;
-    case QUOTE: {
-        StrList_push(arena, &out, strl("<blockquote>\n"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</blockquote>\n"));
-
-    } break;
-    case EXPAND: {
-        StrList_push(arena, &out, strl("<details>\n<summary>\n"));
-        str h = {};
-        if (block->num) {
-            h = str_create_size(arena, 2);
-            h.str[0] = 'h';
-            h.str[1] = '0' + (u8) block->num;
-            StrList_pushv(arena, &out, strl("<"), h, strl(" id='"), block->id, strl("'>"));
-        }
-        StrList_push(arena, &out, block->title);
-        if (block->num) {
-            StrList_pushv(arena, &out, strl("</"), h, strl(">"));
-        }
-        StrList_push(arena, &out, strl("</summary>\n<p>\n"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</p>\n</details>\n"));
-
-    } break;
-    case ORD_LIST: {
-        StrList_push(arena, &out, strl("<ol>\n"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("\n</ol>\n"));
-    } break;
-    case UN_LIST: {
-        StrList_push(arena, &out, strl("<ul>\n"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("\n</ul>\n"));
-    } break;
-    case CODE:  {
-        StrList_pushv(arena, &out, strl("<code id='"), block->id, strl("'><pre>"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</pre></code>\n"));
-    } break;
-    case RULE:  {
-        StrList_push(arena, &out, strl("<hr>\n"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-    } break;
-    case PARAGRAPH: {
-        StrList_push(arena, &out, strl("<p>\n"));
-        StrList_append(&out, block->content = render_text(arena, block->text));
-        StrList_push(arena, &out, strl("</p>\n"));
-    } break;
-    default: {
-        NOTIMPLEMENTED();
-        break;
-    }
-    }
-
-    if (block->type != TABLE_ROW && block->next->type == TABLE_ROW) {
-        StrList_pushv(arena, &out, strl("<table class=\""), block->next->id, strl("\">"));
-    }
-    
-    return out;
+    return o;
 }

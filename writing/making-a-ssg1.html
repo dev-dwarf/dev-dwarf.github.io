@@ -100,7 +100,7 @@ I have been leaving out the details inside the if statements in the parsing, but
 As a basic example of what we have so far, parsing the following:
 </p>
 <code id='code004'><pre>
-<span id='code004-1'><a href='#code004-1' aria-hidden='true'></a>## Hello</span><span id='code004-2'><a href='#code004-2' aria-hidden='true'></a>It<span style='color: var(--red);'>'s nice to be **loud**!</span></pre></code>
+<span id='code004-1'><a href='#code004-1' aria-hidden='true'></a>## Hello</span><span id='code004-2'><a href='#code004-2' aria-hidden='true'></a>It's nice to be **loud**!</span></pre></code>
 <p>
 Will give this structure:
 </p>
@@ -110,7 +110,7 @@ Will give this structure:
 The desired HTML is something like:
 </p>
 <code id='html'><pre>
-<span id='html-1'><a href='#html-1' aria-hidden='true'></a>&lt;h2&gt;Hello&lt;/h2&gt;</span><span id='html-2'><a href='#html-2' aria-hidden='true'></a>&lt;p&gt;It<span style='color: var(--red);'>'s nice to be &lt;b&gt;loud&lt;/b&gt;!&lt;/p&gt;</span></pre></code>
+<span id='html-1'><a href='#html-1' aria-hidden='true'></a>&lt;h2&gt;Hello&lt;/h2&gt;</span><span id='html-2'><a href='#html-2' aria-hidden='true'></a>&lt;p&gt;It's nice to be &lt;b&gt;loud&lt;/b&gt;!&lt;/p&gt;</span></pre></code>
 <p>
 With the above as the goal, it's not hard to imagine rendering the parsed nodes to HTML using a couple loops:
 </p>

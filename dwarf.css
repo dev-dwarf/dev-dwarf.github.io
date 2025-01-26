@@ -162,7 +162,7 @@ pre > span {
     line-height: 1.25
     white-space: pre-wrap;
     position: relative;
-    left: -5em; 
+    left: -3em; 
     padding: none; margin: none; border: none;
     counter-increment: source-line;
 }

@@ -296,9 +296,9 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     StrList html = {0};
     StrList back = {0};
 
-    Block* blocks = parse(tempa, page->content);
+    Block* blocks = parse_md(tempa, page->content);
     StrList md = {0};
-    for (Block* b = blocks; b->type != NIL; b = b->next) {
+    for (Block* b = blocks; b; b = b->next) {
         if (b->type != SPECIAL) {
             md = render_block(tempa, b);
             StrList_append(&html, md);
@@ -396,6 +396,7 @@ int main() {
     // printf("%.*s", (s32) output.len, output.str);
     // print_tree(t);
 
+    /*
     Block *block = parse_md(tempa, strl(
         "# SPLAT\n"
         "---\n"
@@ -455,8 +456,9 @@ int main() {
     printf("%.*s", (s32) output.len, output.str);
     
     return;
+    */
 
-    /* 
+     
     src = (StrNode) {0, strc("src")};
     deploy = (StrNode) {0, strc("deploy")};
     wildcard = (StrNode) {0, strc("*.md")};

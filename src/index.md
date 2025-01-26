@@ -17,7 +17,6 @@
 !|| Text || `+1-505-690-0103` |
 !|| Discord || `dev-dwarf#3925` | 
 <div class="space-after"></div>
-
 ## Brief
 
 I'm Logan Forman, a programmer and mathematician from New Mexico. I've been playing games as long as I can remember and programming them since I was 11. 

@@ -68,8 +68,10 @@ str parse_inline(Arena *a, Text *text) {
         text->data = str_first(text->text, loc);
         text->text = str_skip(text->text, loc+1);
     } else if (text->type == IMAGE) {
-        text->data = text->text;
+        s64 loc = str_char_location(text->text, ')'); ASSERT(loc >= 0);
+        text->data = str_first(text->text, loc);
         text->text.len = 0;
+        return text->text;
     } else if (text->type == EXPLAIN) {
         s64 loc = str_char_location(text->text, ',');
         ASSERT(loc);
@@ -128,7 +130,7 @@ str parse_inline(Arena *a, Text *text) {
 }    
 
 static void push_text(Arena *a, Block *b, str line) {
-    Text *t = Arena_take_struct(a, Text);
+    Text *t = Arena_take_struct_zero(a, Text);
     t->text = line;
 
     Text *last_text = b->text;
@@ -149,7 +151,7 @@ static void push_text(Arena *a, Block *b, str line) {
 static s32 new_block_if_not(Arena *a, Block **curr, enum BlockTypes type) {
     if ((*curr)->type != type) {
         if ((*curr)->type != 0) {
-            (*curr) = (*curr)->next = Arena_take_struct(a, Block);
+            (*curr) = (*curr)->next = Arena_take_struct_zero(a, Block);
         }
         (*curr)->type = type;
         return 1;
@@ -158,30 +160,28 @@ static s32 new_block_if_not(Arena *a, Block **curr, enum BlockTypes type) {
 }
 
 Block* parse_md(Arena *a, str s) {
-    Block *first = Arena_take_struct(a, Block);
+    Block *first = Arena_take_struct_zero(a, Block);
     Block *curr = first;
 
     str_iter_line(s, line) {
+        str line_raw = line;
         line = str_trim_suffix(line, strl("\n"));
         line = str_trim_suffix(line, strl("\r"));
         line = str_trim_whitespace_front(line);
 
-        if (line.len == 0) {
-            curr = curr->next = Arena_take_struct(a, Block);
-        }
-
         char c[3] = {0}; memcpy(c, line.str, MIN(3, line.len));
         if (str_has_prefix(line, strl("```"))) {
             if (curr->type == CODE) {
-                curr = curr->next = Arena_take_struct(a, Block);
+                curr = curr->next = Arena_take_struct_zero(a, Block);
             } else {
                 curr = curr->next = Arena_take_struct(a, Block);
-                curr->type = CODE;
-                curr->id = str_skip(line, 3);
+                *curr = (Block){ .type = CODE, .id = str_skip(line, 3) };
             }
         } else if (curr->type == CODE) {
-            push_text(a, curr, line);
+            push_text(a, curr, line_raw);
             continue;
+        } else if (line.len == 0) {
+            curr = curr->next = Arena_take_struct_zero(a, Block); 
         } else if (c[0] >= '0' && c[0] <= '9' && c[1] == '.') {
             new_block_if_not(a, &curr, ORD_LIST);
             line = str_skip(line, 2);
@@ -191,9 +191,9 @@ Block* parse_md(Arena *a, str s) {
             line = str_skip(line, 2);
             push_text(a, curr, line);
         } else if (c[0] == '-' && c[1] == '-' && c[2] == '-') {
-            curr = curr->next = Arena_take_struct(a, Block);
+            curr = curr->next = Arena_take_struct_zero(a, Block);
             curr->type = RULE;
-            curr = curr->next = Arena_take_struct(a, Block);
+            curr = curr->next = Arena_take_struct_zero(a, Block);
         } else if (c[0] == '>' && c[1] == ' ') {
             new_block_if_not(a, &curr, QUOTE);
             line = str_skip(line, 2);
@@ -206,14 +206,15 @@ Block* parse_md(Arena *a, str s) {
                 push_text(a, curr, line);
             }
         } else if (c[0] == '!' && c[1] == '|') {
-            new_block_if_not(a, &curr, TABLE);
             line = str_skip(line, 2);
             s64 loc = str_char_location(line, '|'); ASSERT(loc >= 0);
-            curr->id = str_first(line, loc);
-            line = str_skip(line, loc+1);
+            if (new_block_if_not(a, &curr, TABLE)) {
+                curr->id = str_first(line, loc);
+            }
+            line = str_skip(line, loc);
             push_text(a, curr, line);
         } else if (c[0] == '@' && c[1] == '{') {
-            curr = curr->next = Arena_take_struct(a, Block);
+            curr = curr->next = Arena_take_struct_zero(a, Block);
             curr->type = SPECIAL;
             line = str_skip(line, 2);
             str_iter_delimiter(line, strl(",}"), sub) {
@@ -226,7 +227,7 @@ Block* parse_md(Arena *a, str s) {
             }
             line = str_skip(line, n);
 
-            curr = curr->next = Arena_take_struct(a, Block);
+            curr = curr->next = Arena_take_struct_zero(a, Block);
             curr->type = HEADING;
             curr->num = n;
             curr->id = line;
@@ -244,10 +245,18 @@ Block* parse_md(Arena *a, str s) {
 
 StrList render_text_inline(Arena *a, Text* first);
 
+StrList render_text_inline_loop(Arena *a, Text *first) {
+    StrList o = {0};
+    for (Text *t = first; t; t = t->next) {
+        StrList_append(&o, render_text_inline(a, t));
+    }
+    return o;
+}
+
 static void render_wrap_text(Arena *a, StrList *out, Text *t, enum TextTypes type, str open, str close)  {
     if (t->type == type) {
         StrList_push(a, out, open);
-        StrList_append(out, render_text_inline(a, t->child));
+        StrList_append(out, render_text_inline_loop(a, t->child));
         StrList_push(a, out, close);
     }
 }
@@ -266,22 +275,22 @@ StrList render_text_inline(Arena *a, Text* first) {
         render_wrap_text(a, out, t, TABLE_CELL, strl("<td>"), strl("</td>"));
         
         if (t->type == IMAGE) {
-            if (str_has_suffix(t->text, strl("mp4"))) {
-                StrList_pushv(a, out, strl("<video controls><source src='"), t->text, strl("' type='video/mp4'></video>"));
+            if (str_has_suffix(t->data, strl(".mp4"))) {
+                StrList_pushv(a, out, strl("<video controls><source src='"), t->data, strl("' type='video/mp4'></video>"));
             } else {
-                StrList_pushv(a, out, strl("<img src='"), t->text, strl("'>"));
+                StrList_pushv(a, out, strl("<img src='"), t->data, strl("'>"));
             }
         }
 
         if (t->type == EXPLAIN) {
             StrList_pushv(a, out, strl("<abbr title='"), t->data, strl("'>"));
-            StrList_append(out, render_text_inline(a, t->child));
+            StrList_append(out, render_text_inline_loop(a, t->child));
             StrList_push(a, out, strl("</abbr>"));
         }
 
         if (t->type == LINK) {
             StrList_pushv(a, out, strl("<a href='"), t->data, strl("'>"));
-            StrList_append(out, render_text_inline(a, t->child));
+            StrList_append(out, render_text_inline_loop(a, t->child));
             StrList_push(a, out, strl("</a>"));
         }
 
@@ -291,7 +300,7 @@ StrList render_text_inline(Arena *a, Text* first) {
 
         if (t->type == 0) {
             if (t->child) {
-                StrList_append(out, render_text_inline(a, t->child));
+                StrList_append(out, render_text_inline_loop(a, t->child));
             }
         }
     }
@@ -348,7 +357,12 @@ StrList render_block(Arena *a, Block *b) {
     
     render_wrap_block(a, b, out, (WrapBlock) { ORD_LIST, strl("<ol>\n"), strl("</ol>\n"), strl("<li>"), strl("</li>\n")});
     render_wrap_block(a, b, out, (WrapBlock) { UN_LIST, strl("<ul>\n"), strl("</ul>\n"), strl("<li>"), strl("</li>\n")});
+
+    render_wrap_block(a, b, out, (WrapBlock) { TABLE, strf(a, "<table class=\"%.*s\">\n", str_PRINTF_ARGS(b->id)), strl("</table>\n"), strl("<tr>"), strl("</tr>\n")});
+    
     render_wrap_block(a, b, out, (WrapBlock) { RULE, strl("<hr>\n")});
+    
+    render_wrap_block(a, b, out, (WrapBlock) { 0, strl("<br>\n")});
 
     render_wrap_block(a, b, out, (WrapBlock) { EXPAND, strf(a, "<details>\n<summary>%.*s</summary>\n<p>", (s32) b->title.len, b->title.str), strl("</p>\n</details>\n")});
     

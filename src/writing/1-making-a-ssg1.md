@@ -30,8 +30,7 @@ struct Text {
     b32 end;
     str text;
 };
-```
-```
+
 struct Block {
     Block *next;
     enum { 
@@ -209,8 +208,7 @@ StrList render(Arena* arena, Block* root) {
     }
     return out;
 }
-```
-```
+
 StrList render_text(Arena* arena, Text* root) {
     StrList out = {0};
     Text prev_filler = {root, Text::NIL, 0};

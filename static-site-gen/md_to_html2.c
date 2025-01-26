@@ -157,9 +157,12 @@ static s32 new_block_if_not(Arena *a, Block **curr, enum BlockTypes type) {
     return 0;
 }
 
+static s32 code_block_number;
 Block* parse_md(Arena *a, str s) {
     Block *first = Arena_take_struct_zero(a, Block);
     Block *curr = first;
+
+    code_block_number = 0;
 
     str_iter_line(s, line) {
         str line_raw = line;
@@ -173,7 +176,11 @@ Block* parse_md(Arena *a, str s) {
                 curr = curr->next = Arena_take_struct_zero(a, Block);
             } else {
                 curr = curr->next = Arena_take_struct(a, Block);
-                *curr = (Block){ .type = CODE, .id = str_skip(line, 3) };
+                *curr = (Block){ .type = CODE, .id = str_trim_whitespace(str_skip(line, 3)) };
+                if (curr->id.len == 0) {
+                    curr->id = strf(a, "code%03d", code_block_number);
+                }
+                code_block_number++;
             }
         } else if (curr->type == CODE) {
             push_text(a, curr, line_raw);
@@ -356,17 +363,40 @@ StrList render_block(Arena *a, Block *b) {
     render_wrap_block(a, b, out, (WrapBlock) { ORD_LIST, strl("<ol>\n"), strl("</ol>\n"), strl("<li>"), strl("</li>\n")});
     render_wrap_block(a, b, out, (WrapBlock) { UN_LIST, strl("<ul>\n"), strl("</ul>\n"), strl("<li>"), strl("</li>\n")});
     render_wrap_block(a, b, out, (WrapBlock) { TABLE, strf(a, "<table class=\"%.*s\">\n", str_PRINTF_ARGS(b->id)), strl("</table>\n"), strl("<tr>"), strl("</tr>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { EXPAND, strf(a, "<details>\n<summary>%.*s</summary>\n<p>", (s32) b->title.len, b->title.str), strl("</p>\n</details>\n")});
     
     render_wrap_block(a, b, out, (WrapBlock) { RULE, strl("<hr>\n")});
     render_wrap_block(a, b, out, (WrapBlock) { 0, strl("\n")});
-
-    render_wrap_block(a, b, out, (WrapBlock) { EXPAND, strf(a, "<details>\n<summary>%.*s</summary>\n<p>", (s32) b->title.len, b->title.str), strl("</p>\n</details>\n")});
     
     if (b->type == CODE) {
         StrList_pushv(a, out, strl("<code id='"), b->id, strl("'><pre>\n"));
-        for (Text *t = b->text; t; t = t->next) {
+        s32 line = 1;
+        for (Text *t = b->text; t; t = t->next, line++) {
+            str line_id = strf(a, "%.*s-%d", b->id.len, b->id.str, line);
+            StrList_pushv(a, out, strl("<span id='"), line_id, strl("'>"));
+            StrList_pushv(a, out, strl("<a href='#"), line_id, strl("' aria-hidden='true'></a>"));
+            
             str s = t->text;
+            s32 in_comment = 0;
             str_iter(s, i, c) { /* Escape HTML characters in code blocks */
+
+                if (str_has_prefix(str_skip(s, i), strl("//"))) {
+                    in_comment = 1;
+                    StrList_pushv(a, out, str_first(s, i-2), strl("<span style='color: var(--green);'>//"));
+                    s = str_skip(s, i+2); i = -1;
+                }
+                if (str_has_prefix(str_skip(s, i), strl("/*"))) {
+                    in_comment = 2;
+                    StrList_pushv(a, out, str_first(s, i), strl("<span style='color: var(--green);'>/*"));
+                    s = str_skip(s, i+2); i = -1;
+                }
+
+                if (in_comment == 2 && str_has_prefix(str_skip(s, i), strl("*/"))) {
+                    in_comment = 0;
+                    StrList_pushv(a, out, str_first(s, i), strl("*/</span>"));
+                    s = str_skip(s, i+2); i = -1;
+                }
+                
                 switch (c) {
                 case '<': {
                     StrList_pushv(a, out, str_first(s, i), strl("&lt;"));
@@ -380,9 +410,16 @@ StrList render_block(Arena *a, Block *b) {
                     StrList_pushv(a, out, str_first(s, i), strl("&amp;"));
                     s = str_skip(s, i+1); i = -1;
                 } break;
+                case '\n': {
+                    if (in_comment == 1) {
+                        in_comment = 0;
+                        StrList_pushv(a, out, str_first(s, i), strl("</span>"));
+                        s = str_skip(s, i+1); i = -1;
+                    }
+                }
                 }
             }
-            StrList_pushv(a, out, s, strl("\n"));
+            StrList_pushv(a, out, s, strl("</span>"));
         }
         StrList_pushv(a, out, strl("</pre></code>\n"));
     }

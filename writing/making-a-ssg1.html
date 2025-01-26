@@ -32,7 +32,7 @@ document.querySelector('body').setAttribute('data-theme', theme);
 <div class='wrapper'>
 <main class='page-content' aria-label='Content'>
 	<title>Making A Static Site Generator</title>
-<br>
+
 <div style='clear: both'><h1>Making A Static Site Generator</h1><h3>18 Dec 2022</h3></div>
 <ul class='sections'>
 <li><a href='#introd'> Introduction</a></li>
@@ -42,14 +42,13 @@ document.querySelector('body').setAttribute('data-theme', theme);
 <li><a href='#conc'> Conclusion</a></li>
 </ul>
 <hr>
-<br>
+
 <h2 id='introd'>
  Introduction
 </h2>
 <p>
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring. The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
 </p>
-<br>
 <p>
 I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
 </p>
@@ -59,14 +58,13 @@ I've been working on building my understanding of text-handling in low-level lan
 <li> Small. Should be <1000 LOC.</li>
 </ol>
 <hr>
-<br>
+
 <h2 id='parse'>
  Parsing Markdown
 </h2>
 <p>
 I started by making a compiler for a simple markup language. <em>Markdown</em> is probably the most popular markup language on the web today. There is a specification called CommonMark that I <em>think</em> is the canonical version of Markdown, with a reference implementation <a href='https://github.com/commonmark/cmark'>cmark</a>, clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the <a href='https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis'>17 rules</a> for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
 </p>
-<br>
 <p>
 Taking a hint from the Markdown spec, I implemented my language as a composition of <code>Block</code> and <code>Text</code> structures:
 </p>
@@ -86,7 +84,7 @@ struct Text {
     str text;
 };
 </pre></code>
-<br>
+
 <code id=''><pre>
 struct Block {
     Block *next;
@@ -147,7 +145,6 @@ str_iter_pop_line(str) {
 <p>
 Each of these cases has some additional semantics, such as ending the previous block, parsing out any extra needed information (for example, <code>HEADING</code> counts the number of # characters to determine the size of the heading, and <code>LINK</code> needs to grab the url), but for the most part they are fairly straight-forward and can be tweaked. The main idea is that each case will either add more Text to the current Block, or end the previous block and start a new one.
 </p>
-<br>
 <p>
 Each Text node at first has a <code>NIL</code> type, to represent that they are unparsed. After all the blocks are parsed, their Text is parsed as well:
 </p>
@@ -229,7 +226,7 @@ for (; curr-&gt;next != 0; pre = curr, curr = curr-&gt;next) {
 I have been leaving out the details inside the if statements in the parsing, but you can see the full details <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/static-site-gen/md_to_html.cpp'>here</a>. The insides are mostly just small amounts of parsing text and then some macros for pushing new <code>Block</code> or <code>Text</code> nodes onto linked lists. You might notice in the above parsing some departures from Markdown, such as <code><a href='link'>text</a></code> to notate a link, instead of a <code>[text](link)</code> pair.
 </p>
 <hr>
-<br>
+
 <h2 id='compile'>
  Render as HTML
 </h2>
@@ -287,7 +284,7 @@ StrList render(Arena* arena, Block* root) {
     return out;
 }
 </pre></code>
-<br>
+
 <code id=''><pre>
 StrList render_text(Arena* arena, Text* root) {
     StrList out = {0};
@@ -305,9 +302,9 @@ StrList render_text(Arena* arena, Text* root) {
     return out;
 }
 </pre></code>
-<br>
+
 <hr>
-<br>
+
 <h2 id='generate'>
  Generating the Site
 </h2>
@@ -407,7 +404,7 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
 And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>on GitHub</a>. You may have noticed an unused type field for pages; the real version of the generator has <code>ARTICLE</code> pages and an <code>INDEX</code> page. <code>ARTICLE</code>s have slightly different HTML generated, and the <code>INDEX</code> gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
 </p>
 <hr>
-<br>
+
 <h2 id='conc'>
  Conclusion
 </h2>
@@ -424,7 +421,7 @@ Overall I'm pretty happy with the results of this project so far. The up-front t
 <p>
 I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without <a href='https://github.com/dev-dwarf/lcf'>lcf</a>, my personal library of C code. 
 </p>
-<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p><a class='btn' href='/writing.html#writing'>←  back to index</a></main>
+<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p></main>
 </div>
 </body>
 <div>
@@ -435,13 +432,15 @@ I should also mention that although the source code for the markdown compiler an
 <td><a href='/projects.html'>projects</a></td>
 <td><a href='/writing.html'>writing</a></td>
 <td><a style='text-decoration-color: #EE802F !important' href='/rss.xml'>rss</a></td>
+<td class='light'><a class='light' onClick='toggleNight()'>light</a></td>
+<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>
 </tr></table>
 <table class='w33 right'><tr>
 <td><a href='https://github.com/dev-dwarf'>github</a></td>
 <td><a href='https://twitter.com/dev_dwarf'>twitter</a></td>
-<td><a href='https://dev-dwarf.itch.io'>games</a></td>
-<td class='light'><a class='light' onClick='toggleNight()'>light</a></td>
-<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>
+<td><a href='https://bsky.app/profile/dev-dwarf.itch.io'>bluesky</a></td>
+<td><a href='https://store.steampowered.com/developer/dd'>steam</a></td>
+<td><a href='https://dev-dwarf.itch.io'>itch.io</a></td>
 </tr></table>
 <p><br><br><br></p>
 </nav>

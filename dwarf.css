@@ -151,19 +151,17 @@ pre {
     line-height: 1.0rem;
     word-wrap: break-word;
     counter-reset: source-line 0;
+    overflow: auto;
 }
 code {
     font-family: 'Code', monospace;
     font-size: 12px;
-    
     word-wrap: break-word;       
 }
 pre > span {
-    line-height: 1.25
-    white-space: pre-wrap;
+    line-height: 1.25;
     position: relative;
-    left: -3em; 
-    padding: none; margin: none; border: none;
+    left: -4em; 
     counter-increment: source-line;
 }
 pre > span > a:first-child::before {
@@ -172,7 +170,6 @@ pre > span > a:first-child::before {
     background-color: var(--bg);
     position: relative;
     text-align: right;
-    padding: none; margin: none; border: none;
     display: inline-block;
     width: 5em;
     vertical-align: baseline;

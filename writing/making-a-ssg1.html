@@ -68,160 +68,26 @@ I started by making a compiler for a simple markup language. <em>Markdown</em> i
 <p>
 Taking a hint from the Markdown spec, I implemented my language as a composition of <code>Block</code> and <code>Text</code> structures:
 </p>
-<code id=''><pre>
-/* md_to_html.h */
-struct Text {
-    Text *next;
-    enum Types { 
-        NIL = 0,
-        TEXT,
-        BOLD, ITALIC, STRUCK, CODE_INLINE, 
-        LINK, IMAGE, EXPLAIN,
-        LIST_ITEM, CODE_BLOCK,
-        BREAK,
-    } type;
-    b32 end;
-    str text;
-};
-</pre></code>
-
-<code id=''><pre>
-struct Block {
-    Block *next;
-    enum { 
-        NIL = 0,
-        PARAGRAPH,
-        HEADING, RULE, CODE, 
-        QUOTE, ORD_LIST, UN_LIST,
-    } type;
-    u32 num; /* For headings */
-    str id;
-    StrList content;
-    Text* text;
-};
-</pre></code>
+<code id='code000'><pre>
+<span id='code000-1'><a href='#code000-1' aria-hidden='true'></a><span style='color: var(--comment);'>/* md_to_html.h */</span></span><span id='code000-2'><a href='#code000-2' aria-hidden='true'></a>struct Text {</span><span id='code000-3'><a href='#code000-3' aria-hidden='true'></a>    Text *next;</span><span id='code000-4'><a href='#code000-4' aria-hidden='true'></a>    enum Types { </span><span id='code000-5'><a href='#code000-5' aria-hidden='true'></a>        NIL = 0,</span><span id='code000-6'><a href='#code000-6' aria-hidden='true'></a>        TEXT,</span><span id='code000-7'><a href='#code000-7' aria-hidden='true'></a>        BOLD, ITALIC, STRUCK, CODE_INLINE, </span><span id='code000-8'><a href='#code000-8' aria-hidden='true'></a>        LINK, IMAGE, EXPLAIN,</span><span id='code000-9'><a href='#code000-9' aria-hidden='true'></a>        LIST_ITEM, CODE_BLOCK,</span><span id='code000-10'><a href='#code000-10' aria-hidden='true'></a>        BREAK,</span><span id='code000-11'><a href='#code000-11' aria-hidden='true'></a>    } type;</span><span id='code000-12'><a href='#code000-12' aria-hidden='true'></a>    b32 end;</span><span id='code000-13'><a href='#code000-13' aria-hidden='true'></a>    str text;</span><span id='code000-14'><a href='#code000-14' aria-hidden='true'></a>};</span><span id='code000-15'><a href='#code000-15' aria-hidden='true'></a></span><span id='code000-16'><a href='#code000-16' aria-hidden='true'></a>struct Block {</span><span id='code000-17'><a href='#code000-17' aria-hidden='true'></a>    Block *next;</span><span id='code000-18'><a href='#code000-18' aria-hidden='true'></a>    enum { </span><span id='code000-19'><a href='#code000-19' aria-hidden='true'></a>        NIL = 0,</span><span id='code000-20'><a href='#code000-20' aria-hidden='true'></a>        PARAGRAPH,</span><span id='code000-21'><a href='#code000-21' aria-hidden='true'></a>        HEADING, RULE, CODE, </span><span id='code000-22'><a href='#code000-22' aria-hidden='true'></a>        QUOTE, ORD_LIST, UN_LIST,</span><span id='code000-23'><a href='#code000-23' aria-hidden='true'></a>    } type;</span><span id='code000-24'><a href='#code000-24' aria-hidden='true'></a>    u32 num; <span style='color: var(--comment);'>/* For headings */</span></span><span id='code000-25'><a href='#code000-25' aria-hidden='true'></a>    str id;</span><span id='code000-26'><a href='#code000-26' aria-hidden='true'></a>    StrList content;</span><span id='code000-27'><a href='#code000-27' aria-hidden='true'></a>    Text* text;</span><span id='code000-28'><a href='#code000-28' aria-hidden='true'></a>};</span></pre></code>
 <p>
 <code>Blocks</code> represent distinct formatting of seperate sections of the document. <code>Text</code> handles formatting that composes. From the names it's hopefully easy to tell the equivalent HTML; putting a given tag in one category or the other has been done somewhat arbitrarily. These structures imply parsing the Blocks and then parsing the Text of each block. I decided to parse for Blocks line-by-line, detecting which type of block it is based on the first few characters:
 </p>
-<code id=''><pre>
-/* md_to_html.cpp */
-str_iter_pop_line(str) { 
-    /* Remove windows newline encoding (\r\n) */
-    line = str_trim_suffix(line, strl("\r"));
-    if (line.len == 0) {
-       /* Breaks block unless PARAGRAPH or CODE */
-    }
-    ch8 c[3];
-    c[0] = line.str[0];
-    c[1] = (line.len &gt; 1)? line.str[1] : 0;
-    c[2] = (line.len &gt; 2)? line.str[2] : 0;
-    if (c[0] == '`' &amp;&amp; c[1] == '`' &amp;&amp; c[2] == '`') {    
-       /* Start/End Code */
-       
-    } else if (code_lock) {
-        /* Just directly add line if in a code block */
-        
-    } else if (c[0] == '#') {
-        /* Heading */
-    
-    } else if (c[0] == '&gt;' &amp;&amp; c[1] == ' ') {
-        /* Quote */
-        
-    } else if (c[0] &gt;= '1' &amp;&amp; c[0] &lt;= '9' &amp;&amp; c[1] == '.' &amp;&amp; c[2] == ' ') {
-        /* Ordered List */
-        
-    } else if ((c[0] == '*' || c[0] == '-') &amp;&amp; c[1] == ' ') {
-        /* Un-Ordered List */
-    
-    } else if (c[0] == '-' &amp;&amp; c[1] == '-' &amp;&amp; c[2] == '-') {
-        /* Horizontal Rule/Line */
-        
-    } else {
-        /* Paragraph */
-    }
-}
-
-</pre></code>
+<code id='code001'><pre>
+<span id='code001-1'><a href='#code001-1' aria-hidden='true'></a><span style='color: var(--comment);'>/* md_to_html.cpp */</span></span><span id='code001-2'><a href='#code001-2' aria-hidden='true'></a>str_iter_pop_line(str) { </span><span id='code001-3'><a href='#code001-3' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* Remove windows newline encoding (\r\n) */</span></span><span id='code001-4'><a href='#code001-4' aria-hidden='true'></a>    line = str_trim_suffix(line, strl(<span style='color: var(--red);'>"\r"</span>));</span><span id='code001-5'><a href='#code001-5' aria-hidden='true'></a>    if (line.len == 0) {</span><span id='code001-6'><a href='#code001-6' aria-hidden='true'></a>       <span style='color: var(--comment);'>/* Breaks block unless PARAGRAPH or CODE */</span></span><span id='code001-7'><a href='#code001-7' aria-hidden='true'></a>    }</span><span id='code001-8'><a href='#code001-8' aria-hidden='true'></a>    ch8 c[3];</span><span id='code001-9'><a href='#code001-9' aria-hidden='true'></a>    c[0] = line.str[0];</span><span id='code001-10'><a href='#code001-10' aria-hidden='true'></a>    c[1] = (line.len &gt; 1)? line.str[1] : 0;</span><span id='code001-11'><a href='#code001-11' aria-hidden='true'></a>    c[2] = (line.len &gt; 2)? line.str[2] : 0;</span><span id='code001-12'><a href='#code001-12' aria-hidden='true'></a>    if (c[0] == <span style='color: var(--red);'>'`'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'`'</span> &amp;&amp; c[2] == <span style='color: var(--red);'>'`'</span>) {    </span><span id='code001-13'><a href='#code001-13' aria-hidden='true'></a>       <span style='color: var(--comment);'>/* Start/End Code */</span></span><span id='code001-14'><a href='#code001-14' aria-hidden='true'></a>       </span><span id='code001-15'><a href='#code001-15' aria-hidden='true'></a>    } else if (code_lock) {</span><span id='code001-16'><a href='#code001-16' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Just directly add line if in a code block */</span></span><span id='code001-17'><a href='#code001-17' aria-hidden='true'></a>        </span><span id='code001-18'><a href='#code001-18' aria-hidden='true'></a>    } else if (c[0] == <span style='color: var(--red);'>'#'</span>) {</span><span id='code001-19'><a href='#code001-19' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Heading */</span></span><span id='code001-20'><a href='#code001-20' aria-hidden='true'></a>    </span><span id='code001-21'><a href='#code001-21' aria-hidden='true'></a>    } else if (c[0] == <span style='color: var(--red);'>'&gt;'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>' '</span>) {</span><span id='code001-22'><a href='#code001-22' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Quote */</span></span><span id='code001-23'><a href='#code001-23' aria-hidden='true'></a>        </span><span id='code001-24'><a href='#code001-24' aria-hidden='true'></a>    } else if (c[0] &gt;= <span style='color: var(--red);'>'1'</span> &amp;&amp; c[0] &lt;= <span style='color: var(--red);'>'9'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'.'</span> &amp;&amp; c[2] == <span style='color: var(--red);'>' '</span>) {</span><span id='code001-25'><a href='#code001-25' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Ordered List */</span></span><span id='code001-26'><a href='#code001-26' aria-hidden='true'></a>        </span><span id='code001-27'><a href='#code001-27' aria-hidden='true'></a>    } else if ((c[0] == <span style='color: var(--red);'>'*'</span> || c[0] == <span style='color: var(--red);'>'-'</span>) &amp;&amp; c[1] == <span style='color: var(--red);'>' '</span>) {</span><span id='code001-28'><a href='#code001-28' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Un-Ordered List */</span></span><span id='code001-29'><a href='#code001-29' aria-hidden='true'></a>    </span><span id='code001-30'><a href='#code001-30' aria-hidden='true'></a>    } else if (c[0] == <span style='color: var(--red);'>'-'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'-'</span> &amp;&amp; c[2] == <span style='color: var(--red);'>'-'</span>) {</span><span id='code001-31'><a href='#code001-31' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Horizontal Rule/Line */</span></span><span id='code001-32'><a href='#code001-32' aria-hidden='true'></a>        </span><span id='code001-33'><a href='#code001-33' aria-hidden='true'></a>    } else {</span><span id='code001-34'><a href='#code001-34' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Paragraph */</span></span><span id='code001-35'><a href='#code001-35' aria-hidden='true'></a>    }</span><span id='code001-36'><a href='#code001-36' aria-hidden='true'></a>}</span><span id='code001-37'><a href='#code001-37' aria-hidden='true'></a></span></pre></code>
 <p>
 Each of these cases has some additional semantics, such as ending the previous block, parsing out any extra needed information (for example, <code>HEADING</code> counts the number of # characters to determine the size of the heading, and <code>LINK</code> needs to grab the url), but for the most part they are fairly straight-forward and can be tweaked. The main idea is that each case will either add more Text to the current Block, or end the previous block and start a new one.
 </p>
 <p>
 Each Text node at first has a <code>NIL</code> type, to represent that they are unparsed. After all the blocks are parsed, their Text is parsed as well:
 </p>
-<code id=''><pre>
-for (curr = root; curr-&gt;type != Block::NIL; curr = curr-&gt;next) {
-    curr-&gt;text = parse_text(arena, curr-&gt;text);
-}
-</pre></code>
+<code id='code002'><pre>
+<span id='code002-1'><a href='#code002-1' aria-hidden='true'></a>for (curr = root; curr-&gt;type != Block::NIL; curr = curr-&gt;next) {</span><span id='code002-2'><a href='#code002-2' aria-hidden='true'></a>    curr-&gt;text = parse_text(arena, curr-&gt;text);</span><span id='code002-3'><a href='#code002-3' aria-hidden='true'></a>}</span></pre></code>
 <p>
 The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support composing formatting like <code><b><em>bold-and-italic</em> just-bold</b></code> generating <b><em>bold-and-italic</em> just-bold</b>, it's not enough to just have <code>BOLD</code> node encapsulate the bolded text in a pair of tags. For this reason each text node has an <code>end</code> flag marking it as the start or end node of a pair:
 </p>
-<code id=''><pre>
-for (; curr-&gt;next != 0; pre = curr, curr = curr-&gt;next) {
-    str s = curr-&gt;text;
-    if ((curr-&gt;type == Text::LIST_ITEM) /* Already formatted, do not parse */
-        || (curr-&gt;type == Text::CODE_BLOCK)
-        || (curr-&gt;type == Text::BREAK)) {
-        continue;
-    }
-    if (curr-&gt;type == Text::NIL) {
-        curr-&gt;type = Text::TEXT;
-    }
-    if (s.len == 0) {
-        if (curr-&gt;type == Text::TEXT) {
-            curr-&gt;type = Text::BREAK;
-        } else {
-            PUSH_TEXT(Text::BREAK, 0, 1);
-        }
-        continue;
-    }
-    chr8 c[3]; 
-    c[1] = s.str[0];
-    c[2] = (s.len &gt; 1)? s.str[1] : 0;
-    str_iter_custom(s, i, _unused) {
-        c[0] = c[1];
-        c[1] = c[2];
-        c[2] = (s.len &gt; i+2)? s.str[i+2] : 0;
-        if (ignore_next) {
-            PUSH_TEXT(Text::TEXT, i-1, 1);
-            ignore_next = false;
-        } else if (c[0] == '`') {
-            /* Inline Code */
-            
-        } else if (curr-&gt;type == Text::CODE_INLINE &amp;&amp; !curr-&gt;end) {
-            /* Do nothing, do not parse stuff inside code */
-        } else if (c[0] == '*' &amp;&amp; c[1] == '*') {
-            /* Bold *.
-            
-        } else if (c[0] == '*') {
-            /* Italic */
-            
-        } else if (c[0] == '~' &amp;&amp; c[1] == '~') {
-            /* Strikethrough */
-            
-        } else if (c[0] == '@' &amp;&amp; c[1] == '(') {
-            /* Links */
-            
-        } else if (c[0] == '!' &amp;&amp; c[1] == '(') {
-            /* Images */
-            
-        } else if (c[0] == '?' &amp;&amp; c[1] == '(') {
-            /* Explain - Hover over to see expanded text */
-            
-        } else if (c[0] == ')') {
-            /* Closing parenthesis can end one of the above ^ */
-            if (paren_stacki &gt; 0) {
-                Text::Types t = paren_stack[--paren_stacki];
-                PUSH_TEXT(t, i, 1);
-            }
-            break;
-        } else if (c[0] == '\\') {
-            /* Backslash ignores next formatting char */
-        }
-    } /* end str_iter */
-    ASSERTM(pre == &amp;pre_filler || pre-&gt;type != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
-}
-</pre></code>
+<code id='code003'><pre>
+<span id='code003-1'><a href='#code003-1' aria-hidden='true'></a>for (; curr-&gt;next != 0; pre = curr, curr = curr-&gt;next) {</span><span id='code003-2'><a href='#code003-2' aria-hidden='true'></a>    str s = curr-&gt;text;</span><span id='code003-3'><a href='#code003-3' aria-hidden='true'></a>    if ((curr-&gt;type == Text::LIST_ITEM) <span style='color: var(--comment);'>/* Already formatted, do not parse */</span></span><span id='code003-4'><a href='#code003-4' aria-hidden='true'></a>        || (curr-&gt;type == Text::CODE_BLOCK)</span><span id='code003-5'><a href='#code003-5' aria-hidden='true'></a>        || (curr-&gt;type == Text::BREAK)) {</span><span id='code003-6'><a href='#code003-6' aria-hidden='true'></a>        continue;</span><span id='code003-7'><a href='#code003-7' aria-hidden='true'></a>    }</span><span id='code003-8'><a href='#code003-8' aria-hidden='true'></a>    if (curr-&gt;type == Text::NIL) {</span><span id='code003-9'><a href='#code003-9' aria-hidden='true'></a>        curr-&gt;type = Text::TEXT;</span><span id='code003-10'><a href='#code003-10' aria-hidden='true'></a>    }</span><span id='code003-11'><a href='#code003-11' aria-hidden='true'></a>    if (s.len == 0) {</span><span id='code003-12'><a href='#code003-12' aria-hidden='true'></a>        if (curr-&gt;type == Text::TEXT) {</span><span id='code003-13'><a href='#code003-13' aria-hidden='true'></a>            curr-&gt;type = Text::BREAK;</span><span id='code003-14'><a href='#code003-14' aria-hidden='true'></a>        } else {</span><span id='code003-15'><a href='#code003-15' aria-hidden='true'></a>            PUSH_TEXT(Text::BREAK, 0, 1);</span><span id='code003-16'><a href='#code003-16' aria-hidden='true'></a>        }</span><span id='code003-17'><a href='#code003-17' aria-hidden='true'></a>        continue;</span><span id='code003-18'><a href='#code003-18' aria-hidden='true'></a>    }</span><span id='code003-19'><a href='#code003-19' aria-hidden='true'></a>    chr8 c[3]; </span><span id='code003-20'><a href='#code003-20' aria-hidden='true'></a>    c[1] = s.str[0];</span><span id='code003-21'><a href='#code003-21' aria-hidden='true'></a>    c[2] = (s.len &gt; 1)? s.str[1] : 0;</span><span id='code003-22'><a href='#code003-22' aria-hidden='true'></a>    str_iter_custom(s, i, _unused) {</span><span id='code003-23'><a href='#code003-23' aria-hidden='true'></a>        c[0] = c[1];</span><span id='code003-24'><a href='#code003-24' aria-hidden='true'></a>        c[1] = c[2];</span><span id='code003-25'><a href='#code003-25' aria-hidden='true'></a>        c[2] = (s.len &gt; i+2)? s.str[i+2] : 0;</span><span id='code003-26'><a href='#code003-26' aria-hidden='true'></a>        if (ignore_next) {</span><span id='code003-27'><a href='#code003-27' aria-hidden='true'></a>            PUSH_TEXT(Text::TEXT, i-1, 1);</span><span id='code003-28'><a href='#code003-28' aria-hidden='true'></a>            ignore_next = false;</span><span id='code003-29'><a href='#code003-29' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'`'</span>) {</span><span id='code003-30'><a href='#code003-30' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Inline Code */</span></span><span id='code003-31'><a href='#code003-31' aria-hidden='true'></a>            </span><span id='code003-32'><a href='#code003-32' aria-hidden='true'></a>        } else if (curr-&gt;type == Text::CODE_INLINE &amp;&amp; !curr-&gt;end) {</span><span id='code003-33'><a href='#code003-33' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Do nothing, do not parse stuff inside code */</span></span><span id='code003-34'><a href='#code003-34' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'*'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'*'</span>) {</span><span id='code003-35'><a href='#code003-35' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Bold */</span></span><span id='code003-36'><a href='#code003-36' aria-hidden='true'></a>            </span><span id='code003-37'><a href='#code003-37' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'*'</span>) {</span><span id='code003-38'><a href='#code003-38' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Italic */</span></span><span id='code003-39'><a href='#code003-39' aria-hidden='true'></a>            </span><span id='code003-40'><a href='#code003-40' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'~'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'~'</span>) {</span><span id='code003-41'><a href='#code003-41' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Strikethrough */</span></span><span id='code003-42'><a href='#code003-42' aria-hidden='true'></a>            </span><span id='code003-43'><a href='#code003-43' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'@'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'('</span>) {</span><span id='code003-44'><a href='#code003-44' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Links */</span></span><span id='code003-45'><a href='#code003-45' aria-hidden='true'></a>            </span><span id='code003-46'><a href='#code003-46' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'!'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'('</span>) {</span><span id='code003-47'><a href='#code003-47' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Images */</span></span><span id='code003-48'><a href='#code003-48' aria-hidden='true'></a>            </span><span id='code003-49'><a href='#code003-49' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'?'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'('</span>) {</span><span id='code003-50'><a href='#code003-50' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Explain - Hover over to see expanded text */</span></span><span id='code003-51'><a href='#code003-51' aria-hidden='true'></a>            </span><span id='code003-52'><a href='#code003-52' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>')'</span>) {</span><span id='code003-53'><a href='#code003-53' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Closing parenthesis can end one of the above ^ */</span></span><span id='code003-54'><a href='#code003-54' aria-hidden='true'></a>            if (paren_stacki &gt; 0) {</span><span id='code003-55'><a href='#code003-55' aria-hidden='true'></a>                Text::Types t = paren_stack[--paren_stacki];</span><span id='code003-56'><a href='#code003-56' aria-hidden='true'></a>                PUSH_TEXT(t, i, 1);</span><span id='code003-57'><a href='#code003-57' aria-hidden='true'></a>            }</span><span id='code003-58'><a href='#code003-58' aria-hidden='true'></a>            break;</span><span id='code003-59'><a href='#code003-59' aria-hidden='true'></a>        } else if (c[0] == <span style='color: var(--red);'>'\\'</span>) {</span><span id='code003-60'><a href='#code003-60' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Backslash ignores next formatting char */</span></span><span id='code003-61'><a href='#code003-61' aria-hidden='true'></a>        }</span><span id='code003-62'><a href='#code003-62' aria-hidden='true'></a>    } <span style='color: var(--comment);'>/* end str_iter */</span></span><span id='code003-63'><a href='#code003-63' aria-hidden='true'></a>    ASSERTM(pre == &amp;pre_filler || pre-&gt;type != Text::NIL, <span style='color: var(--red);'>"Must not leave NIL nodes in Text linked-list!"</span>);</span><span id='code003-64'><a href='#code003-64' aria-hidden='true'></a>}</span></pre></code>
 <p>
 I have been leaving out the details inside the if statements in the parsing, but you can see the full details <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/static-site-gen/md_to_html.cpp'>here</a>. The insides are mostly just small amounts of parsing text and then some macros for pushing new <code>Block</code> or <code>Text</code> nodes onto linked lists. You might notice in the above parsing some departures from Markdown, such as <code><a href='link'>text</a></code> to notate a link, instead of a <code>[text](link)</code> pair.
 </p>
@@ -233,75 +99,23 @@ I have been leaving out the details inside the if statements in the parsing, but
 <p>
 As a basic example of what we have so far, parsing the following:
 </p>
-<code id=''><pre>
-## Hello
-It's nice to be **loud**!
-</pre></code>
+<code id='code004'><pre>
+<span id='code004-1'><a href='#code004-1' aria-hidden='true'></a>## Hello</span><span id='code004-2'><a href='#code004-2' aria-hidden='true'></a>It<span style='color: var(--red);'>'s nice to be **loud**!</span></pre></code>
 <p>
 Will give this structure:
 </p>
-<code id=''><pre>
-Block(type=Header, num=2, text=[
-    Text(type=Text, str="Hello")
-]),
-Block(type=Paragraph, text=[
-    Text(type=Text, str="It's nice to be "),
-    Text(type=Bold, str="loud", end=false),
-    Text(type=Bold, str="!", end=true)
-])
-</pre></code>
+<code id='code005'><pre>
+<span id='code005-1'><a href='#code005-1' aria-hidden='true'></a>Block(type=Header, num=2, text=[</span><span id='code005-2'><a href='#code005-2' aria-hidden='true'></a>    Text(type=Text, str=<span style='color: var(--red);'>"Hello"</span>)</span><span id='code005-3'><a href='#code005-3' aria-hidden='true'></a>]),</span><span id='code005-4'><a href='#code005-4' aria-hidden='true'></a>Block(type=Paragraph, text=[</span><span id='code005-5'><a href='#code005-5' aria-hidden='true'></a>    Text(type=Text, str=<span style='color: var(--red);'>"It's nice to be "</span>),</span><span id='code005-6'><a href='#code005-6' aria-hidden='true'></a>    Text(type=Bold, str=<span style='color: var(--red);'>"loud"</span>, end=false),</span><span id='code005-7'><a href='#code005-7' aria-hidden='true'></a>    Text(type=Bold, str=<span style='color: var(--red);'>"!"</span>, end=true)</span><span id='code005-8'><a href='#code005-8' aria-hidden='true'></a>])</span></pre></code>
 <p>
 The desired HTML is something like:
 </p>
 <code id='html'><pre>
-&lt;h2&gt;Hello&lt;/h2&gt;
-&lt;p&gt;It's nice to be &lt;b&gt;loud&lt;/b&gt;!&lt;/p&gt;
-</pre></code>
+<span id='html-1'><a href='#html-1' aria-hidden='true'></a>&lt;h2&gt;Hello&lt;/h2&gt;</span><span id='html-2'><a href='#html-2' aria-hidden='true'></a>&lt;p&gt;It<span style='color: var(--red);'>'s nice to be &lt;b&gt;loud&lt;/b&gt;!&lt;/p&gt;</span></pre></code>
 <p>
 With the above as the goal, it's not hard to imagine rendering the parsed nodes to HTML using a couple loops:
 </p>
-<code id=''><pre>
-StrList render(Arena* arena, Block* root) {
-    StrList out = {0};
-    for (Block* b = root; b-&gt;type != Block::NIL; b = b-&gt;next) {
-        switch (b-&gt;type) {
-            /* Do pre-content tags for Block type. EX: */
-            case Block::ORD_LIST: {
-                StrList_add(arena, &amp;out, strl("&amp;ltol&amp;gt\n"));
-            } break;
-        }
-    
-        b-&gt;content = render_text(arena, b-&gt;text);
-        StrList_append(&amp;out, StrList_copy(arena, b-&gt;content));    
-    
-        switch (b-&gt;type) {
-            /* Do post-content tags for Block type. EX: */
-            case Block::ORD_LIST: {
-                StrList_add(arena, &amp;out, strl("\n&amp;lt/ol&amp;gt\n"));
-            } break;                    
-        }
-    }
-    return out;
-}
-</pre></code>
-
-<code id=''><pre>
-StrList render_text(Arena* arena, Text* root) {
-    StrList out = {0};
-    Text prev_filler = {root, Text::NIL, 0};
-    for (Text* t = root, *prev = &amp;prev_filler; t-&gt;type != Text::NIL; prev = t, t = t-&gt;next) {
-        switch (t-&gt;type) {
-            /* Add start or end tags based on t-&gt;end. EX: */
-            case Text::BOLD: {
-                str s[2] = {strl("&amp;ltb&amp;gt"), strl("&amp;lt/b&amp;gt")};
-                StrList_add(arena, &amp;out, s[t-&gt;end]);
-                StrList_add(arena, &amp;out, t-&gt;text);
-            } break;
-        }
-    }
-    return out;
-}
-</pre></code>
+<code id='code007'><pre>
+<span id='code007-1'><a href='#code007-1' aria-hidden='true'></a>StrList render(Arena* arena, Block* root) {</span><span id='code007-2'><a href='#code007-2' aria-hidden='true'></a>    StrList out = {0};</span><span id='code007-3'><a href='#code007-3' aria-hidden='true'></a>    for (Block* b = root; b-&gt;type != Block::NIL; b = b-&gt;next) {</span><span id='code007-4'><a href='#code007-4' aria-hidden='true'></a>        switch (b-&gt;type) {</span><span id='code007-5'><a href='#code007-5' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Do pre-content tags for Block type. EX: */</span></span><span id='code007-6'><a href='#code007-6' aria-hidden='true'></a>            case Block::ORD_LIST: {</span><span id='code007-7'><a href='#code007-7' aria-hidden='true'></a>                StrList_add(arena, &amp;out, strl(<span style='color: var(--red);'>"&amp;ltol&amp;gt\n"</span>));</span><span id='code007-8'><a href='#code007-8' aria-hidden='true'></a>            } break;</span><span id='code007-9'><a href='#code007-9' aria-hidden='true'></a>        }</span><span id='code007-10'><a href='#code007-10' aria-hidden='true'></a>    </span><span id='code007-11'><a href='#code007-11' aria-hidden='true'></a>        b-&gt;content = render_text(arena, b-&gt;text);</span><span id='code007-12'><a href='#code007-12' aria-hidden='true'></a>        StrList_append(&amp;out, StrList_copy(arena, b-&gt;content));    </span><span id='code007-13'><a href='#code007-13' aria-hidden='true'></a>    </span><span id='code007-14'><a href='#code007-14' aria-hidden='true'></a>        switch (b-&gt;type) {</span><span id='code007-15'><a href='#code007-15' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Do post-content tags for Block type. EX: */</span></span><span id='code007-16'><a href='#code007-16' aria-hidden='true'></a>            case Block::ORD_LIST: {</span><span id='code007-17'><a href='#code007-17' aria-hidden='true'></a>                StrList_add(arena, &amp;out, strl(<span style='color: var(--red);'>"\n&amp;lt/ol&amp;gt\n"</span>));</span><span id='code007-18'><a href='#code007-18' aria-hidden='true'></a>            } break;                    </span><span id='code007-19'><a href='#code007-19' aria-hidden='true'></a>        }</span><span id='code007-20'><a href='#code007-20' aria-hidden='true'></a>    }</span><span id='code007-21'><a href='#code007-21' aria-hidden='true'></a>    return out;</span><span id='code007-22'><a href='#code007-22' aria-hidden='true'></a>}</span><span id='code007-23'><a href='#code007-23' aria-hidden='true'></a></span><span id='code007-24'><a href='#code007-24' aria-hidden='true'></a>StrList render_text(Arena* arena, Text* root) {</span><span id='code007-25'><a href='#code007-25' aria-hidden='true'></a>    StrList out = {0};</span><span id='code007-26'><a href='#code007-26' aria-hidden='true'></a>    Text prev_filler = {root, Text::NIL, 0};</span><span id='code007-27'><a href='#code007-27' aria-hidden='true'></a>    for (Text* t = root, *prev = &amp;prev_filler; t-&gt;type != Text::NIL; prev = t, t = t-&gt;next) {</span><span id='code007-28'><a href='#code007-28' aria-hidden='true'></a>        switch (t-&gt;type) {</span><span id='code007-29'><a href='#code007-29' aria-hidden='true'></a>            <span style='color: var(--comment);'>/* Add start or end tags based on t-&gt;end. EX: */</span></span><span id='code007-30'><a href='#code007-30' aria-hidden='true'></a>            case Text::BOLD: {</span><span id='code007-31'><a href='#code007-31' aria-hidden='true'></a>                str s[2] = {strl(<span style='color: var(--red);'>"&amp;ltb&amp;gt"</span>), strl(<span style='color: var(--red);'>"&amp;lt/b&amp;gt"</span>)};</span><span id='code007-32'><a href='#code007-32' aria-hidden='true'></a>                StrList_add(arena, &amp;out, s[t-&gt;end]);</span><span id='code007-33'><a href='#code007-33' aria-hidden='true'></a>                StrList_add(arena, &amp;out, t-&gt;text);</span><span id='code007-34'><a href='#code007-34' aria-hidden='true'></a>            } break;</span><span id='code007-35'><a href='#code007-35' aria-hidden='true'></a>        }</span><span id='code007-36'><a href='#code007-36' aria-hidden='true'></a>    }</span><span id='code007-37'><a href='#code007-37' aria-hidden='true'></a>    return out;</span><span id='code007-38'><a href='#code007-38' aria-hidden='true'></a>}</span></pre></code>
 
 <hr>
 
@@ -311,95 +125,23 @@ StrList render_text(Arena* arena, Text* root) {
 <p>
 The markdown compiler is a good step, but it needs to be told what to compile, and the results are still missing necessary HTML boilerplate. For my site I decided to have a <code>src</code> folder for the markdown contents of my articles, and then compile everything to a <code>deploy</code> folder containing the generated HTML and other assets:
 </p>
-<code id=''><pre>
-- dev-dwarf.github.io
-    - src
-        foo.md
-        etc...
-    - deploy
-        foo.html
-        etc...
-</pre></code>
+<code id='code008'><pre>
+<span id='code008-1'><a href='#code008-1' aria-hidden='true'></a>- dev-dwarf.github.io</span><span id='code008-2'><a href='#code008-2' aria-hidden='true'></a>    - src</span><span id='code008-3'><a href='#code008-3' aria-hidden='true'></a>        foo.md</span><span id='code008-4'><a href='#code008-4' aria-hidden='true'></a>        etc...</span><span id='code008-5'><a href='#code008-5' aria-hidden='true'></a>    - deploy</span><span id='code008-6'><a href='#code008-6' aria-hidden='true'></a>        foo.html</span><span id='code008-7'><a href='#code008-7' aria-hidden='true'></a>        etc...</span></pre></code>
 <p>
 I started a new file to drive this process. First I defined some structs to store data for each page, and help me manage lists of pages:
 </p>
-<code id=''><pre>
-/* site.h */
-struct Page {
-    Page *next; 
-    str filename;
-    str base_href;
-    StrList base_dir;
-    u64 created_time;
-    u64 modified_time;
-    str title;
-    str content;
-    enum Types {
-        DEFAULT,
-        /* don't worry about the other types for now */
-    } type;
-};
-struct PageList {
-    Page *first;
-    Page *last;
-    u64 count;
-};
-</pre></code>
+<code id='code009'><pre>
+<span id='code009-1'><a href='#code009-1' aria-hidden='true'></a><span style='color: var(--comment);'>/* site.h */</span></span><span id='code009-2'><a href='#code009-2' aria-hidden='true'></a>struct Page {</span><span id='code009-3'><a href='#code009-3' aria-hidden='true'></a>    Page *next; </span><span id='code009-4'><a href='#code009-4' aria-hidden='true'></a>    str filename;</span><span id='code009-5'><a href='#code009-5' aria-hidden='true'></a>    str base_href;</span><span id='code009-6'><a href='#code009-6' aria-hidden='true'></a>    StrList base_dir;</span><span id='code009-7'><a href='#code009-7' aria-hidden='true'></a>    u64 created_time;</span><span id='code009-8'><a href='#code009-8' aria-hidden='true'></a>    u64 modified_time;</span><span id='code009-9'><a href='#code009-9' aria-hidden='true'></a>    str title;</span><span id='code009-10'><a href='#code009-10' aria-hidden='true'></a>    str content;</span><span id='code009-11'><a href='#code009-11' aria-hidden='true'></a>    enum Types {</span><span id='code009-12'><a href='#code009-12' aria-hidden='true'></a>        DEFAULT,</span><span id='code009-13'><a href='#code009-13' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* don't worry about the other types for now */</span></span><span id='code009-14'><a href='#code009-14' aria-hidden='true'></a>    } type;</span><span id='code009-15'><a href='#code009-15' aria-hidden='true'></a>};</span><span id='code009-16'><a href='#code009-16' aria-hidden='true'></a>struct PageList {</span><span id='code009-17'><a href='#code009-17' aria-hidden='true'></a>    Page *first;</span><span id='code009-18'><a href='#code009-18' aria-hidden='true'></a>    Page *last;</span><span id='code009-19'><a href='#code009-19' aria-hidden='true'></a>    u64 count;</span><span id='code009-20'><a href='#code009-20' aria-hidden='true'></a>};</span></pre></code>
 <p>
 Then there is a main loop that goes something like:
 </p>
-<code id=''><pre>
-global StrList dir;
-int main() {
-    Arena *longa = Arena_create_default();
-    Arena *tempa = Arena_create_default();
-
-    /* ... set dir to src directory */
-    
-    PageList allPages = get_pages_in_dir(longa, Page::DEFAULT);
-
-    for (Page *n = allPages.first; n != 0; n = n-&gt;next) {
-        compile_page(longa, tempa, n);
-        Arena_reset_all(tempa);
-    }
-}
-</pre></code>
+<code id='code010'><pre>
+<span id='code010-1'><a href='#code010-1' aria-hidden='true'></a>global StrList dir;</span><span id='code010-2'><a href='#code010-2' aria-hidden='true'></a>int main() {</span><span id='code010-3'><a href='#code010-3' aria-hidden='true'></a>    Arena *longa = Arena_create_default();</span><span id='code010-4'><a href='#code010-4' aria-hidden='true'></a>    Arena *tempa = Arena_create_default();</span><span id='code010-5'><a href='#code010-5' aria-hidden='true'></a></span><span id='code010-6'><a href='#code010-6' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* ... set dir to src directory */</span></span><span id='code010-7'><a href='#code010-7' aria-hidden='true'></a>    </span><span id='code010-8'><a href='#code010-8' aria-hidden='true'></a>    PageList allPages = get_pages_in_dir(longa, Page::DEFAULT);</span><span id='code010-9'><a href='#code010-9' aria-hidden='true'></a></span><span id='code010-10'><a href='#code010-10' aria-hidden='true'></a>    for (Page *n = allPages.first; n != 0; n = n-&gt;next) {</span><span id='code010-11'><a href='#code010-11' aria-hidden='true'></a>        compile_page(longa, tempa, n);</span><span id='code010-12'><a href='#code010-12' aria-hidden='true'></a>        Arena_reset_all(tempa);</span><span id='code010-13'><a href='#code010-13' aria-hidden='true'></a>    }</span><span id='code010-14'><a href='#code010-14' aria-hidden='true'></a>}</span></pre></code>
 <p>
 The <code>global StrList dir</code> holds the current directory/file. It's convenient to have it as a list so that I can pop off or switch out nodes to change the targeted file or directory. <code>get_pages_in_dir</code> just uses filesystem calls to make a list of markdown files in the <code>src</code> folder. <code>compile_page</code> loads the raw markdown, compiles it, and adds some enclosing HTML to the front and back. Finally it's written out to the equivalent HTML file in the <code>deploy</code> folder:
 </p>
-<code id=''><pre>
-void compile_page(Arena *longa, Arena *tempa, Page *page) {
-    StrList_append(&amp;dir, page-&gt;base_dir);
-        
-    filename.str = page-&gt;filename;
-    StrList_add_node(&amp;dir, &amp;filename);
-    switch_to_dir(&amp;src);
-    page-&gt;content = win32_load_entire_file(tempa, build_dir(tempa));
-    StrList_pop_node(&amp;dir);
-
-    filename.str = str_concat(tempa, str_cut(page-&gt;filename, 3), strl("html\0"));
-    StrList_add_node(&amp;dir, &amp;filename);
-
-    StrList html = {0};
-    StrList_add(tempa, &amp;html, HEADER);
-    StrList_add(tempa, &amp;html, strl("\t&lt;title&gt;LCF/DD:"));
-    StrList_add(tempa, &amp;html, page-&gt;title);
-    StrList_add(tempa, &amp;html, strl("&lt;/title&gt;\n"));
-
-    Block* blocks = parse(tempa, page-&gt;content);
-    StrList md = render(tempa, blocks);
-    StrList_append(&amp;html, md);
-    
-    StrList_add(tempa, &amp;html, FOOTER);
-
-    switch_to_dir(&amp;deploy);
-    win32_write_file(build_dir(tempa).str, html);
-
-    page-&gt;content = str_EMPTY; /* clear this because it was on the temp arena */
-    StrList_pop_node(&amp;dir);
-    StrList_pop(&amp;dir, page-&gt;base_dir.count);
-}
-</pre></code>
+<code id='code011'><pre>
+<span id='code011-1'><a href='#code011-1' aria-hidden='true'></a>void compile_page(Arena *longa, Arena *tempa, Page *page) {</span><span id='code011-2'><a href='#code011-2' aria-hidden='true'></a>    StrList_append(&amp;dir, page-&gt;base_dir);</span><span id='code011-3'><a href='#code011-3' aria-hidden='true'></a>        </span><span id='code011-4'><a href='#code011-4' aria-hidden='true'></a>    filename.str = page-&gt;filename;</span><span id='code011-5'><a href='#code011-5' aria-hidden='true'></a>    StrList_add_node(&amp;dir, &amp;filename);</span><span id='code011-6'><a href='#code011-6' aria-hidden='true'></a>    switch_to_dir(&amp;src);</span><span id='code011-7'><a href='#code011-7' aria-hidden='true'></a>    page-&gt;content = win32_load_entire_file(tempa, build_dir(tempa));</span><span id='code011-8'><a href='#code011-8' aria-hidden='true'></a>    StrList_pop_node(&amp;dir);</span><span id='code011-9'><a href='#code011-9' aria-hidden='true'></a></span><span id='code011-10'><a href='#code011-10' aria-hidden='true'></a>    filename.str = str_concat(tempa, str_cut(page-&gt;filename, 3), strl(<span style='color: var(--red);'>"html\0"</span>));</span><span id='code011-11'><a href='#code011-11' aria-hidden='true'></a>    StrList_add_node(&amp;dir, &amp;filename);</span><span id='code011-12'><a href='#code011-12' aria-hidden='true'></a></span><span id='code011-13'><a href='#code011-13' aria-hidden='true'></a>    StrList html = {0};</span><span id='code011-14'><a href='#code011-14' aria-hidden='true'></a>    StrList_add(tempa, &amp;html, HEADER);</span><span id='code011-15'><a href='#code011-15' aria-hidden='true'></a>    StrList_add(tempa, &amp;html, strl(<span style='color: var(--red);'>"\t&lt;title&gt;LCF/DD:"</span>));</span><span id='code011-16'><a href='#code011-16' aria-hidden='true'></a>    StrList_add(tempa, &amp;html, page-&gt;title);</span><span id='code011-17'><a href='#code011-17' aria-hidden='true'></a>    StrList_add(tempa, &amp;html, strl(<span style='color: var(--red);'>"&lt;/title&gt;\n"</span>));</span><span id='code011-18'><a href='#code011-18' aria-hidden='true'></a></span><span id='code011-19'><a href='#code011-19' aria-hidden='true'></a>    Block* blocks = parse(tempa, page-&gt;content);</span><span id='code011-20'><a href='#code011-20' aria-hidden='true'></a>    StrList md = render(tempa, blocks);</span><span id='code011-21'><a href='#code011-21' aria-hidden='true'></a>    StrList_append(&amp;html, md);</span><span id='code011-22'><a href='#code011-22' aria-hidden='true'></a>    </span><span id='code011-23'><a href='#code011-23' aria-hidden='true'></a>    StrList_add(tempa, &amp;html, FOOTER);</span><span id='code011-24'><a href='#code011-24' aria-hidden='true'></a></span><span id='code011-25'><a href='#code011-25' aria-hidden='true'></a>    switch_to_dir(&amp;deploy);</span><span id='code011-26'><a href='#code011-26' aria-hidden='true'></a>    win32_write_file(build_dir(tempa).str, html);</span><span id='code011-27'><a href='#code011-27' aria-hidden='true'></a></span><span id='code011-28'><a href='#code011-28' aria-hidden='true'></a>    page-&gt;content = str_EMPTY; <span style='color: var(--comment);'>/* clear this because it was on the temp arena */</span></span><span id='code011-29'><a href='#code011-29' aria-hidden='true'></a>    StrList_pop_node(&amp;dir);</span><span id='code011-30'><a href='#code011-30' aria-hidden='true'></a>    StrList_pop(&amp;dir, page-&gt;base_dir.count);</span><span id='code011-31'><a href='#code011-31' aria-hidden='true'></a>}</span></pre></code>
 <p>
 And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>on GitHub</a>. You may have noticed an unused type field for pages; the real version of the generator has <code>ARTICLE</code> pages and an <code>INDEX</code> page. <code>ARTICLE</code>s have slightly different HTML generated, and the <code>INDEX</code> gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
 </p>

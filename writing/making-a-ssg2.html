@@ -65,59 +65,21 @@ In this post I'll walk through how adding one simple feature to my markdown pars
 <p>
 So instead of writing an interpreter for some crappy template language, here's how the markdown compiler has been updated to handle special templates (<code>md_to_html.cpp</code>):
 </p>
-<code id=''><pre>
-/* in parse()... */
-} else if (c[0] == '@' &amp;&amp; c[1] == '{') {
-PUSH_BLOCK(); /* Immediately end the previous block. */
-line = str_skip(line, 2);
-/* Mark this block as special, save first arg as .id */
-next.type = Block::SPECIAL;
-next.id = str_pop_at_first_delimiter(&amp;line, strl(",}"));
-/* Push remaining args to .content */
-str_iter_pop_delimiter(line, strl(",}")) {
-    /* NOTE(lcf): optionally allow space in args list */
-    if (str_char_location(sub, ' ') == 0) {
-        sub = str_skip(sub, 1);
-    }
-    StrList_push(arena, &amp;next.content, sub);
-}
-/* End the special block */
-PUSH_BLOCK();
-}
-</pre></code>
+<code id='code000'><pre>
+<span id='code000-1'><a href='#code000-1' aria-hidden='true'></a><span style='color: var(--comment);'>/* in parse()... */</span></span><span id='code000-2'><a href='#code000-2' aria-hidden='true'></a>} else if (c[0] == <span style='color: var(--red);'>'@'</span> &amp;&amp; c[1] == <span style='color: var(--red);'>'{'</span>) {</span><span id='code000-3'><a href='#code000-3' aria-hidden='true'></a>PUSH_BLOCK(); <span style='color: var(--comment);'>/* Immediately end the previous block. */</span></span><span id='code000-4'><a href='#code000-4' aria-hidden='true'></a>line = str_skip(line, 2);</span><span id='code000-5'><a href='#code000-5' aria-hidden='true'></a><span style='color: var(--comment);'>/* Mark this block as special, save first arg as .id */</span></span><span id='code000-6'><a href='#code000-6' aria-hidden='true'></a>next.type = Block::SPECIAL;</span><span id='code000-7'><a href='#code000-7' aria-hidden='true'></a>next.id = str_pop_at_first_delimiter(&amp;line, strl(<span style='color: var(--red);'>",}"</span>));</span><span id='code000-8'><a href='#code000-8' aria-hidden='true'></a><span style='color: var(--comment);'>/* Push remaining args to .content */</span></span><span id='code000-9'><a href='#code000-9' aria-hidden='true'></a>str_iter_pop_delimiter(line, strl(<span style='color: var(--red);'>",}"</span>)) {</span><span id='code000-10'><a href='#code000-10' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* NOTE(lcf): optionally allow space in args list */</span></span><span id='code000-11'><a href='#code000-11' aria-hidden='true'></a>    if (str_char_location(sub, <span style='color: var(--red);'>' '</span>) == 0) {</span><span id='code000-12'><a href='#code000-12' aria-hidden='true'></a>        sub = str_skip(sub, 1);</span><span id='code000-13'><a href='#code000-13' aria-hidden='true'></a>    }</span><span id='code000-14'><a href='#code000-14' aria-hidden='true'></a>    StrList_push(arena, &amp;next.content, sub);</span><span id='code000-15'><a href='#code000-15' aria-hidden='true'></a>}</span><span id='code000-16'><a href='#code000-16' aria-hidden='true'></a><span style='color: var(--comment);'>/* End the special block */</span></span><span id='code000-17'><a href='#code000-17' aria-hidden='true'></a>PUSH_BLOCK();</span><span id='code000-18'><a href='#code000-18' aria-hidden='true'></a>}</span></pre></code>
 <p>
 That's it. There's no additional rendering code or anything else in the markdown compiler, it just packages up arguments into the Block data structure and then is done. All the remaining work of handling the special templates is in the site specific code (<code>site.cpp</code>).
 </p>
 <p>
 So now in <code>site.cpp:compile_page()</code>, instead of:
 </p>
-<code id=''><pre>
-/* ... snip ... */
-Block* blocks = parse(tempa, page-&gt;content);
-StrList md = {0};
-for (Block* b = blocks; b-&gt;type != Block::NIL; b = b-&gt;next) {
-    md = render_block(tempa, b);
-    StrList_append(&amp;html, md);
-}
-/* ... snip ... */
-</pre></code>
+<code id='code001'><pre>
+<span id='code001-1'><a href='#code001-1' aria-hidden='true'></a><span style='color: var(--comment);'>/* ... snip ... */</span></span><span id='code001-2'><a href='#code001-2' aria-hidden='true'></a>Block* blocks = parse(tempa, page-&gt;content);</span><span id='code001-3'><a href='#code001-3' aria-hidden='true'></a>StrList md = {0};</span><span id='code001-4'><a href='#code001-4' aria-hidden='true'></a>for (Block* b = blocks; b-&gt;type != Block::NIL; b = b-&gt;next) {</span><span id='code001-5'><a href='#code001-5' aria-hidden='true'></a>    md = render_block(tempa, b);</span><span id='code001-6'><a href='#code001-6' aria-hidden='true'></a>    StrList_append(&amp;html, md);</span><span id='code001-7'><a href='#code001-7' aria-hidden='true'></a>}</span><span id='code001-8'><a href='#code001-8' aria-hidden='true'></a><span style='color: var(--comment);'>/* ... snip ... */</span></span></pre></code>
 <p>
 I now have:
 </p>
-<code id=''><pre>
-/* ... snip ... */
-Block* blocks = parse(tempa, page-&gt;content);
-StrList md = {0};
-for (Block* b = blocks; b-&gt;type != Block::NIL; b = b-&gt;next) {
-    if (b-&gt;type != Block::SPECIAL) {
-        md = render_block(tempa, b);
-        StrList_append(&amp;html, md);
-    } else {
-        render_special_block(longa, tempa, page, &amp;html, &amp;back, blocks, b);
-    }
-}
-/* ... snip ... */
-</pre></code>
+<code id='code002'><pre>
+<span id='code002-1'><a href='#code002-1' aria-hidden='true'></a><span style='color: var(--comment);'>/* ... snip ... */</span></span><span id='code002-2'><a href='#code002-2' aria-hidden='true'></a>Block* blocks = parse(tempa, page-&gt;content);</span><span id='code002-3'><a href='#code002-3' aria-hidden='true'></a>StrList md = {0};</span><span id='code002-4'><a href='#code002-4' aria-hidden='true'></a>for (Block* b = blocks; b-&gt;type != Block::NIL; b = b-&gt;next) {</span><span id='code002-5'><a href='#code002-5' aria-hidden='true'></a>    if (b-&gt;type != Block::SPECIAL) {</span><span id='code002-6'><a href='#code002-6' aria-hidden='true'></a>        md = render_block(tempa, b);</span><span id='code002-7'><a href='#code002-7' aria-hidden='true'></a>        StrList_append(&amp;html, md);</span><span id='code002-8'><a href='#code002-8' aria-hidden='true'></a>    } else {</span><span id='code002-9'><a href='#code002-9' aria-hidden='true'></a>        render_special_block(longa, tempa, page, &amp;html, &amp;back, blocks, b);</span><span id='code002-10'><a href='#code002-10' aria-hidden='true'></a>    }</span><span id='code002-11'><a href='#code002-11' aria-hidden='true'></a>}</span><span id='code002-12'><a href='#code002-12' aria-hidden='true'></a><span style='color: var(--comment);'>/* ... snip ... */</span></span></pre></code>
 <p>
 Where <code>render_special_block()</code> contains the code to handle each special node. That's all fine, but really I haven't done anything useful yet, so lets look at some examples of templates that I've implemented for the site so far.
 </p>
@@ -132,16 +94,8 @@ Where <code>render_special_block()</code> contains the code to handle each speci
 <p>
 The markdown for <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/src/technical/making-a-ssg2.md'>this page</a> starts off with the <code>@{article}</code> special block, which just puts a short message at the end of the page. This code is even slightly more complicated than it needs to be at the moment, because in the future when I have more articles I will make the link take you back to the part of the index page where the link for the current article is.
 </p>
-<code id=''><pre>
-if (str_eq(block-&gt;id, strl("article"))) {
-    str link_ref = StrList_join(tempa, page-&gt;base_dir, {strl("#"), strl("/  "), {}});
-    StrList_pushv(tempa, back,
-                  strl("&lt;hr&gt;&lt;p class='centert'&gt; Feel free to message me with any comments about this article! &lt;br&gt; Email: &lt;code&gt;contact@loganforman  .com&lt;/code&gt; &lt;/p&gt;"),
-                  strl("&lt;a class='btn' href='/writing.html"),
-                  link_ref,
-                  strl("'&gt;←  back to index&lt;/a&gt;"));
-}
-</pre></code>
+<code id='code003'><pre>
+<span id='code003-1'><a href='#code003-1' aria-hidden='true'></a>if (str_eq(block-&gt;id, strl(<span style='color: var(--red);'>"article"</span>))) {</span><span id='code003-2'><a href='#code003-2' aria-hidden='true'></a>    str link_ref = StrList_join(tempa, page-&gt;base_dir, {strl(<span style='color: var(--red);'>"#"</span>), strl(<span style='color: var(--red);'>"/  "</span>), {}});</span><span id='code003-3'><a href='#code003-3' aria-hidden='true'></a>    StrList_pushv(tempa, back,</span><span id='code003-4'><a href='#code003-4' aria-hidden='true'></a>                  strl(<span style='color: var(--red);'>"&lt;hr&gt;&lt;p class='centert'&gt; Feel free to message me with any comments about this article! &lt;br&gt; Email: &lt;code&gt;contact@loganforman  .com&lt;/code&gt; &lt;/p&gt;"</span>),</span><span id='code003-5'><a href='#code003-5' aria-hidden='true'></a>                  strl(<span style='color: var(--red);'>"&lt;a class='btn' href='/writing.html"</span>),</span><span id='code003-6'><a href='#code003-6' aria-hidden='true'></a>                  link_ref,</span><span id='code003-7'><a href='#code003-7' aria-hidden='true'></a>                  strl(<span style='color: var(--red);'>"'&gt;←  back to index&lt;/a&gt;"</span>));</span><span id='code003-8'><a href='#code003-8' aria-hidden='true'></a>}</span></pre></code>
 
 <h3 id='sections'>
  @{sections}
@@ -149,43 +103,8 @@ if (str_eq(block-&gt;id, strl("article"))) {
 <p>
 A <code>@{sections}</code> block will make a list of clickable links to headers on the page. This node is a bit bigger than the others as it handles a few special cases like headers in expandable sections and different levels of indentation for different sizes of header. The code iterates through the block list for the page, searching for headings with a non-empty id (the id is used to create the link url, and so indicates that it can be linked to at all). Additional list levels are created or ended based on the difference of size between the previous and next heading.
 </p>
-<code id=''><pre>
-if (str_eq(block-&gt;id, strl("sections"))) {
-    StrList_push(tempa, front, strl("&lt;ul class='sections'&gt;\n"));
-    u32 n = 0; u32 nfirst = 0;
-    for (Block* b = block; b-&gt;type != Block::NIL; b = b-&gt;next) {
-        if ((b-&gt;type == Block::HEADING || b-&gt;type == Block::EXPAND)
-           &amp;&amp; str_not_empty(b-&gt;id)) {
-            if (n == 0) {
-                n = b-&gt;num;
-                nfirst = n;
-            }
-            for (; n &lt; b-&gt;num; n++) {
-                StrList_push(tempa, front, strl("&lt;ul class='sections'&gt;\n"));
-            }
-            for (; n &gt; b-&gt;num; n--) {
-                StrList_push(tempa, front, strl("&lt;/ul&gt;\n"));
-            }
-            n = b-&gt;num;
-        }
-        if (b-&gt;type == Block::HEADING &amp;&amp; str_not_empty(b-&gt;id)) {
-            StrList_pushv(tempa, front, strl("&lt;li&gt;&lt;a href='#"), b-&gt;id, strl("'&gt;"));
-            StrList_append(front, render_text(tempa, b-&gt;text));
-            StrList_push(tempa, front, strl("&lt;/a&gt;&lt;/li&gt;\n"));
-        }
-        if (b-&gt;type == Block::EXPAND &amp;&amp; str_not_empty(b-&gt;id)) {
-            StrList_pushv(tempa, front, strl("&lt;li&gt;&lt;a href='#"),
-                        b-&gt;id,
-                        strl("'&gt;"),
-                        b-&gt;title,
-                        strl("&lt;/a&gt;&lt;/li&gt;\n"));
-        }
-    }
-    for (; n &gt;= nfirst; n--) {
-        StrList_push(tempa, front, strl("&lt;/ul&gt;\n"));
-    }
-}
-</pre></code>
+<code id='code004'><pre>
+<span id='code004-1'><a href='#code004-1' aria-hidden='true'></a>if (str_eq(block-&gt;id, strl(<span style='color: var(--red);'>"sections"</span>))) {</span><span id='code004-2'><a href='#code004-2' aria-hidden='true'></a>    StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;ul class='sections'&gt;\n"</span>));</span><span id='code004-3'><a href='#code004-3' aria-hidden='true'></a>    u32 n = 0; u32 nfirst = 0;</span><span id='code004-4'><a href='#code004-4' aria-hidden='true'></a>    for (Block* b = block; b-&gt;type != Block::NIL; b = b-&gt;next) {</span><span id='code004-5'><a href='#code004-5' aria-hidden='true'></a>        if ((b-&gt;type == Block::HEADING || b-&gt;type == Block::EXPAND)</span><span id='code004-6'><a href='#code004-6' aria-hidden='true'></a>           &amp;&amp; str_not_empty(b-&gt;id)) {</span><span id='code004-7'><a href='#code004-7' aria-hidden='true'></a>            if (n == 0) {</span><span id='code004-8'><a href='#code004-8' aria-hidden='true'></a>                n = b-&gt;num;</span><span id='code004-9'><a href='#code004-9' aria-hidden='true'></a>                nfirst = n;</span><span id='code004-10'><a href='#code004-10' aria-hidden='true'></a>            }</span><span id='code004-11'><a href='#code004-11' aria-hidden='true'></a>            for (; n &lt; b-&gt;num; n++) {</span><span id='code004-12'><a href='#code004-12' aria-hidden='true'></a>                StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;ul class='sections'&gt;\n"</span>));</span><span id='code004-13'><a href='#code004-13' aria-hidden='true'></a>            }</span><span id='code004-14'><a href='#code004-14' aria-hidden='true'></a>            for (; n &gt; b-&gt;num; n--) {</span><span id='code004-15'><a href='#code004-15' aria-hidden='true'></a>                StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;/ul&gt;\n"</span>));</span><span id='code004-16'><a href='#code004-16' aria-hidden='true'></a>            }</span><span id='code004-17'><a href='#code004-17' aria-hidden='true'></a>            n = b-&gt;num;</span><span id='code004-18'><a href='#code004-18' aria-hidden='true'></a>        }</span><span id='code004-19'><a href='#code004-19' aria-hidden='true'></a>        if (b-&gt;type == Block::HEADING &amp;&amp; str_not_empty(b-&gt;id)) {</span><span id='code004-20'><a href='#code004-20' aria-hidden='true'></a>            StrList_pushv(tempa, front, strl(<span style='color: var(--red);'>"&lt;li&gt;&lt;a href='#"</span>), b-&gt;id, strl(<span style='color: var(--red);'>"'&gt;"</span>));</span><span id='code004-21'><a href='#code004-21' aria-hidden='true'></a>            StrList_append(front, render_text(tempa, b-&gt;text));</span><span id='code004-22'><a href='#code004-22' aria-hidden='true'></a>            StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;/a&gt;&lt;/li&gt;\n"</span>));</span><span id='code004-23'><a href='#code004-23' aria-hidden='true'></a>        }</span><span id='code004-24'><a href='#code004-24' aria-hidden='true'></a>        if (b-&gt;type == Block::EXPAND &amp;&amp; str_not_empty(b-&gt;id)) {</span><span id='code004-25'><a href='#code004-25' aria-hidden='true'></a>            StrList_pushv(tempa, front, strl(<span style='color: var(--red);'>"&lt;li&gt;&lt;a href='#"</span>),</span><span id='code004-26'><a href='#code004-26' aria-hidden='true'></a>                        b-&gt;id,</span><span id='code004-27'><a href='#code004-27' aria-hidden='true'></a>                        strl(<span style='color: var(--red);'>"'&gt;"</span>),</span><span id='code004-28'><a href='#code004-28' aria-hidden='true'></a>                        b-&gt;title,</span><span id='code004-29'><a href='#code004-29' aria-hidden='true'></a>                        strl(<span style='color: var(--red);'>"&lt;/a&gt;&lt;/li&gt;\n"</span>));</span><span id='code004-30'><a href='#code004-30' aria-hidden='true'></a>        }</span><span id='code004-31'><a href='#code004-31' aria-hidden='true'></a>    }</span><span id='code004-32'><a href='#code004-32' aria-hidden='true'></a>    for (; n &gt;= nfirst; n--) {</span><span id='code004-33'><a href='#code004-33' aria-hidden='true'></a>        StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;/ul&gt;\n"</span>));</span><span id='code004-34'><a href='#code004-34' aria-hidden='true'></a>    }</span><span id='code004-35'><a href='#code004-35' aria-hidden='true'></a>}</span></pre></code>
 
 <h3 id='index'>
  @{index}
@@ -193,31 +112,8 @@ if (str_eq(block-&gt;id, strl("sections"))) {
 <p>
 The original inspiration for designing the special block feature this way was to create an index of pages. Implementing this feature requires some metadata about other pages that exist in the site, as well as the ability to iterate over these pages. An index special block will be written as <code>@{index, /dir/}</code>, where <code>dir</code> is the directory containing the pages to index. The code for this special block simply accesses the list of all the pages in the site, and checks for those which are in the directory specified by the parameter. For each of these pages, it adds an entry to a table with the title of the page (which itself is set by a title special block).
 </p>
-<code id=''><pre>
-if (str_eq(block-&gt;id, strl("index"))) {
-    str base_href = block-&gt;content.first-&gt;str;
-    StrList_push(tempa, front, strl("&lt;table&gt;&lt;tr&gt;&lt;td&gt;Date&lt;/td&gt;&lt;td&gt;Title&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"));
-    for (Page *p = allPages.first; p != 0; p = p-&gt;next) {
-        if (str_eq(p-&gt;base_href, base_href) &amp;&amp; str_not_empty(p-&gt;title)) {
-            StrList_pushv(tempa, front, strl("&lt;tr&gt;&lt;td&gt;&lt;code&gt;"),
-                         p-&gt;date,
-                         strl("&lt;/code&gt;&lt;/td&gt;&lt;td&gt;"),
-                         strl("&lt;a href='"),
-                         p-&gt;base_href,
-                         str_cut(p-&gt;filename,2),
-                         strl("html'&gt;"),
-                         p-&gt;title,
-                         strl("&lt;/a&gt;"),
-                         strl("&lt;/td&gt;&lt;td&gt;&lt;a class='centered btn' href='"),
-                         p-&gt;base_href,
-                         str_cut(p-&gt;filename,2),
-                         strl("html'&gt;"),
-                         strl("Read →&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"));
-        }
-    }
-    StrList_push(tempa, front, strl("&lt;/table&gt;"));
-}
-</pre></code>
+<code id='code005'><pre>
+<span id='code005-1'><a href='#code005-1' aria-hidden='true'></a>if (str_eq(block-&gt;id, strl(<span style='color: var(--red);'>"index"</span>))) {</span><span id='code005-2'><a href='#code005-2' aria-hidden='true'></a>    str base_href = block-&gt;content.first-&gt;str;</span><span id='code005-3'><a href='#code005-3' aria-hidden='true'></a>    StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;table&gt;&lt;tr&gt;&lt;td&gt;Date&lt;/td&gt;&lt;td&gt;Title&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span>));</span><span id='code005-4'><a href='#code005-4' aria-hidden='true'></a>    for (Page *p = allPages.first; p != 0; p = p-&gt;next) {</span><span id='code005-5'><a href='#code005-5' aria-hidden='true'></a>        if (str_eq(p-&gt;base_href, base_href) &amp;&amp; str_not_empty(p-&gt;title)) {</span><span id='code005-6'><a href='#code005-6' aria-hidden='true'></a>            StrList_pushv(tempa, front, strl(<span style='color: var(--red);'>"&lt;tr&gt;&lt;td&gt;&lt;code&gt;"</span>),</span><span id='code005-7'><a href='#code005-7' aria-hidden='true'></a>                         p-&gt;date,</span><span id='code005-8'><a href='#code005-8' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"&lt;/code&gt;&lt;/td&gt;&lt;td&gt;"</span>),</span><span id='code005-9'><a href='#code005-9' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"&lt;a href='"</span>),</span><span id='code005-10'><a href='#code005-10' aria-hidden='true'></a>                         p-&gt;base_href,</span><span id='code005-11'><a href='#code005-11' aria-hidden='true'></a>                         str_cut(p-&gt;filename,2),</span><span id='code005-12'><a href='#code005-12' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"html'&gt;"</span>),</span><span id='code005-13'><a href='#code005-13' aria-hidden='true'></a>                         p-&gt;title,</span><span id='code005-14'><a href='#code005-14' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"&lt;/a&gt;"</span>),</span><span id='code005-15'><a href='#code005-15' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"&lt;/td&gt;&lt;td&gt;&lt;a class='centered btn' href='"</span>),</span><span id='code005-16'><a href='#code005-16' aria-hidden='true'></a>                         p-&gt;base_href,</span><span id='code005-17'><a href='#code005-17' aria-hidden='true'></a>                         str_cut(p-&gt;filename,2),</span><span id='code005-18'><a href='#code005-18' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"html'&gt;"</span>),</span><span id='code005-19'><a href='#code005-19' aria-hidden='true'></a>                         strl(<span style='color: var(--red);'>"Read →&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"</span>));</span><span id='code005-20'><a href='#code005-20' aria-hidden='true'></a>        }</span><span id='code005-21'><a href='#code005-21' aria-hidden='true'></a>    }</span><span id='code005-22'><a href='#code005-22' aria-hidden='true'></a>    StrList_push(tempa, front, strl(<span style='color: var(--red);'>"&lt;/table&gt;"</span>));</span><span id='code005-23'><a href='#code005-23' aria-hidden='true'></a>}</span></pre></code>
 
 <hr>
 

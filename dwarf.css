@@ -38,6 +38,7 @@ body {
     --deep: var(--purple);
     --low: var(--bone);
     --high: var(--yellow);
+    --comment: var(--green);
 }
 
 body[data-theme="night"] {
@@ -47,6 +48,7 @@ body[data-theme="night"] {
     --deep: var(--black);
     --low: var(--dblue);
     --high: var(--dblue);
+    --comment: var(--grey);
 }
 
 .articles ul {
@@ -141,20 +143,44 @@ blockquote {
 }
 
 pre {
-    border-left: 2px solid var(--high);
-    margin: 1rem 1rem;
-    padding: 1rem 1rem;
-    white-space: pre-wrap;
+    margin: 1rem 0em;
+    padding: 0rem 0rem;
+    white-space: preserve nowrap;
     font-family: 'Code', monospace;
     font-size: 12px;
     line-height: 1.0rem;
     word-wrap: break-word;
+    counter-reset: source-line 0;
 }
 code {
     font-family: 'Code', monospace;
     font-size: 12px;
-    line-height: 1.0rem;
+    
     word-wrap: break-word;       
+}
+pre > span {
+    line-height: 1.25
+    white-space: pre-wrap;
+    position: relative;
+    left: -5em; 
+    padding: none; margin: none; border: none;
+    counter-increment: source-line;
+}
+pre > span > a:first-child::before {
+    font-weight: bold;
+    color: var(--high);
+    background-color: var(--bg);
+    position: relative;
+    text-align: right;
+    padding: none; margin: none; border: none;
+    display: inline-block;
+    width: 5em;
+    vertical-align: baseline;
+    padding-right: 1em;
+    content: counter(source-line);
+}
+pre > span > a:first-child:hover::before {
+    color: var(--blue) !important;
 }
 
 abbr {

@@ -79,58 +79,22 @@ and added to the system for my games. Here's some footage of the final result in
 <p>
 My desired API is roughly the same as rxi's:
 </p>
-<code id=''><pre>
-void undo_push(void *source, s64 size); /* Mark regions that will potentially change */
-void undo_commit(); /* Check marked regions and finalize action or discard regions. */
-void undo();
-void redo();
-
-/* Usage */
-for (;;) { /* Event/Game loop */
-  handle_events();
-
-  if (mouse.is_pressed) {
-    undo_push(bitmap, sizeof(bitmap))
-    set_pixel(bitmap, mouse.x, mouse.y);
-  }
-
-  if (!mouse.is_pressed) { undo_commit(); }
-
-  draw();
-}
-</pre></code>
+<code id='code000'><pre>
+<span id='code000-1'><a href='#code000-1' aria-hidden='true'></a>void undo_push(void *source, s64 size); <span style='color: var(--comment);'>/* Mark regions that will potentially change */</span></span><span id='code000-2'><a href='#code000-2' aria-hidden='true'></a>void undo_commit(); <span style='color: var(--comment);'>/* Check marked regions and finalize action or discard regions. */</span></span><span id='code000-3'><a href='#code000-3' aria-hidden='true'></a>void undo();</span><span id='code000-4'><a href='#code000-4' aria-hidden='true'></a>void redo();</span><span id='code000-5'><a href='#code000-5' aria-hidden='true'></a></span><span id='code000-6'><a href='#code000-6' aria-hidden='true'></a><span style='color: var(--comment);'>/* Usage */</span></span><span id='code000-7'><a href='#code000-7' aria-hidden='true'></a>for (;;) { <span style='color: var(--comment);'>/* Event/Game loop */</span></span><span id='code000-8'><a href='#code000-8' aria-hidden='true'></a>  handle_events();</span><span id='code000-9'><a href='#code000-9' aria-hidden='true'></a></span><span id='code000-10'><a href='#code000-10' aria-hidden='true'></a>  if (mouse.is_pressed) {</span><span id='code000-11'><a href='#code000-11' aria-hidden='true'></a>    undo_push(bitmap, sizeof(bitmap))</span><span id='code000-12'><a href='#code000-12' aria-hidden='true'></a>    set_pixel(bitmap, mouse.x, mouse.y);</span><span id='code000-13'><a href='#code000-13' aria-hidden='true'></a>  }</span><span id='code000-14'><a href='#code000-14' aria-hidden='true'></a></span><span id='code000-15'><a href='#code000-15' aria-hidden='true'></a>  if (!mouse.is_pressed) { undo_commit(); }</span><span id='code000-16'><a href='#code000-16' aria-hidden='true'></a></span><span id='code000-17'><a href='#code000-17' aria-hidden='true'></a>  draw();</span><span id='code000-18'><a href='#code000-18' aria-hidden='true'></a>}</span></pre></code>
 <p>
 At the core of the undo system are the <code>Delta</code> structs which are the basic primitives for constructing commits, 
 which together comprise an undo/redo action that can be surfaced to the user. 
 </p>
-<code id=''><pre>
-typedef struct {
-    s64 size;
-    u8* copy;
-    u8* source;
-} Delta;
-</pre></code>
+<code id='code001'><pre>
+<span id='code001-1'><a href='#code001-1' aria-hidden='true'></a>typedef struct {</span><span id='code001-2'><a href='#code001-2' aria-hidden='true'></a>    s64 size;</span><span id='code001-3'><a href='#code001-3' aria-hidden='true'></a>    u8* copy;</span><span id='code001-4'><a href='#code001-4' aria-hidden='true'></a>    u8* source;</span><span id='code001-5'><a href='#code001-5' aria-hidden='true'></a>} Delta;</span></pre></code>
 <p>
 The <code>Undo</code> struct holds all the Deltas and other information needed for the overall Undo system. The copy arena 
 will hold the copies of all the data pointed to by the deltas. 
 For my current use case I just have a global instance of this struct, so the methods just operate on that instance.
 You can easily switch over to passing the Undo struct explicitly if needed. 
 </p>
-<code id=''><pre>
-#define UNDO_MEMORY MB(10)
-#define MAX_UNDOS 0x10000 /* ~3 MB of undos, 7 MB for copied state */
-typedef struct {
-    Arena* copy;
-    Delta delta[MAX_UNDOS];
-    s32 undo;
-    s32 redo; /* &gt;= undo */
-    s32 temp; /* &gt;= redo */
-    u8 *copy_redo_start;
-    u8 *copy_temp_start;
-    s32 tag;
-} Undo;
-Undo *UNDO;
-</pre></code>
+<code id='code002'><pre>
+<span id='code002-1'><a href='#code002-1' aria-hidden='true'></a>#define UNDO_MEMORY MB(10)</span><span id='code002-2'><a href='#code002-2' aria-hidden='true'></a>#define MAX_UNDOS 0x10000 <span style='color: var(--comment);'>/* ~3 MB of undos, 7 MB for copied state */</span></span><span id='code002-3'><a href='#code002-3' aria-hidden='true'></a>typedef struct {</span><span id='code002-4'><a href='#code002-4' aria-hidden='true'></a>    Arena* copy;</span><span id='code002-5'><a href='#code002-5' aria-hidden='true'></a>    Delta delta[MAX_UNDOS];</span><span id='code002-6'><a href='#code002-6' aria-hidden='true'></a>    s32 undo;</span><span id='code002-7'><a href='#code002-7' aria-hidden='true'></a>    s32 redo; <span style='color: var(--comment);'>/* &gt;= undo */</span></span><span id='code002-8'><a href='#code002-8' aria-hidden='true'></a>    s32 temp; <span style='color: var(--comment);'>/* &gt;= redo */</span></span><span id='code002-9'><a href='#code002-9' aria-hidden='true'></a>    u8 *copy_redo_start;</span><span id='code002-10'><a href='#code002-10' aria-hidden='true'></a>    u8 *copy_temp_start;</span><span id='code002-11'><a href='#code002-11' aria-hidden='true'></a>    s32 tag;</span><span id='code002-12'><a href='#code002-12' aria-hidden='true'></a>} Undo;</span><span id='code002-13'><a href='#code002-13' aria-hidden='true'></a>Undo *UNDO;</span></pre></code>
 <p>
 Following rxi's recommendations, the undo, redo, and temp state are stored in 3 stacks. However in my implementation 
 all of these stacks live in the same <code>Undo->delta</code> array, where the undo stack is elements [0, undo), redo is [undo, redo),
@@ -142,173 +106,27 @@ The <code>undo_push</code> and <code>undo_commit</code> functions are the core o
 them onto the temp stack. <code>undo_commit</code> then checks each currently marked region for any changes. The copies for changed regions 
 are moved so that they are next to previous undo information, overwriting any redo information.
 </p>
-<code id=''><pre>
-void undo_push(void* source, s64 size) {
-    u8* copy = Arena_take(UNDO-&gt;copy, size);
-    memcpy(copy, source, size);
-    UNDO-&gt;delta[UNDO-&gt;temp] = (Delta){
-        .size = size,
-        .copy = copy,
-        .source = source,
-    };
-    UNDO-&gt;temp++;
-}
-
-void undo_commit() {
-    UNDO-&gt;tag = 0; /* Ignore for now : ) */
-
-    s32 changes = 0;
-    u8* new_pos = UNDO-&gt;copy_temp_start;
-    
-    for (s32 i = UNDO-&gt;redo; i &lt; UNDO-&gt;temp; i++) {
-        Delta c = UNDO-&gt;delta[i];
-        if (memcmp(c.copy, c.source, c.size)) {
-            if (changes == 0 &amp;&amp; UNDO-&gt;redo != UNDO-&gt;undo) {
-                /* Set pos to overwrite redos */
-                new_pos = UNDO-&gt;copy_redo_start;
-            }
-        
-            c.copy = memcpy(new_pos, c.copy, c.size);
-            UNDO-&gt;delta[UNDO-&gt;undo++] = c;
-            new_pos += c.size;
-            changes++;
-        }
-    }
-    
-    if (changes) { /* Add header for commit */
-        UNDO-&gt;delta[UNDO-&gt;undo++] = (Delta){ 
-            .size = changes,
-            .copy = ((u8*)UNDO-&gt;copy) + UNDO-&gt;copy-&gt;pos,
-            .source = 0, /* null source identifies headers */
-        };
-        UNDO-&gt;redo = UNDO-&gt;undo; 
-    } 
-
-    UNDO-&gt;temp = UNDO-&gt;redo;
-    Arena_resetp(UNDO-&gt;copy, new_pos);
-    UNDO-&gt;copy_temp_start = new_pos;
-}
-</pre></code>
+<code id='code003'><pre>
+<span id='code003-1'><a href='#code003-1' aria-hidden='true'></a>void undo_push(void* source, s64 size) {</span><span id='code003-2'><a href='#code003-2' aria-hidden='true'></a>    u8* copy = Arena_take(UNDO-&gt;copy, size);</span><span id='code003-3'><a href='#code003-3' aria-hidden='true'></a>    memcpy(copy, source, size);</span><span id='code003-4'><a href='#code003-4' aria-hidden='true'></a>    UNDO-&gt;delta[UNDO-&gt;temp] = (Delta){</span><span id='code003-5'><a href='#code003-5' aria-hidden='true'></a>        .size = size,</span><span id='code003-6'><a href='#code003-6' aria-hidden='true'></a>        .copy = copy,</span><span id='code003-7'><a href='#code003-7' aria-hidden='true'></a>        .source = source,</span><span id='code003-8'><a href='#code003-8' aria-hidden='true'></a>    };</span><span id='code003-9'><a href='#code003-9' aria-hidden='true'></a>    UNDO-&gt;temp++;</span><span id='code003-10'><a href='#code003-10' aria-hidden='true'></a>}</span><span id='code003-11'><a href='#code003-11' aria-hidden='true'></a></span><span id='code003-12'><a href='#code003-12' aria-hidden='true'></a>void undo_commit() {</span><span id='code003-13'><a href='#code003-13' aria-hidden='true'></a>    UNDO-&gt;tag = 0; <span style='color: var(--comment);'>/* Ignore for now : ) */</span></span><span id='code003-14'><a href='#code003-14' aria-hidden='true'></a></span><span id='code003-15'><a href='#code003-15' aria-hidden='true'></a>    s32 changes = 0;</span><span id='code003-16'><a href='#code003-16' aria-hidden='true'></a>    u8* new_pos = UNDO-&gt;copy_temp_start;</span><span id='code003-17'><a href='#code003-17' aria-hidden='true'></a>    </span><span id='code003-18'><a href='#code003-18' aria-hidden='true'></a>    for (s32 i = UNDO-&gt;redo; i &lt; UNDO-&gt;temp; i++) {</span><span id='code003-19'><a href='#code003-19' aria-hidden='true'></a>        Delta c = UNDO-&gt;delta[i];</span><span id='code003-20'><a href='#code003-20' aria-hidden='true'></a>        if (memcmp(c.copy, c.source, c.size)) {</span><span id='code003-21'><a href='#code003-21' aria-hidden='true'></a>            if (changes == 0 &amp;&amp; UNDO-&gt;redo != UNDO-&gt;undo) {</span><span id='code003-22'><a href='#code003-22' aria-hidden='true'></a>                <span style='color: var(--comment);'>/* Set pos to overwrite redos */</span></span><span id='code003-23'><a href='#code003-23' aria-hidden='true'></a>                new_pos = UNDO-&gt;copy_redo_start;</span><span id='code003-24'><a href='#code003-24' aria-hidden='true'></a>            }</span><span id='code003-25'><a href='#code003-25' aria-hidden='true'></a>        </span><span id='code003-26'><a href='#code003-26' aria-hidden='true'></a>            c.copy = memcpy(new_pos, c.copy, c.size);</span><span id='code003-27'><a href='#code003-27' aria-hidden='true'></a>            UNDO-&gt;delta[UNDO-&gt;undo++] = c;</span><span id='code003-28'><a href='#code003-28' aria-hidden='true'></a>            new_pos += c.size;</span><span id='code003-29'><a href='#code003-29' aria-hidden='true'></a>            changes++;</span><span id='code003-30'><a href='#code003-30' aria-hidden='true'></a>        }</span><span id='code003-31'><a href='#code003-31' aria-hidden='true'></a>    }</span><span id='code003-32'><a href='#code003-32' aria-hidden='true'></a>    </span><span id='code003-33'><a href='#code003-33' aria-hidden='true'></a>    if (changes) { <span style='color: var(--comment);'>/* Add header for commit */</span></span><span id='code003-34'><a href='#code003-34' aria-hidden='true'></a>        UNDO-&gt;delta[UNDO-&gt;undo++] = (Delta){ </span><span id='code003-35'><a href='#code003-35' aria-hidden='true'></a>            .size = changes,</span><span id='code003-36'><a href='#code003-36' aria-hidden='true'></a>            .copy = ((u8*)UNDO-&gt;copy) + UNDO-&gt;copy-&gt;pos,</span><span id='code003-37'><a href='#code003-37' aria-hidden='true'></a>            .source = 0, <span style='color: var(--comment);'>/* null source identifies headers */</span></span><span id='code003-38'><a href='#code003-38' aria-hidden='true'></a>        };</span><span id='code003-39'><a href='#code003-39' aria-hidden='true'></a>        UNDO-&gt;redo = UNDO-&gt;undo; </span><span id='code003-40'><a href='#code003-40' aria-hidden='true'></a>    } </span><span id='code003-41'><a href='#code003-41' aria-hidden='true'></a></span><span id='code003-42'><a href='#code003-42' aria-hidden='true'></a>    UNDO-&gt;temp = UNDO-&gt;redo;</span><span id='code003-43'><a href='#code003-43' aria-hidden='true'></a>    Arena_resetp(UNDO-&gt;copy, new_pos);</span><span id='code003-44'><a href='#code003-44' aria-hidden='true'></a>    UNDO-&gt;copy_temp_start = new_pos;</span><span id='code003-45'><a href='#code003-45' aria-hidden='true'></a>}</span></pre></code>
 <p>
 Given a stack of undo information built this way, the implementation of undo is straightforward. The amount of deltas for 
 the commit is identified using the header delta, and then those are looped over and swap their copy with what is currently
 at the source. 
 </p>
-<code id=''><pre>
-void swap_delta(Delta d) {
-    for (s64 j = 0; j &lt; d.size; j++) {
-        u8 temp = *d.copy;
-        *d.copy++ = *d.source;
-        *d.source++ = temp;
-    }
-}
-void undo() {
-    if (UNDO-&gt;undo &gt; 0) {
-        s32 N = UNDO-&gt;undo-1;
-        Delta header = UNDO-&gt;delta[N];
-        s32 changes = header.size;
-        s32 n = N - changes;
-        for (s32 i = N-1; i &gt;= n; i--) {
-            swap_delta(UNDO-&gt;delta[i]);
-        }
-
-        Delta first = UNDO-&gt;delta[n];
-        UNDO-&gt;copy_redo_start = first.copy;
-        UNDO-&gt;undo = n;
-    }
-}
-</pre></code>
+<code id='code004'><pre>
+<span id='code004-1'><a href='#code004-1' aria-hidden='true'></a>void swap_delta(Delta d) {</span><span id='code004-2'><a href='#code004-2' aria-hidden='true'></a>    for (s64 j = 0; j &lt; d.size; j++) {</span><span id='code004-3'><a href='#code004-3' aria-hidden='true'></a>        u8 temp = *d.copy;</span><span id='code004-4'><a href='#code004-4' aria-hidden='true'></a>        *d.copy++ = *d.source;</span><span id='code004-5'><a href='#code004-5' aria-hidden='true'></a>        *d.source++ = temp;</span><span id='code004-6'><a href='#code004-6' aria-hidden='true'></a>    }</span><span id='code004-7'><a href='#code004-7' aria-hidden='true'></a>}</span><span id='code004-8'><a href='#code004-8' aria-hidden='true'></a>void undo() {</span><span id='code004-9'><a href='#code004-9' aria-hidden='true'></a>    if (UNDO-&gt;undo &gt; 0) {</span><span id='code004-10'><a href='#code004-10' aria-hidden='true'></a>        s32 N = UNDO-&gt;undo-1;</span><span id='code004-11'><a href='#code004-11' aria-hidden='true'></a>        Delta header = UNDO-&gt;delta[N];</span><span id='code004-12'><a href='#code004-12' aria-hidden='true'></a>        s32 changes = header.size;</span><span id='code004-13'><a href='#code004-13' aria-hidden='true'></a>        s32 n = N - changes;</span><span id='code004-14'><a href='#code004-14' aria-hidden='true'></a>        for (s32 i = N-1; i &gt;= n; i--) {</span><span id='code004-15'><a href='#code004-15' aria-hidden='true'></a>            swap_delta(UNDO-&gt;delta[i]);</span><span id='code004-16'><a href='#code004-16' aria-hidden='true'></a>        }</span><span id='code004-17'><a href='#code004-17' aria-hidden='true'></a></span><span id='code004-18'><a href='#code004-18' aria-hidden='true'></a>        Delta first = UNDO-&gt;delta[n];</span><span id='code004-19'><a href='#code004-19' aria-hidden='true'></a>        UNDO-&gt;copy_redo_start = first.copy;</span><span id='code004-20'><a href='#code004-20' aria-hidden='true'></a>        UNDO-&gt;undo = n;</span><span id='code004-21'><a href='#code004-21' aria-hidden='true'></a>    }</span><span id='code004-22'><a href='#code004-22' aria-hidden='true'></a>}</span></pre></code>
 <p>
 The swap in the undo is important, as these same deltas now can be used to redo by swapping again. The redo function needs to 
 scan to find its header, but otherwise is quite dual to undo as you would expect:
 </p>
-<code id=''><pre>
-void redo() {
-    if (UNDO-&gt;redo - UNDO-&gt;undo &gt; 0) {
-        /* Do not redo while temp stack has delta 
-           this could be fine if they touch disjoint memory, but if 
-           there is overlap things will break!
-        */
-        ASSERT(UNDO-&gt;redo == UNDO-&gt;temp);
-        /* Find header for first change */
-        s32 N = UNDO-&gt;undo;
-        for (; N &lt; UNDO-&gt;redo; N++) {
-            Delta c = UNDO-&gt;delta[N];
-            if (!c.source) {
-                break;
-            }
-        }
-        
-        Delta header = UNDO-&gt;delta[N];
-        s32 changes = header.size;
-        s32 n = N - changes;
-        for (s32 i = n; i &lt; N; i++) {
-            swap_delta(UNDO-&gt;delta[i]);
-        }
-
-        UNDO-&gt;copy_redo_start = header.copy;
-        UNDO-&gt;undo = N+1;
-    }
-}
-</pre></code>
+<code id='code005'><pre>
+<span id='code005-1'><a href='#code005-1' aria-hidden='true'></a>void redo() {</span><span id='code005-2'><a href='#code005-2' aria-hidden='true'></a>    if (UNDO-&gt;redo - UNDO-&gt;undo &gt; 0) {</span><span id='code005-3'><a href='#code005-3' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Do not redo while temp stack has delta </span></span><span id='code005-4'><a href='#code005-4' aria-hidden='true'></a><span style='color: var(--comment);'>           this could be fine if they touch disjoint memory, but if </span></span><span id='code005-5'><a href='#code005-5' aria-hidden='true'></a><span style='color: var(--comment);'>           there is overlap things will break!</span></span><span id='code005-6'><a href='#code005-6' aria-hidden='true'></a><span style='color: var(--comment);'>        */</span></span><span id='code005-7'><a href='#code005-7' aria-hidden='true'></a>        ASSERT(UNDO-&gt;redo == UNDO-&gt;temp);</span><span id='code005-8'><a href='#code005-8' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Find header for first change */</span></span><span id='code005-9'><a href='#code005-9' aria-hidden='true'></a>        s32 N = UNDO-&gt;undo;</span><span id='code005-10'><a href='#code005-10' aria-hidden='true'></a>        for (; N &lt; UNDO-&gt;redo; N++) {</span><span id='code005-11'><a href='#code005-11' aria-hidden='true'></a>            Delta c = UNDO-&gt;delta[N];</span><span id='code005-12'><a href='#code005-12' aria-hidden='true'></a>            if (!c.source) {</span><span id='code005-13'><a href='#code005-13' aria-hidden='true'></a>                break;</span><span id='code005-14'><a href='#code005-14' aria-hidden='true'></a>            }</span><span id='code005-15'><a href='#code005-15' aria-hidden='true'></a>        }</span><span id='code005-16'><a href='#code005-16' aria-hidden='true'></a>        </span><span id='code005-17'><a href='#code005-17' aria-hidden='true'></a>        Delta header = UNDO-&gt;delta[N];</span><span id='code005-18'><a href='#code005-18' aria-hidden='true'></a>        s32 changes = header.size;</span><span id='code005-19'><a href='#code005-19' aria-hidden='true'></a>        s32 n = N - changes;</span><span id='code005-20'><a href='#code005-20' aria-hidden='true'></a>        for (s32 i = n; i &lt; N; i++) {</span><span id='code005-21'><a href='#code005-21' aria-hidden='true'></a>            swap_delta(UNDO-&gt;delta[i]);</span><span id='code005-22'><a href='#code005-22' aria-hidden='true'></a>        }</span><span id='code005-23'><a href='#code005-23' aria-hidden='true'></a></span><span id='code005-24'><a href='#code005-24' aria-hidden='true'></a>        UNDO-&gt;copy_redo_start = header.copy;</span><span id='code005-25'><a href='#code005-25' aria-hidden='true'></a>        UNDO-&gt;undo = N+1;</span><span id='code005-26'><a href='#code005-26' aria-hidden='true'></a>    }</span><span id='code005-27'><a href='#code005-27' aria-hidden='true'></a>}</span></pre></code>
 <p>
 And that's it for the basic API implementation! In the following sections I'll show some other additions to this core that I made as 
 I added the functionality to my editor. But first a larger example code showing the API in use: 
 </p>
-<code id=''><pre>
-#define NSQUARES 10
-static Color squares[NSQUARES];
-static b32 changed[NSQUARES];
-static Color text_color = {.r=0xFF, .g=0xFF, .b=0xFF, .a=0xFF};
-static Color end_color = {0};
-static char* message = "";
-
-Rectangle r = { .width = 16, .height = 16 };
-for (s32 i = 0; i &lt; NSQUARES; i++) {
-    b32 selected = 0;
-    if (CheckCollisionPointRec(G-&gt;mouse, r)) {
-        selected = 1;
-
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &amp;&amp; !changed[i]) {
-            changed[i] = 1;
-            undo_push(squares+i, sizeof(Color));
-            squares[i].r = randu32(&amp;G-&gt;rng);
-            squares[i].g = randu32(&amp;G-&gt;rng);
-            squares[i].b = randu32(&amp;G-&gt;rng);
-            text_color = HYELLOW;
-        }
-    }
-
-    Color c = squares[i]; c.a = 0xFF;
-    DrawRectangleRec(r, c);
-    DrawRectangleLinesEx(r, 2, (selected)? HBLUE : (changed[i])? HGREEN : HDBLUE);
-    r.x += r.width+2;
-}
-
-if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    undo_commit(HBLUE); 
-    memset(changed, 0, sizeof(changed));
-    end_color = text_color = HYELLOW; message = "Commit!";
-}
-
-if (IsKeyDown(KEY_LEFT_CONTROL) &amp;&amp; IsKeyPressed(KEY_Z)) {
-    if (!IsKeyDown(KEY_LEFT_SHIFT)) {
-        undo(); 
-        end_color = text_color = HRED; message = "Undo!";
-    } else {
-        redo(); 
-        end_color = text_color = HBLUE; message = "Redo!";
-    }
-}
-
-char buf[128];
-stbsp_sprintf(buf, "%d &lt;= %d &lt;= %d", UNDO-&gt;undo, UNDO-&gt;redo, UNDO-&gt;temp);
-DrawText(buf, 32, 32, 13, text_color);
-DrawText(message, 32, 64, 13, end_color);
-
-text_color = LERP_COLOR(text_color, HFF, 0.2);
-end_color.a = LERP(end_color.a, 0, 0.05);
-</pre></code>
+<code id='code006'><pre>
+<span id='code006-1'><a href='#code006-1' aria-hidden='true'></a>#define NSQUARES 10</span><span id='code006-2'><a href='#code006-2' aria-hidden='true'></a>static Color squares[NSQUARES];</span><span id='code006-3'><a href='#code006-3' aria-hidden='true'></a>static b32 changed[NSQUARES];</span><span id='code006-4'><a href='#code006-4' aria-hidden='true'></a>static Color text_color = {.r=0xFF, .g=0xFF, .b=0xFF, .a=0xFF};</span><span id='code006-5'><a href='#code006-5' aria-hidden='true'></a>static Color end_color = {0};</span><span id='code006-6'><a href='#code006-6' aria-hidden='true'></a>static char* message = <span style='color: var(--red);'>""</span>;</span><span id='code006-7'><a href='#code006-7' aria-hidden='true'></a></span><span id='code006-8'><a href='#code006-8' aria-hidden='true'></a>Rectangle r = { .width = 16, .height = 16 };</span><span id='code006-9'><a href='#code006-9' aria-hidden='true'></a>for (s32 i = 0; i &lt; NSQUARES; i++) {</span><span id='code006-10'><a href='#code006-10' aria-hidden='true'></a>    b32 selected = 0;</span><span id='code006-11'><a href='#code006-11' aria-hidden='true'></a>    if (CheckCollisionPointRec(G-&gt;mouse, r)) {</span><span id='code006-12'><a href='#code006-12' aria-hidden='true'></a>        selected = 1;</span><span id='code006-13'><a href='#code006-13' aria-hidden='true'></a></span><span id='code006-14'><a href='#code006-14' aria-hidden='true'></a>        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &amp;&amp; !changed[i]) {</span><span id='code006-15'><a href='#code006-15' aria-hidden='true'></a>            changed[i] = 1;</span><span id='code006-16'><a href='#code006-16' aria-hidden='true'></a>            undo_push(squares+i, sizeof(Color));</span><span id='code006-17'><a href='#code006-17' aria-hidden='true'></a>            squares[i].r = randu32(&amp;G-&gt;rng);</span><span id='code006-18'><a href='#code006-18' aria-hidden='true'></a>            squares[i].g = randu32(&amp;G-&gt;rng);</span><span id='code006-19'><a href='#code006-19' aria-hidden='true'></a>            squares[i].b = randu32(&amp;G-&gt;rng);</span><span id='code006-20'><a href='#code006-20' aria-hidden='true'></a>            text_color = HYELLOW;</span><span id='code006-21'><a href='#code006-21' aria-hidden='true'></a>        }</span><span id='code006-22'><a href='#code006-22' aria-hidden='true'></a>    }</span><span id='code006-23'><a href='#code006-23' aria-hidden='true'></a></span><span id='code006-24'><a href='#code006-24' aria-hidden='true'></a>    Color c = squares[i]; c.a = 0xFF;</span><span id='code006-25'><a href='#code006-25' aria-hidden='true'></a>    DrawRectangleRec(r, c);</span><span id='code006-26'><a href='#code006-26' aria-hidden='true'></a>    DrawRectangleLinesEx(r, 2, (selected)? HBLUE : (changed[i])? HGREEN : HDBLUE);</span><span id='code006-27'><a href='#code006-27' aria-hidden='true'></a>    r.x += r.width+2;</span><span id='code006-28'><a href='#code006-28' aria-hidden='true'></a>}</span><span id='code006-29'><a href='#code006-29' aria-hidden='true'></a></span><span id='code006-30'><a href='#code006-30' aria-hidden='true'></a>if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {</span><span id='code006-31'><a href='#code006-31' aria-hidden='true'></a>    undo_commit(HBLUE); </span><span id='code006-32'><a href='#code006-32' aria-hidden='true'></a>    memset(changed, 0, sizeof(changed));</span><span id='code006-33'><a href='#code006-33' aria-hidden='true'></a>    end_color = text_color = HYELLOW; message = <span style='color: var(--red);'>"Commit!"</span>;</span><span id='code006-34'><a href='#code006-34' aria-hidden='true'></a>}</span><span id='code006-35'><a href='#code006-35' aria-hidden='true'></a></span><span id='code006-36'><a href='#code006-36' aria-hidden='true'></a>if (IsKeyDown(KEY_LEFT_CONTROL) &amp;&amp; IsKeyPressed(KEY_Z)) {</span><span id='code006-37'><a href='#code006-37' aria-hidden='true'></a>    if (!IsKeyDown(KEY_LEFT_SHIFT)) {</span><span id='code006-38'><a href='#code006-38' aria-hidden='true'></a>        undo(); </span><span id='code006-39'><a href='#code006-39' aria-hidden='true'></a>        end_color = text_color = HRED; message = <span style='color: var(--red);'>"Undo!"</span>;</span><span id='code006-40'><a href='#code006-40' aria-hidden='true'></a>    } else {</span><span id='code006-41'><a href='#code006-41' aria-hidden='true'></a>        redo(); </span><span id='code006-42'><a href='#code006-42' aria-hidden='true'></a>        end_color = text_color = HBLUE; message = <span style='color: var(--red);'>"Redo!"</span>;</span><span id='code006-43'><a href='#code006-43' aria-hidden='true'></a>    }</span><span id='code006-44'><a href='#code006-44' aria-hidden='true'></a>}</span><span id='code006-45'><a href='#code006-45' aria-hidden='true'></a></span><span id='code006-46'><a href='#code006-46' aria-hidden='true'></a>char buf[128];</span><span id='code006-47'><a href='#code006-47' aria-hidden='true'></a>stbsp_sprintf(buf, <span style='color: var(--red);'>"%d &lt;= %d &lt;= %d"</span>, UNDO-&gt;undo, UNDO-&gt;redo, UNDO-&gt;temp);</span><span id='code006-48'><a href='#code006-48' aria-hidden='true'></a>DrawText(buf, 32, 32, 13, text_color);</span><span id='code006-49'><a href='#code006-49' aria-hidden='true'></a>DrawText(message, 32, 64, 13, end_color);</span><span id='code006-50'><a href='#code006-50' aria-hidden='true'></a></span><span id='code006-51'><a href='#code006-51' aria-hidden='true'></a>text_color = LERP_COLOR(text_color, HFF, 0.2);</span><span id='code006-52'><a href='#code006-52' aria-hidden='true'></a>end_color.a = LERP(end_color.a, 0, 0.05);</span></pre></code>
 <p>
 This gif of the demo shows how the undo stack is built up with commits, can be undone/redone, and how redo history is 
 overwritten with new changes:
@@ -326,52 +144,18 @@ In the simple example given above, there is only one type of edit action happeni
 level editor I needed to make sure that two different actions aren't in progress simultaneously, as this would corrupt the
 temp stack. This was simple to add, by wrapping relevant code with an additional check, <code>undo_begin</code>:
 </p>
-<code id=''><pre>
-#define undo_begin() undo_begin_ex(__LINE__)
-b32 undo_begin_ex(s32 tag) {
-    b32 can_initiate = UNDO-&gt;redo == UNDO-&gt;temp || UNDO-&gt;tag == tag;
-    if (can_initiate) UNDO-&gt;tag = tag;
-    return can_initiate;
-}
-</pre></code>
+<code id='code007'><pre>
+<span id='code007-1'><a href='#code007-1' aria-hidden='true'></a>#define undo_begin() undo_begin_ex(__LINE__)</span><span id='code007-2'><a href='#code007-2' aria-hidden='true'></a>b32 undo_begin_ex(s32 tag) {</span><span id='code007-3'><a href='#code007-3' aria-hidden='true'></a>    b32 can_initiate = UNDO-&gt;redo == UNDO-&gt;temp || UNDO-&gt;tag == tag;</span><span id='code007-4'><a href='#code007-4' aria-hidden='true'></a>    if (can_initiate) UNDO-&gt;tag = tag;</span><span id='code007-5'><a href='#code007-5' aria-hidden='true'></a>    return can_initiate;</span><span id='code007-6'><a href='#code007-6' aria-hidden='true'></a>}</span></pre></code>
 <p>
 The tag is reset by a commit:
 </p>
-<code id=''><pre>
-void undo_commit() {
-    UNDO-&gt;tag = 0; /* Remember this? */
-
-    /* .. snip .. */
-}
-</pre></code>
+<code id='code008'><pre>
+<span id='code008-1'><a href='#code008-1' aria-hidden='true'></a>void undo_commit() {</span><span id='code008-2'><a href='#code008-2' aria-hidden='true'></a>    UNDO-&gt;tag = 0; <span style='color: var(--comment);'>/* Remember this? */</span></span><span id='code008-3'><a href='#code008-3' aria-hidden='true'></a></span><span id='code008-4'><a href='#code008-4' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* .. snip .. */</span></span><span id='code008-5'><a href='#code008-5' aria-hidden='true'></a>}</span></pre></code>
 <p>
 And the usage code looks like:
 </p>
-<code id=''><pre>
-for (;;) { /* event loop */
-
-    if (undo_begin()) { /* Action 1 */
-        if (IsMouseDown(MOUSE_BUTTON_LEFT)) {
-            undo_push(..., ...);
-
-            // Do action
-        } else if (IsMouseReleased(MOUSE_BUTTON_LEFT)) {
-            undo_commit();
-        }
-    }
-
-    if (undo_begin()) { /* Action 1 */
-        if (IsMouseDown(MOUSE_BUTTON_RIGHT)) {
-            undo_push(..., ...);
-
-            // Do action
-        } else if (IsMouseReleased(MOUSE_BUTTON_RIGHT)) {
-            undo_commit();
-        }
-    }
-
-}
-</pre></code>
+<code id='code009'><pre>
+<span id='code009-1'><a href='#code009-1' aria-hidden='true'></a>for (;;) { <span style='color: var(--comment);'>/* event loop */</span></span><span id='code009-2'><a href='#code009-2' aria-hidden='true'></a></span><span id='code009-3'><a href='#code009-3' aria-hidden='true'></a>    if (undo_begin()) { <span style='color: var(--comment);'>/* Action 1 */</span></span><span id='code009-4'><a href='#code009-4' aria-hidden='true'></a>        if (IsMouseDown(MOUSE_BUTTON_LEFT)) {</span><span id='code009-5'><a href='#code009-5' aria-hidden='true'></a>            undo_push(..., ...);</span><span id='code009-6'><a href='#code009-6' aria-hidden='true'></a></span><span id='code009-7'><a href='#code009-7' aria-hidden='true'></a>            <span style='color: var(--comment);'>// Do action</span></span><span id='code009-8'><a href='#code009-8' aria-hidden='true'></a>        } else if (IsMouseReleased(MOUSE_BUTTON_LEFT)) {</span><span id='code009-9'><a href='#code009-9' aria-hidden='true'></a>            undo_commit();</span><span id='code009-10'><a href='#code009-10' aria-hidden='true'></a>        }</span><span id='code009-11'><a href='#code009-11' aria-hidden='true'></a>    }</span><span id='code009-12'><a href='#code009-12' aria-hidden='true'></a></span><span id='code009-13'><a href='#code009-13' aria-hidden='true'></a>    if (undo_begin()) { <span style='color: var(--comment);'>/* Action 1 */</span></span><span id='code009-14'><a href='#code009-14' aria-hidden='true'></a>        if (IsMouseDown(MOUSE_BUTTON_RIGHT)) {</span><span id='code009-15'><a href='#code009-15' aria-hidden='true'></a>            undo_push(..., ...);</span><span id='code009-16'><a href='#code009-16' aria-hidden='true'></a></span><span id='code009-17'><a href='#code009-17' aria-hidden='true'></a>            <span style='color: var(--comment);'>// Do action</span></span><span id='code009-18'><a href='#code009-18' aria-hidden='true'></a>        } else if (IsMouseReleased(MOUSE_BUTTON_RIGHT)) {</span><span id='code009-19'><a href='#code009-19' aria-hidden='true'></a>            undo_commit();</span><span id='code009-20'><a href='#code009-20' aria-hidden='true'></a>        }</span><span id='code009-21'><a href='#code009-21' aria-hidden='true'></a>    }</span><span id='code009-22'><a href='#code009-22' aria-hidden='true'></a></span><span id='code009-23'><a href='#code009-23' aria-hidden='true'></a>}</span></pre></code>
 <p>
 Both of these actions can progress across multiple frames, but because of the "locking" provided by <code>undo_begin</code> they 
 will never be in progress at the same time. 
@@ -397,54 +181,8 @@ a great foundation for the more complex implementation.
 Because of how simple the undo system is, it's easy to store extra information alongside the deltas. In my editor I added information 
 about the current size and color of the cursor rectangle at each push, which lends a great visual flair to the undos and redos:
 </p>
-<code id=''><pre>
-void undo_push(void* source, s64 size) {
-    /* ... */
-    UNDO-&gt;temp_rect = RectangleGrow(UNDO-&gt;temp_rect, cursor_rect);
-}
-
-void undo_commit(Color c) {
-    /* ... */
-    if (changes) { /* Add header for commit */
-        UNDO-&gt;delta[UNDO-&gt;undo++] = (Delta){ 
-            .size = changes,
-            .copy = ((u8*)UNDO-&gt;copy) + UNDO-&gt;copy-&gt;pos,
-            .source = 0, /* null source identifies headers */
-            .cursor_color = c,
-            .cursor_rect  = UNDO-&gt;temp_rect,
-        };
-        UNDO-&gt;redo = UNDO-&gt;undo; 
-    } 
-    /* ... */
-}
-void undo() {
-    if (UNDO-&gt;undo &gt; 0) {
-        /* ... */
-
-        cursor_color = header.cursor_color;
-        cursor_rect = header.cursor_rect;
-        cursor_lerp = 0; cursor_lerp_reset = 3;
-        /* Invert add/delete colors for undos */
-        Color c = HRED;
-        if (!memcmp(&amp;cursor_color, &amp;c, sizeof(Color))) {
-            cursor_color = HBLUE;
-        } else {
-            Color c = HBLUE; 
-            if (!memcmp(&amp;cursor_color, &amp;c, sizeof(Color))) cursor_color = HRED;
-        }
-    }
-}
-
-void redo() {
-    if (UNDO-&gt;redo - UNDO-&gt;undo &gt; 0) {
-        /* ... */
-        
-        cursor_color = header.cursor_color;
-        cursor_rect = header.cursor_rect;
-        cursor_lerp = 0; cursor_lerp_reset = 3;
-    }
-}
-</pre></code>
+<code id='code010'><pre>
+<span id='code010-1'><a href='#code010-1' aria-hidden='true'></a>void undo_push(void* source, s64 size) {</span><span id='code010-2'><a href='#code010-2' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* ... */</span></span><span id='code010-3'><a href='#code010-3' aria-hidden='true'></a>    UNDO-&gt;temp_rect = RectangleGrow(UNDO-&gt;temp_rect, cursor_rect);</span><span id='code010-4'><a href='#code010-4' aria-hidden='true'></a>}</span><span id='code010-5'><a href='#code010-5' aria-hidden='true'></a></span><span id='code010-6'><a href='#code010-6' aria-hidden='true'></a>void undo_commit(Color c) {</span><span id='code010-7'><a href='#code010-7' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* ... */</span></span><span id='code010-8'><a href='#code010-8' aria-hidden='true'></a>    if (changes) { <span style='color: var(--comment);'>/* Add header for commit */</span></span><span id='code010-9'><a href='#code010-9' aria-hidden='true'></a>        UNDO-&gt;delta[UNDO-&gt;undo++] = (Delta){ </span><span id='code010-10'><a href='#code010-10' aria-hidden='true'></a>            .size = changes,</span><span id='code010-11'><a href='#code010-11' aria-hidden='true'></a>            .copy = ((u8*)UNDO-&gt;copy) + UNDO-&gt;copy-&gt;pos,</span><span id='code010-12'><a href='#code010-12' aria-hidden='true'></a>            .source = 0, <span style='color: var(--comment);'>/* null source identifies headers */</span></span><span id='code010-13'><a href='#code010-13' aria-hidden='true'></a>            .cursor_color = c,</span><span id='code010-14'><a href='#code010-14' aria-hidden='true'></a>            .cursor_rect  = UNDO-&gt;temp_rect,</span><span id='code010-15'><a href='#code010-15' aria-hidden='true'></a>        };</span><span id='code010-16'><a href='#code010-16' aria-hidden='true'></a>        UNDO-&gt;redo = UNDO-&gt;undo; </span><span id='code010-17'><a href='#code010-17' aria-hidden='true'></a>    } </span><span id='code010-18'><a href='#code010-18' aria-hidden='true'></a>    <span style='color: var(--comment);'>/* ... */</span></span><span id='code010-19'><a href='#code010-19' aria-hidden='true'></a>}</span><span id='code010-20'><a href='#code010-20' aria-hidden='true'></a>void undo() {</span><span id='code010-21'><a href='#code010-21' aria-hidden='true'></a>    if (UNDO-&gt;undo &gt; 0) {</span><span id='code010-22'><a href='#code010-22' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* ... */</span></span><span id='code010-23'><a href='#code010-23' aria-hidden='true'></a></span><span id='code010-24'><a href='#code010-24' aria-hidden='true'></a>        cursor_color = header.cursor_color;</span><span id='code010-25'><a href='#code010-25' aria-hidden='true'></a>        cursor_rect = header.cursor_rect;</span><span id='code010-26'><a href='#code010-26' aria-hidden='true'></a>        cursor_lerp = 0; cursor_lerp_reset = 3;</span><span id='code010-27'><a href='#code010-27' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* Invert add/delete colors for undos */</span></span><span id='code010-28'><a href='#code010-28' aria-hidden='true'></a>        Color c = HRED;</span><span id='code010-29'><a href='#code010-29' aria-hidden='true'></a>        if (!memcmp(&amp;cursor_color, &amp;c, sizeof(Color))) {</span><span id='code010-30'><a href='#code010-30' aria-hidden='true'></a>            cursor_color = HBLUE;</span><span id='code010-31'><a href='#code010-31' aria-hidden='true'></a>        } else {</span><span id='code010-32'><a href='#code010-32' aria-hidden='true'></a>            Color c = HBLUE; </span><span id='code010-33'><a href='#code010-33' aria-hidden='true'></a>            if (!memcmp(&amp;cursor_color, &amp;c, sizeof(Color))) cursor_color = HRED;</span><span id='code010-34'><a href='#code010-34' aria-hidden='true'></a>        }</span><span id='code010-35'><a href='#code010-35' aria-hidden='true'></a>    }</span><span id='code010-36'><a href='#code010-36' aria-hidden='true'></a>}</span><span id='code010-37'><a href='#code010-37' aria-hidden='true'></a></span><span id='code010-38'><a href='#code010-38' aria-hidden='true'></a>void redo() {</span><span id='code010-39'><a href='#code010-39' aria-hidden='true'></a>    if (UNDO-&gt;redo - UNDO-&gt;undo &gt; 0) {</span><span id='code010-40'><a href='#code010-40' aria-hidden='true'></a>        <span style='color: var(--comment);'>/* ... */</span></span><span id='code010-41'><a href='#code010-41' aria-hidden='true'></a>        </span><span id='code010-42'><a href='#code010-42' aria-hidden='true'></a>        cursor_color = header.cursor_color;</span><span id='code010-43'><a href='#code010-43' aria-hidden='true'></a>        cursor_rect = header.cursor_rect;</span><span id='code010-44'><a href='#code010-44' aria-hidden='true'></a>        cursor_lerp = 0; cursor_lerp_reset = 3;</span><span id='code010-45'><a href='#code010-45' aria-hidden='true'></a>    }</span><span id='code010-46'><a href='#code010-46' aria-hidden='true'></a>}</span></pre></code>
 
 <p>
 <video controls><source src='/assets/undoingyourmom.mp4' type='video/mp4'></video>

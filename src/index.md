@@ -1,21 +1,18 @@
 <div class="center"> !(/assets/dd.png) </div>
 ##center Logan Forman @(https://www.twitter.com/dev_dwarf @dev dwarf)
-!|w100| Personal Info || |
+!|left w66| Info || |
 !|| Occupation || Programming, Applied Mathematics |
 !|| Location || Albuquerque, New Mexico |
 !|| Employment || Simulation Software Engineer, <wbr> @(https://www.sceye.com/ Sceye Inc.) |
-!|| Education || B.S. Applied Mathematics, <wbr> @(https://nmt.edu/ New Mexico Institute of Mining and Technology) | 
-<div class="space-after"></div>
+!|| Education || B.S. Applied Mathematics, <wbr> @(https://nmt.edu/ NM Tech.) | 
 
-!|left w50| Quick Links || |
-!|| @(/resume.html Resume) || @(https://github.com/dev-dwarf GitHub) |
-!|| @(/writing.html Writing) || @(/resources.html Resources) |
-!|| @(/projects.html Portfolio) || @(/rss.xml RSS) |
+!|right w33| Contact || |
+!|| Email || contact@loganforman.com |
+!|| Discord || dev-dwarf | 
+!|| Github || @(https://github.com/dev-dwarf dev-dwarf) | 
+!|| Twitter || @(https://twitter.com/dev_dwarf dev_dwarf) | 
 
-!|right w50| Contact || |
-!|| Email || `contact@loganforman.com` |
-!|| Text || `+1-505-690-0103` |
-!|| Discord || `dev-dwarf` | 
+<br class='right'>
 <div class="space-after"></div>
 
 ## Brief

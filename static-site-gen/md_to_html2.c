@@ -371,32 +371,39 @@ StrList render_block(Arena *a, Block *b) {
     if (b->type == CODE) {
         StrList_pushv(a, out, strl("<code id='"), b->id, strl("'><pre>\n"));
         s32 line = 1;
+
+        s32 in_comment = 0;
+        str comment_span = strc("<span style='color: var(--comment);'>");
         for (Text *t = b->text; t; t = t->next, line++) {
             str line_id = strf(a, "%.*s-%d", b->id.len, b->id.str, line);
             StrList_pushv(a, out, strl("<span id='"), line_id, strl("'>"));
             StrList_pushv(a, out, strl("<a href='#"), line_id, strl("' aria-hidden='true'></a>"));
+
+            if (in_comment == 2) {
+                StrList_push(a, out, comment_span);
+            }
             
+            char in_string = 0;
             str s = t->text;
-            s32 in_comment = 0;
+            char pc = 0;
             str_iter(s, i, c) { /* Escape HTML characters in code blocks */
 
                 if (str_has_prefix(str_skip(s, i), strl("//"))) {
                     in_comment = 1;
-                    StrList_pushv(a, out, str_first(s, i-2), strl("<span style='color: var(--green);'>//"));
-                    s = str_skip(s, i+2); i = -1;
+                    StrList_pushv(a, out, str_first(s, i), comment_span);
+                    s = str_skip(s, i); i = 2;
                 }
+                
                 if (str_has_prefix(str_skip(s, i), strl("/*"))) {
                     in_comment = 2;
-                    StrList_pushv(a, out, str_first(s, i), strl("<span style='color: var(--green);'>/*"));
-                    s = str_skip(s, i+2); i = -1;
-                }
-
-                if (in_comment == 2 && str_has_prefix(str_skip(s, i), strl("*/"))) {
+                    StrList_pushv(a, out, str_first(s, i), comment_span);
+                    s = str_skip(s, i); i = 2;
+                } else if (in_comment == 2 && str_has_prefix(str_skip(s, i), strl("*/"))) {
                     in_comment = 0;
                     StrList_pushv(a, out, str_first(s, i), strl("*/</span>"));
                     s = str_skip(s, i+2); i = -1;
                 }
-                
+
                 switch (c) {
                 case '<': {
                     StrList_pushv(a, out, str_first(s, i), strl("&lt;"));
@@ -410,16 +417,33 @@ StrList render_block(Arena *a, Block *b) {
                     StrList_pushv(a, out, str_first(s, i), strl("&amp;"));
                     s = str_skip(s, i+1); i = -1;
                 } break;
-                case '\n': {
-                    if (in_comment == 1) {
-                        in_comment = 0;
-                        StrList_pushv(a, out, str_first(s, i), strl("</span>"));
-                        s = str_skip(s, i+1); i = -1;
+                case '\'': 
+                case '"': {
+                    if (in_comment == 0) {
+                        if (in_string == 0) {
+                            in_string = c;
+                            StrList_pushv(a, out, str_first(s, i), strl("<span style='color: var(--red);'>"));
+                            s = str_skip(s, i); i = 0;
+                        } else if (in_string == c) {
+                            in_string = 0;
+                            StrList_pushv(a, out, str_first(s, i+1), strl("</span>"));
+                            s = str_skip(s, i+1); i = 0;
+                        }
                     }
+                } break;
                 }
-                }
+
+                pc = c;
             }
-            StrList_pushv(a, out, s, strl("</span>"));
+
+            StrList_push(a, out, s);
+            if (in_comment > 0) {
+                if (in_comment == 1) {
+                    in_comment = 0;
+                }
+                StrList_push(a, out, strl("</span>"));
+            }
+            StrList_push(a, out, strl("</span>"));
         }
         StrList_pushv(a, out, strl("</pre></code>\n"));
     }

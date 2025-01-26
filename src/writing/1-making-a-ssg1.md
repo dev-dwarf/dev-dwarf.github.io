@@ -129,7 +129,7 @@ for (; curr->next != 0; pre = curr, curr = curr->next) {
         } else if (curr->type == Text::CODE_INLINE && !curr->end) {
             /* Do nothing, do not parse stuff inside code */
         } else if (c[0] == '*' && c[1] == '*') {
-            /* Bold *.
+            /* Bold */
             
         } else if (c[0] == '*') {
             /* Italic */

@@ -1,24 +1,5 @@
 #include "md_to_html.h"
 
-void print_tree(Text *text) {
-    if (!text) return;
-    switch (text->type) {
-        case TEXT: { printf("%.*s", (s32) text->text.len, text->text.str); } break;
-        case BOLD: { printf("**"); } break;
-        case ITALIC: { printf("*"); } break;
-        case STRUCK: { printf("~~"); } break;
-        case LINK: { printf("@("); } break;
-    }
-    print_tree(text->child);
-    switch (text->type) {
-        case BOLD: { printf("**"); } break;
-        case ITALIC: { printf("*"); } break;
-        case STRUCK: { printf("~~"); } break;
-        case LINK: { printf(")"); } break;
-    }
-    print_tree(text->next);
-}
-
 str parse_inline(Arena *a, Text *text);
 
 static Text *new_text(Arena *a, str text, enum TextTypes type) {
@@ -384,9 +365,7 @@ StrList render_block(Arena *a, Block *b) {
             
             char in_string = 0;
             str s = t->text;
-            char pc = 0;
             str_iter(s, i, c) { /* Escape HTML characters in code blocks */
-
                 if (str_has_prefix(str_skip(s, i), strl("//"))) {
                     in_comment = 1;
                     StrList_pushv(a, out, str_first(s, i), comment_span);
@@ -432,8 +411,6 @@ StrList render_block(Arena *a, Block *b) {
                     }
                 } break;
                 }
-
-                pc = c;
             }
 
             StrList_push(a, out, s);

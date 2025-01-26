@@ -420,7 +420,8 @@ StrList render_block(Arena *a, Block *b) {
                 case '\'': 
                 case '"': {
                     if (in_comment == 0) {
-                        if (in_string == 0) {
+                        s64 loc = str_char_location(str_skip(s, i+1), c);
+                        if (in_string == 0 && loc >= 0) {
                             in_string = c;
                             StrList_pushv(a, out, str_first(s, i), strl("<span style='color: var(--red);'>"));
                             s = str_skip(s, i); i = 0;

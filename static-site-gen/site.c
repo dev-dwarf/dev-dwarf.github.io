@@ -1,11 +1,9 @@
 /* TODO
-    * Fix article index sorting
-        * Uses file creation times atm, this info is not saved by git
-        * Just give articles a number and sort by that?
     * Implement math expressions using mathml
         * Browsers now have support
         * Fallback: https://github.com/fred-wang/mathml.css
         * Just make a little custom lang for this, can fallback to mathml if needed :vomit:
+    *  optional ids for code blocks (like headers) + line numbers that can be linked to
  */
 
 #include <stdio.h>
@@ -134,7 +132,20 @@ PageList get_pages_in_dir(Arena *arena) {
     os_FileSearchIter(arena, search, file) {
         /* Fill out page struct from file info */
         Page *next = Arena_take_struct_zero(arena, Page);
+
         next->filename = file.name;
+        next->out_filename = file.name;
+        if (char_is_num(file.name.str[0])) {
+            str_iter(file.name, i, c) {
+                next->out_filename = str_skip(next->out_filename, 1);
+                if (char_is_num(c)) {
+                    next->order = 10*next->order + (s32)(c - '0');
+                } else {
+                    break;
+                }
+            }
+        }
+        
         next->created_time = file.created;
         next->base_href = base_href;
         next->base_dir = base_dir;
@@ -146,7 +157,7 @@ PageList get_pages_in_dir(Arena *arena) {
             dirPages.last = next;
         } else {
             for (; curr != 0; pre = curr, curr = curr->next) {
-                if (next->created_time > curr->created_time) {
+                if (next->order > curr->order) {
                     if (pre == curr) {
                         dirPages.first = next;
                     } else {
@@ -233,7 +244,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
                              strl("</code></td><td>"),
                              strl("<a href='"),
                              p->base_href,
-                             str_cut(p->filename,2),
+                             str_cut(p->out_filename,2),
                              strl("html'>"),
                              p->title,
                              strl("</a>"),
@@ -251,11 +262,11 @@ void compile_page(Arena *longa, Arena *tempa, Page *page) {
     StrList_push_node(&dir, &filename);
     switch_to_dir(&src);
     page->content = os_ReadFile(tempa, build_dir(tempa));
-    page->title = str_cut(page->filename, 3);
+    page->title = str_cut(page->out_filename, 3);
 
     StrList_pop_node(&dir);
 
-    filename.str = str_concat(tempa, str_cut(page->filename, 2), strl("html\0"));
+    filename.str = str_concat(tempa, str_cut(page->out_filename, 2), strl("html\0"));
     StrList_push_node(&dir, &filename);
 
     StrList html = {0};
@@ -317,10 +328,10 @@ void compile_feeds(Arena *arena, PageList pages) {
                       n->desc,
                       strl("</description>\n<link>https://loganforman.com/"),
                       n->base_href,
-                      str_cut(n->filename, 2),
+                      str_cut(n->out_filename, 2),
                       strl("html</link><guid isPermaLink='true'>https://loganforman.com/"),
                       n->base_href,
-                      str_cut(n->filename, 2),
+                      str_cut(n->out_filename, 2),
                       strl("</guid>\n<pubDate>"),
                       n->rss_day,
                       strl(", "),

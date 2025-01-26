@@ -23,7 +23,7 @@ typedef struct Text {
 enum BlockTypes { 
     PARAGRAPH = 1,
     HEADING, RULE, CODE,
-    TABLE_ROW, TABLE_END,
+    TABLE, TABLE_ROW, TABLE_END,
     QUOTE, ORD_LIST, UN_LIST,
     EXPAND,
     SPECIAL, /* Let caller deal with these */
@@ -32,7 +32,7 @@ enum BlockTypes {
 typedef struct Block {
     struct Block *next;
     enum BlockTypes type;
-    u32 num;
+    s32 num;
     str id;
     str title;
     StrList content;

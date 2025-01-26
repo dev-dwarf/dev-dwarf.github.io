@@ -2,11 +2,17 @@
 ---
 
 *italic*
+
 **bold**
+
 ***it-bold***
+
 ~~struck~~
+
 `inline code`
+
 @(/splat.html link)
+
 !(/assets/dd.png)
 
 ---
@@ -35,6 +41,7 @@ h5
 ```
 generic code block
 ```
+
 
 1. item 1
 1. item 2

@@ -181,7 +181,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     
     if (str_eq(block->id, strl("sections"))) {
         StrList_push(tempa, front, strl("<ul class='sections'>\n"));
-        u32 n = 0; u32 nfirst = 0;
+        s32 n = 0; s32 nfirst = 0;
         for (Block* b = block; b->type != NIL; b = b->next) {
             if ((b->type == HEADING || b->type == EXPAND)
                 && str_not_empty(b->id)) {
@@ -387,29 +387,76 @@ int main() {
     Arena *tempa = Arena_create_custom(params);
 
     // TODO test code
-    Text *t = &(Text){
-        .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) more italic* * escape \\* asterisk *")
-    };
-    parse_inline(tempa, t);
-    StrList output_list = render_text_inline(tempa, t->child);
-    str output = StrList_join(tempa, output_list, (StrJoin){0});
-    printf("%.*s", (s32) output.len, output.str);
+    // Text *t = &(Text){
+    //     .text = strl("**bold *bold-italic*** *italic @(link ~~ struck ~~) more italic* * escape \\* asterisk *")
+    // };
+    // parse_inline(tempa, t);
+    // StrList output_list = render_text_inline(tempa, t->child);
+    // str output = StrList_join(tempa, output_list, (StrJoin){0});
+    // printf("%.*s", (s32) output.len, output.str);
     // print_tree(t);
 
-    // parse_md(tempa, strl(
-    //     "# Header 1\n"
-    //     "paragraph p1\n"
-    //     "paragraph p2\n"
-    //     "\n"
-    //     "New paragraph\n"
-    //     "## Header 2\n"
-    //     "New paragraph\n"
-    //     "New paragraph continued\n"
-    // ));
+    Block *block = parse_md(tempa, strl(
+        "# SPLAT\n"
+        "---\n"
+        "\n"
+        "*italic*\n"
+        "\n"
+        "**bold**\n"
+        "\n"
+        "***it-bold***\n"
+        "\n"
+        "~~struck~~\n"
+        "\n"
+        "`inline code`\n"
+        "\n"
+        "@(/splat.html link)\n"
+        "\n"
+        "!(/assets/dd.png)\n"
+        "---\n"
+        "@{sections}\n"
+        "#h1 H1\n"
+        "h1\n"
+        "##h2 H2\n"
+        "h2\n"
+        "###h3 H3\n"
+        "h3\n"
+        "####h4 H4\n"
+        "h4\n"
+        "#####h5 H5\n"
+        "h5\n"
+        "---\n"
+        "\n"
+        "[ ###expand Expandable Note H3\n"
+        "[ text of expandable note\n"
+        "\n"
+        "!|centered w33| Centered || Small || Table |\n"
+        "!|| 1 || 2 || 3 |\n"
+        "!|| 4 || 5 || 6 |\n"
+        "\n"
+        "?(Exoteric Explanation, Esoteric Phrase)\n"
+        "\n"
+        "```\n"
+        "generic code block\n"
+        "```\n"
+        "\n"
+        "\n"
+        "1. item 1\n"
+        "1. item 2\n"
+        "1. item 3\n"
+    ));
+
+    StrList output_list = (StrList){0};
+    for (Block *b = block; b; b = b->next) {
+        StrList_append(&output_list, render_block(tempa, b));
+    }
+
+    str output = StrList_join(tempa, output_list, (StrJoin){0});
+    printf("%.*s", (s32) output.len, output.str);
     
     return;
-    /*
 
+    /* 
     src = (StrNode) {0, strc("src")};
     deploy = (StrNode) {0, strc("deploy")};
     wildcard = (StrNode) {0, strc("*.md")};
@@ -439,6 +486,6 @@ int main() {
     compile_feeds(tempa, writingPages);
     
     return 0;
-    */
+    /* */
 }
 

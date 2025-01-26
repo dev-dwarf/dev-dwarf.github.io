@@ -146,13 +146,15 @@ static void push_text(Arena *a, Block *b, str line) {
     } 
 }
 
-static void new_block_if_not(Arena *a, Block **curr, enum BlockTypes type) {
+static s32 new_block_if_not(Arena *a, Block **curr, enum BlockTypes type) {
     if ((*curr)->type != type) {
-        if ((*curr)->type == 0) {
+        if ((*curr)->type != 0) {
             (*curr) = (*curr)->next = Arena_take_struct(a, Block);
         }
         (*curr)->type = type;
+        return 1;
     }
+    return 0;
 }
 
 Block* parse_md(Arena *a, str s) {
@@ -168,13 +170,14 @@ Block* parse_md(Arena *a, str s) {
             curr = curr->next = Arena_take_struct(a, Block);
         }
 
-        char c[3]; memcpy(c, line.str, MIN(3, line.len));
+        char c[3] = {0}; memcpy(c, line.str, MIN(3, line.len));
         if (str_has_prefix(line, strl("```"))) {
             if (curr->type == CODE) {
                 curr = curr->next = Arena_take_struct(a, Block);
             } else {
                 curr = curr->next = Arena_take_struct(a, Block);
                 curr->type = CODE;
+                curr->id = str_skip(line, 3);
             }
         } else if (curr->type == CODE) {
             push_text(a, curr, line);
@@ -196,9 +199,14 @@ Block* parse_md(Arena *a, str s) {
             line = str_skip(line, 2);
             push_text(a, curr, line);
         } else if (c[0] == '[' && c[1] == ' ') {
-            
+            line = str_skip(line, 2);
+            if (new_block_if_not(a, &curr, EXPAND)) {
+                curr->title = line;
+            } else {
+                push_text(a, curr, line);
+            }
         } else if (c[0] == '!' && c[1] == '|') {
-            new_block_if_not(a, &curr, ORD_LIST);
+            new_block_if_not(a, &curr, TABLE);
             line = str_skip(line, 2);
             s64 loc = str_char_location(line, '|'); ASSERT(loc >= 0);
             curr->id = str_first(line, loc);
@@ -236,7 +244,7 @@ Block* parse_md(Arena *a, str s) {
 
 StrList render_text_inline(Arena *a, Text* first);
 
-static void render_wrap(Arena *a, StrList *out, Text *t, enum TextTypes type, str open, str close)  {
+static void render_wrap_text(Arena *a, StrList *out, Text *t, enum TextTypes type, str open, str close)  {
     if (t->type == type) {
         StrList_push(a, out, open);
         StrList_append(out, render_text_inline(a, t->child));
@@ -246,39 +254,128 @@ static void render_wrap(Arena *a, StrList *out, Text *t, enum TextTypes type, st
 
 // Render text on the same line
 StrList render_text_inline(Arena *a, Text* first) {
-    StrList out = {0};
+    StrList o = {0};
+    StrList *out = &o;
 
-    for (Text *t = first; t; t = t->next) {
-        render_wrap(a, &out, t, BOLD, strl("<b>"), strl("</b>"));
-        render_wrap(a, &out, t, ITALIC, strl("<em>"), strl("</em>"));
-        render_wrap(a, &out, t, STRUCK, strl("<s>"), strl("</s>"));
-        render_wrap(a, &out, t, CODE_INLINE, strl("<code>"), strl("</code>"));
-        render_wrap(a, &out, t, TABLE_CELL, strl("<td>"), strl("</td>"));
+    Text *t = first;
+    if (t) {
+        render_wrap_text(a, out, t, BOLD, strl("<b>"), strl("</b>"));
+        render_wrap_text(a, out, t, ITALIC, strl("<em>"), strl("</em>"));
+        render_wrap_text(a, out, t, STRUCK, strl("<s>"), strl("</s>"));
+        render_wrap_text(a, out, t, CODE_INLINE, strl("<code>"), strl("</code>"));
+        render_wrap_text(a, out, t, TABLE_CELL, strl("<td>"), strl("</td>"));
         
         if (t->type == IMAGE) {
             if (str_has_suffix(t->text, strl("mp4"))) {
-                StrList_pushv(a, &out, strl("<video controls><source src='"), t->text, strl("' type='video/mp4'></video>"));
+                StrList_pushv(a, out, strl("<video controls><source src='"), t->text, strl("' type='video/mp4'></video>"));
             } else {
-                StrList_pushv(a, &out, strl("<img src='"), t->text, strl("'>"));
+                StrList_pushv(a, out, strl("<img src='"), t->text, strl("'>"));
             }
         }
 
         if (t->type == EXPLAIN) {
-            StrList_pushv(a, &out, strl("<abbr tile='"), t->data, strl("'>"));
-            StrList_append(&out, render_text_inline(a, t->child));
-            StrList_push(a, &out, strl("</abbr>"));
+            StrList_pushv(a, out, strl("<abbr title='"), t->data, strl("'>"));
+            StrList_append(out, render_text_inline(a, t->child));
+            StrList_push(a, out, strl("</abbr>"));
         }
 
         if (t->type == LINK) {
-            StrList_pushv(a, &out, strl("<a href='"), t->data, strl("'>"));
-            StrList_append(&out, render_text_inline(a, t->child));
-            StrList_push(a, &out, strl("</a>"));
+            StrList_pushv(a, out, strl("<a href='"), t->data, strl("'>"));
+            StrList_append(out, render_text_inline(a, t->child));
+            StrList_push(a, out, strl("</a>"));
         }
 
         if (t->type == TEXT) {
-            StrList_push(a, &out, t->text);
+            StrList_push(a, out, t->text);
+        }
+
+        if (t->type == 0) {
+            if (t->child) {
+                StrList_append(out, render_text_inline(a, t->child));
+            }
         }
     }
 
-    return out;
+    return o;
+}
+
+typedef struct WrapBlock {
+    enum BlockTypes type;
+    str open;
+    str close;
+    str open_line;
+    str close_line;
+} WrapBlock;
+
+void render_wrap_block(Arena *a, Block *b, StrList *out, WrapBlock params) {
+    if (params.close_line.len == 0) {
+        params.close_line = strl("\n");
+    }
+    
+    if (b->type == params.type) {
+
+        StrList rendered = (StrList){0};
+        for (Text *t = b->text; t; t = t->next) {
+            StrList r = render_text_inline(a, t);
+            if (r.total_len > 0) {
+                if (params.open_line.len) {
+                    StrList_push(a, &rendered, params.open_line);
+                }
+                StrList_append(&rendered, r);    
+                StrList_push(a, &rendered, params.close_line);
+            }
+        }
+
+        if (b->type == RULE || rendered.total_len > 0) {
+            StrList_push(a, out, params.open);
+            StrList_append(out, rendered);
+            StrList_push(a, out, params.close);
+        } else {
+            StrList_push(a, out, strl("<br>\n"));
+        }
+    }
+}
+
+StrList render_block(Arena *a, Block *b) {
+    StrList o = {0};
+    StrList *out = &o;
+
+    render_wrap_block(a, b, out, (WrapBlock) { PARAGRAPH, strl("<p>\n"), strl("</p>\n") });
+    render_wrap_block(a, b, out, (WrapBlock) { QUOTE, strl("<blockquote><p>\n"), strl("</p></blockquote>\n")});
+
+    str open = (b->id.len > 0)? strf(a, "<h%d id='%.*s'>\n", (s32) b->num, str_PRINTF_ARGS(b->id)) : strf(a, "<h%d>\n", (s32) b->num);
+    render_wrap_block(a, b, out, (WrapBlock) { HEADING, open, strf(a, "</h%d>\n", (s32) b->num)});
+    
+    render_wrap_block(a, b, out, (WrapBlock) { ORD_LIST, strl("<ol>\n"), strl("</ol>\n"), strl("<li>"), strl("</li>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { UN_LIST, strl("<ul>\n"), strl("</ul>\n"), strl("<li>"), strl("</li>\n")});
+    render_wrap_block(a, b, out, (WrapBlock) { RULE, strl("<hr>\n")});
+
+    render_wrap_block(a, b, out, (WrapBlock) { EXPAND, strf(a, "<details>\n<summary>%.*s</summary>\n<p>", (s32) b->title.len, b->title.str), strl("</p>\n</details>\n")});
+    
+    if (b->type == CODE) {
+        StrList_pushv(a, out, strl("<code id='"), b->id, strl("'><pre>\n"));
+        for (Text *t = b->text; t; t = t->next) {
+            str s = t->text;
+            str_iter(s, i, c) { /* Escape HTML characters in code blocks */
+                switch (c) {
+                case '<': {
+                    StrList_pushv(a, out, str_first(s, i), strl("&lt;"));
+                    s = str_skip(s, i+1); i = -1;
+                } break;
+                case '>': {
+                    StrList_pushv(a, out, str_first(s, i), strl("&gt;"));
+                    s = str_skip(s, i+1); i = -1;
+                } break;
+                case '&': {
+                    StrList_pushv(a, out, str_first(s, i), strl("&amp;"));
+                    s = str_skip(s, i+1); i = -1;
+                } break;
+                }
+            }
+            StrList_pushv(a, out, s, strl("\n"));
+        }
+        StrList_pushv(a, out, strl("</pre></code>\n"));
+    }
+
+    return o;
 }

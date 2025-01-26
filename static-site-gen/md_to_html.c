@@ -376,7 +376,7 @@ StrList render_text(Arena* arena, Text* root) {
 }
 
 /* take fully parsed markdown blocks and render as html tags */
-StrList render_block(Arena *arena, Block *block) {
+StrList render_block_old(Arena *arena, Block *block) {
     StrList out = {0};
     switch (block->type) {
     case HEADING: {

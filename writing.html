@@ -1,69 +1,61 @@
-
 <!DOCTYPE html>
 <!-- GENERATED -->
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Logan Forman" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="/assets/dd.png" />
-    <link rel="canonical" href="http://loganforman.com/" />
-    <meta property="og:url" content="http://loganforman.com/"/>
-    <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Logan Forman" />
-    <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
-    <link rel="stylesheet" href="/dwarf.css">
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    </head>
-    
-    <body>
-    <script>
-        var theme = localStorage.getItem('theme') || 'light';
-
-        // window.onload = function() {
-           document.querySelector('body').setAttribute('data-theme', theme);
-        // }
-
-        function toggleNight() {
-            console.log('toggle');
-            theme = (theme == 'light')? 'night' : 'light';
-            localStorage.setItem('theme', theme);
-            document.querySelector('body').setAttribute('data-theme', theme);   
-        }
-
-    </script>
-    <div class="wrapper">
-    <main class="page-content" aria-label="Content">
-
+<html lang='en-US'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<meta property='og:title' content='Logan Forman' />
+<meta property='og:locale' content='en_US' />
+<meta property='og:image' content='/assets/dd.png' />
+<link rel='canonical' href='http://loganforman.com/' />
+<meta property='og:url' content='http://loganforman.com/'/>
+<meta property='og:site_name' content='Logan Forman / Dev-Dwarf' />
+<meta property='og:type' content='website' />
+<meta name='twitter:card' content='summary' />
+<meta property='twitter:title' content='Logan Forman' />
+<script type='application/ld+json'>
+{'@context':'https://schema.org','@type':'WebSite','headline':'Logan Forman / Dev-Dwarf','name':'Logan Forman / Dev-Dwarf','url':'http://loganforman.com/'}</script>
+<link rel='stylesheet' href='/dwarf.css'>
+<link rel='icon' type='image/x-icon' href='/assets/favicon.ico'>
+</head>
+<body>
+<script>
+var theme = localStorage.getItem('theme') || 'light'
+document.querySelector('body').setAttribute('data-theme', theme)
+function toggleNight() {
+console.log('toggle')
+theme = (theme == 'light')? 'night' : 'light'
+localStorage.setItem('theme', theme)
+document.querySelector('body').setAttribute('data-theme', theme);  
+}
+</script>
+<div class='wrapper'>
+<main class='page-content' aria-label='Content'>
 	<title>writing</title>
-<h2 style='text-align:center' id=''>Writing
-</h2><table><tr><td>Date</td><td>Title</td></tr><tr><td><code>08 Jan 2024</code></td><td><a href='/writing/implementing-a-simple-undo-system.html'>Implementing A Simple Undo System</a></td></tr><tr><td><code>09 Jun 2023</code></td><td><a href='/writing/making-a-ssg2.html'>Upgrading A Static Site Generator</a></td></tr><tr><td><code>18 Dec 2022</code></td><td><a href='/writing/making-a-ssg1.html'>Making A Static Site Generator</a></td></tr></table>
-    </main> 
-    </div>
-    </body>
-    <div>
-    <hr>
-    <nav>
-    <table class="w33 left"><tr>
-    <td><a href="/index.html">home</a></td>
-    <td><a href="/projects.html">projects</a></td>
-    <td><a href="/writing.html">writing</a></td>
-    <td><a style="text-decoration-color: #EE802F !important" href='/rss.xml'>rss</a></td>
-    </tr></table>
-
-    <table class="w33 right"><tr>
-    <td><a href="https://github.com/dev-dwarf">github</a></td>
-    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
-    <td><a href="https://dev-dwarf.itch.io">games</a></td>
-    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
-    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
-    </tr></table>
-    <p><br><br><br></p>
-    </nav>
-    
-    </div>
-    </html>
+<br>
+<h2 id='center'>
+ Writing
+</h2>
+<table><tr><td>Date</td><td>Title</td></tr><tr><td><code>08 Jan 2024</code></td><td><a href='/writing/implementing-a-simple-undo-system.html'>Implementing A Simple Undo System</a></td></tr><tr><td><code>09 Jun 2023</code></td><td><a href='/writing/making-a-ssg2.html'>Upgrading A Static Site Generator</a></td></tr><tr><td><code>18 Dec 2022</code></td><td><a href='/writing/making-a-ssg1.html'>Making A Static Site Generator</a></td></tr></table></main>
+</div>
+</body>
+<div>
+<hr>
+<nav>
+<table class='w33 left'><tr>
+<td><a href='/index.html'>home</a></td>
+<td><a href='/projects.html'>projects</a></td>
+<td><a href='/writing.html'>writing</a></td>
+<td><a style='text-decoration-color: #EE802F !important' href='/rss.xml'>rss</a></td>
+</tr></table>
+<table class='w33 right'><tr>
+<td><a href='https://github.com/dev-dwarf'>github</a></td>
+<td><a href='https://twitter.com/dev_dwarf'>twitter</a></td>
+<td><a href='https://dev-dwarf.itch.io'>games</a></td>
+<td class='light'><a class='light' onClick='toggleNight()'>light</a></td>
+<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>
+</tr></table>
+<p><br><br><br></p>
+</nav>
+</div>
+</html>

@@ -1,82 +1,77 @@
-
 <!DOCTYPE html>
 <!-- GENERATED -->
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:title" content="Logan Forman" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="/assets/dd.png" />
-    <link rel="canonical" href="http://loganforman.com/" />
-    <meta property="og:url" content="http://loganforman.com/"/>
-    <meta property="og:site_name" content="Logan Forman / Dev-Dwarf" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Logan Forman" />
-    <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","headline":"Logan Forman / Dev-Dwarf","name":"Logan Forman / Dev-Dwarf","url":"http://loganforman.com/"}</script>
-    <link rel="stylesheet" href="/dwarf.css">
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    </head>
-    
-    <body>
-    <script>
-        var theme = localStorage.getItem('theme') || 'light';
-
-        // window.onload = function() {
-           document.querySelector('body').setAttribute('data-theme', theme);
-        // }
-
-        function toggleNight() {
-            console.log('toggle');
-            theme = (theme == 'light')? 'night' : 'light';
-            localStorage.setItem('theme', theme);
-            document.querySelector('body').setAttribute('data-theme', theme);   
-        }
-
-    </script>
-    <div class="wrapper">
-    <main class="page-content" aria-label="Content">
-
+<html lang='en-US'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<meta property='og:title' content='Logan Forman' />
+<meta property='og:locale' content='en_US' />
+<meta property='og:image' content='/assets/dd.png' />
+<link rel='canonical' href='http://loganforman.com/' />
+<meta property='og:url' content='http://loganforman.com/'/>
+<meta property='og:site_name' content='Logan Forman / Dev-Dwarf' />
+<meta property='og:type' content='website' />
+<meta name='twitter:card' content='summary' />
+<meta property='twitter:title' content='Logan Forman' />
+<script type='application/ld+json'>
+{'@context':'https://schema.org','@type':'WebSite','headline':'Logan Forman / Dev-Dwarf','name':'Logan Forman / Dev-Dwarf','url':'http://loganforman.com/'}</script>
+<link rel='stylesheet' href='/dwarf.css'>
+<link rel='icon' type='image/x-icon' href='/assets/favicon.ico'>
+</head>
+<body>
+<script>
+var theme = localStorage.getItem('theme') || 'light'
+document.querySelector('body').setAttribute('data-theme', theme)
+function toggleNight() {
+console.log('toggle')
+theme = (theme == 'light')? 'night' : 'light'
+localStorage.setItem('theme', theme)
+document.querySelector('body').setAttribute('data-theme', theme);  
+}
+</script>
+<div class='wrapper'>
+<main class='page-content' aria-label='Content'>
 	<title>Making A Static Site Generator</title>
+<br>
 <div style='clear: both'><h1>Making A Static Site Generator</h1><h3>18 Dec 2022</h3></div>
 <ul class='sections'>
-<li><a href='#introd'>Introduction
-</a></li>
-<li><a href='#parse'>Parsing Markdown
-</a></li>
-<li><a href='#compile'>Render as HTML
-</a></li>
-<li><a href='#generate'>Generating the Site
-</a></li>
-<li><a href='#conc'>Conclusion
-</a></li>
+<li><a href='#introd'> Introduction</a></li>
+<li><a href='#parse'> Parsing Markdown</a></li>
+<li><a href='#compile'> Render as HTML</a></li>
+<li><a href='#generate'> Generating the Site</a></li>
+<li><a href='#conc'> Conclusion</a></li>
 </ul>
 <hr>
-<h2 id='introd'>Introduction
-</h2><p>
+<br>
+<h2 id='introd'>
+ Introduction
+</h2>
+<p>
 I wanted to make a new portfolio site as I get ready to apply for jobs after I graduate in the Spring. The main options seem to be engines like WordPress, raw HTML/CSS/JS, or generators like Jekyll. The engine approach feels too high-level for me, and my attempts at raw HTML always feel tedious, so I lean towards generators. In the past I made a small site following the Jekyll tutorial, but it felt frustrating to me. There was a lot of setup, many different levels of abstraction that seemed unnecessary, a dizzying array of plugins which weren't quite right, and the result was fairly slow, often taking a noticeable (1-3s) amount of time for my small site.
-<br><br>I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
+</p>
+<br>
+<p>
+I've been working on building my understanding of text-handling in low-level languages like C and C++, so I thought building a small static site generator would be a good test of what I've learned. My goals for the project are:
 </p>
 <ol>
-<li> Easily extendable. Do exactly what I want, quickly.
-</li>
-<li> Markup language to write pages/articles in.
-</li>
-<li> Small. Should be <1000 LOC.
-</li>
-
+<li> Easily extendable. Do exactly what I want, quickly.</li>
+<li> Markup language to write pages/articles in.</li>
+<li> Small. Should be <1000 LOC.</li>
 </ol>
 <hr>
-<h2 id='parse'>Parsing Markdown
-</h2><p>
-I started by making a compiler for a simple markup language. 
-<em>Markdown</em> is probably the most popular markup language on the web today. There is a specification called CommonMark that I <em>think</em> is the canonical version of Markdown, with a reference implementation <a href='https://github.com/commonmark/cmark'>cmark
-</a>, clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the <a href='https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis'>17 rules
-</a> for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.<br><br>Taking a hint from the Markdown spec, I implemented my language as a composition of 
-<code>Block</code> and <code>Text</code> structures:</p>
-<code id=''><pre>/* md_to_html.h */
+<br>
+<h2 id='parse'>
+ Parsing Markdown
+</h2>
+<p>
+I started by making a compiler for a simple markup language. <em>Markdown</em> is probably the most popular markup language on the web today. There is a specification called CommonMark that I <em>think</em> is the canonical version of Markdown, with a reference implementation <a href='https://github.com/commonmark/cmark'>cmark</a>, clocking in at ~20,000 LOC. I read through their spec, and while it gave me some ideas, some of it seems like a bit much unless you're expecting to face highly adversarial inputs (like the <a href='https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis'>17 rules</a> for parsing bold/italic combos). I decided to keep some of the basic syntax of Markdown but not worry about following the spec too closely, making extensions and changes as desired.
+</p>
+<br>
+<p>
+Taking a hint from the Markdown spec, I implemented my language as a composition of <code>Block</code> and <code>Text</code> structures:
+</p>
+<code id=''><pre>
+/* md_to_html.h */
 struct Text {
     Text *next;
     enum Types { 
@@ -91,7 +86,9 @@ struct Text {
     str text;
 };
 </pre></code>
-<code id=''><pre>struct Block {
+<br>
+<code id=''><pre>
+struct Block {
     Block *next;
     enum { 
         NIL = 0,
@@ -106,8 +103,10 @@ struct Text {
 };
 </pre></code>
 <p>
-<code>Blocks</code> represent distinct formatting of seperate sections of the document. <code>Text</code> handles formatting that composes. From the names it's hopefully easy to tell the equivalent HTML; putting a given tag in one category or the other has been done somewhat arbitrarily. These structures imply parsing the Blocks and then parsing the Text of each block. I decided to parse for Blocks line-by-line, detecting which type of block it is based on the first few characters:</p>
-<code id=''><pre>/* md_to_html.cpp */
+<code>Blocks</code> represent distinct formatting of seperate sections of the document. <code>Text</code> handles formatting that composes. From the names it's hopefully easy to tell the equivalent HTML; putting a given tag in one category or the other has been done somewhat arbitrarily. These structures imply parsing the Blocks and then parsing the Text of each block. I decided to parse for Blocks line-by-line, detecting which type of block it is based on the first few characters:
+</p>
+<code id=''><pre>
+/* md_to_html.cpp */
 str_iter_pop_line(str) { 
     /* Remove windows newline encoding (\r\n) */
     line = str_trim_suffix(line, strl("\r"));
@@ -116,9 +115,9 @@ str_iter_pop_line(str) {
     }
     ch8 c[3];
     c[0] = line.str[0];
-    c[1] = (line.len &gt 1)? line.str[1] : 0;
-    c[2] = (line.len &gt 2)? line.str[2] : 0;
-    if (c[0] == '`' &amp&amp c[1] == '`' &amp&amp c[2] == '`') {    
+    c[1] = (line.len &gt; 1)? line.str[1] : 0;
+    c[2] = (line.len &gt; 2)? line.str[2] : 0;
+    if (c[0] == '`' &amp;&amp; c[1] == '`' &amp;&amp; c[2] == '`') {    
        /* Start/End Code */
        
     } else if (code_lock) {
@@ -127,47 +126,53 @@ str_iter_pop_line(str) {
     } else if (c[0] == '#') {
         /* Heading */
     
-    } else if (c[0] == '&gt' &amp&amp c[1] == ' ') {
+    } else if (c[0] == '&gt;' &amp;&amp; c[1] == ' ') {
         /* Quote */
         
-    } else if (c[0] &gt= '1' &amp&amp c[0] &lt= '9' &amp&amp c[1] == '.' &amp&amp c[2] == ' ') {
+    } else if (c[0] &gt;= '1' &amp;&amp; c[0] &lt;= '9' &amp;&amp; c[1] == '.' &amp;&amp; c[2] == ' ') {
         /* Ordered List */
         
-    } else if ((c[0] == '*' || c[0] == '-') &amp&amp c[1] == ' ') {
+    } else if ((c[0] == '*' || c[0] == '-') &amp;&amp; c[1] == ' ') {
         /* Un-Ordered List */
     
-    } else if (c[0] == '-' &amp&amp c[1] == '-' &amp&amp c[2] == '-') {
+    } else if (c[0] == '-' &amp;&amp; c[1] == '-' &amp;&amp; c[2] == '-') {
         /* Horizontal Rule/Line */
         
     } else {
         /* Paragraph */
     }
 }
-<br></pre></code>
+
+</pre></code>
 <p>
-Each of these cases has some additional semantics, such as ending the previous block, parsing out any extra needed information (for example, 
-<code>HEADING</code> counts the number of # characters to determine the size of the heading, and <code>LINK</code> needs to grab the url), but for the most part they are fairly straight-forward and can be tweaked. The main idea is that each case will either add more Text to the current Block, or end the previous block and start a new one.<br><br>Each Text node at first has a 
-<code>NIL</code> type, to represent that they are unparsed. After all the blocks are parsed, their Text is parsed as well:</p>
-<code id=''><pre>for (curr = root; curr-&gttype != Block::NIL; curr = curr-&gtnext) {
-    curr-&gttext = parse_text(arena, curr-&gttext);
+Each of these cases has some additional semantics, such as ending the previous block, parsing out any extra needed information (for example, <code>HEADING</code> counts the number of # characters to determine the size of the heading, and <code>LINK</code> needs to grab the url), but for the most part they are fairly straight-forward and can be tweaked. The main idea is that each case will either add more Text to the current Block, or end the previous block and start a new one.
+</p>
+<br>
+<p>
+Each Text node at first has a <code>NIL</code> type, to represent that they are unparsed. After all the blocks are parsed, their Text is parsed as well:
+</p>
+<code id=''><pre>
+for (curr = root; curr-&gt;type != Block::NIL; curr = curr-&gt;next) {
+    curr-&gt;text = parse_text(arena, curr-&gt;text);
 }
 </pre></code>
 <p>
-The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support composing formatting like 
-<code>***bold-and-italic* just-bold**</code> generating <b><em>bold-and-italic</em> just-bold</b>, it's not enough to just have <code>BOLD</code> node encapsulate the bolded text in a pair of tags. For this reason each text node has an <code>end</code> flag marking it as the start or end node of a pair:</p>
-<code id=''><pre>for (; curr-&gtnext != 0; pre = curr, curr = curr-&gtnext) {
-    str s = curr-&gttext;
-    if ((curr-&gttype == Text::LIST_ITEM) /* Already formatted, do not parse */
-        || (curr-&gttype == Text::CODE_BLOCK)
-        || (curr-&gttype == Text::BREAK)) {
+The Text parsing is similar to the Block parsing, except each character is checked, and most nodes come in start/end pairs. Because I want to support composing formatting like <code><b><em>bold-and-italic</em> just-bold</b></code> generating <b><em>bold-and-italic</em> just-bold</b>, it's not enough to just have <code>BOLD</code> node encapsulate the bolded text in a pair of tags. For this reason each text node has an <code>end</code> flag marking it as the start or end node of a pair:
+</p>
+<code id=''><pre>
+for (; curr-&gt;next != 0; pre = curr, curr = curr-&gt;next) {
+    str s = curr-&gt;text;
+    if ((curr-&gt;type == Text::LIST_ITEM) /* Already formatted, do not parse */
+        || (curr-&gt;type == Text::CODE_BLOCK)
+        || (curr-&gt;type == Text::BREAK)) {
         continue;
     }
-    if (curr-&gttype == Text::NIL) {
-        curr-&gttype = Text::TEXT;
+    if (curr-&gt;type == Text::NIL) {
+        curr-&gt;type = Text::TEXT;
     }
     if (s.len == 0) {
-        if (curr-&gttype == Text::TEXT) {
-            curr-&gttype = Text::BREAK;
+        if (curr-&gt;type == Text::TEXT) {
+            curr-&gt;type = Text::BREAK;
         } else {
             PUSH_TEXT(Text::BREAK, 0, 1);
         }
@@ -175,40 +180,40 @@ The Text parsing is similar to the Block parsing, except each character is check
     }
     chr8 c[3]; 
     c[1] = s.str[0];
-    c[2] = (s.len &gt 1)? s.str[1] : 0;
+    c[2] = (s.len &gt; 1)? s.str[1] : 0;
     str_iter_custom(s, i, _unused) {
         c[0] = c[1];
         c[1] = c[2];
-        c[2] = (s.len &gt i+2)? s.str[i+2] : 0;
+        c[2] = (s.len &gt; i+2)? s.str[i+2] : 0;
         if (ignore_next) {
             PUSH_TEXT(Text::TEXT, i-1, 1);
             ignore_next = false;
         } else if (c[0] == '`') {
             /* Inline Code */
             
-        } else if (curr-&gttype == Text::CODE_INLINE &amp&amp !curr-&gtend) {
+        } else if (curr-&gt;type == Text::CODE_INLINE &amp;&amp; !curr-&gt;end) {
             /* Do nothing, do not parse stuff inside code */
-        } else if (c[0] == '*' &amp&amp c[1] == '*') {
+        } else if (c[0] == '*' &amp;&amp; c[1] == '*') {
             /* Bold *.
             
         } else if (c[0] == '*') {
             /* Italic */
             
-        } else if (c[0] == '~' &amp&amp c[1] == '~') {
+        } else if (c[0] == '~' &amp;&amp; c[1] == '~') {
             /* Strikethrough */
             
-        } else if (c[0] == '@' &amp&amp c[1] == '(') {
+        } else if (c[0] == '@' &amp;&amp; c[1] == '(') {
             /* Links */
             
-        } else if (c[0] == '!' &amp&amp c[1] == '(') {
+        } else if (c[0] == '!' &amp;&amp; c[1] == '(') {
             /* Images */
             
-        } else if (c[0] == '?' &amp&amp c[1] == '(') {
+        } else if (c[0] == '?' &amp;&amp; c[1] == '(') {
             /* Explain - Hover over to see expanded text */
             
         } else if (c[0] == ')') {
             /* Closing parenthesis can end one of the above ^ */
-            if (paren_stacki &gt 0) {
+            if (paren_stacki &gt; 0) {
                 Text::Types t = paren_stack[--paren_stacki];
                 PUSH_TEXT(t, i, 1);
             }
@@ -217,25 +222,29 @@ The Text parsing is similar to the Block parsing, except each character is check
             /* Backslash ignores next formatting char */
         }
     } /* end str_iter */
-    ASSERTM(pre == &amppre_filler || pre-&gttype != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
+    ASSERTM(pre == &amp;pre_filler || pre-&gt;type != Text::NIL, "Must not leave NIL nodes in Text linked-list!");
 }
 </pre></code>
 <p>
-I have been leaving out the details inside the if statements in the parsing, but you can see the full details 
-<a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/static-site-gen/md_to_html.cpp'>here
-</a>. The insides are mostly just small amounts of parsing text and then some macros for pushing new <code>Block</code> or <code>Text</code> nodes onto linked lists. You might notice in the above parsing some departures from Markdown, such as <code>@(link text)</code> to notate a link, instead of a <code>[text](link)</code> pair.</p>
+I have been leaving out the details inside the if statements in the parsing, but you can see the full details <a href='https://github.com/dev-dwarf/dev-dwarf.github.io/blob/main/static-site-gen/md_to_html.cpp'>here</a>. The insides are mostly just small amounts of parsing text and then some macros for pushing new <code>Block</code> or <code>Text</code> nodes onto linked lists. You might notice in the above parsing some departures from Markdown, such as <code><a href='link'>text</a></code> to notate a link, instead of a <code>[text](link)</code> pair.
+</p>
 <hr>
-<h2 id='compile'>Render as HTML
-</h2><p>
+<br>
+<h2 id='compile'>
+ Render as HTML
+</h2>
+<p>
 As a basic example of what we have so far, parsing the following:
 </p>
-<code id=''><pre>## Hello
+<code id=''><pre>
+## Hello
 It's nice to be **loud**!
 </pre></code>
 <p>
 Will give this structure:
 </p>
-<code id=''><pre>Block(type=Header, num=2, text=[
+<code id=''><pre>
+Block(type=Header, num=2, text=[
     Text(type=Text, str="Hello")
 ]),
 Block(type=Paragraph, text=[
@@ -247,57 +256,66 @@ Block(type=Paragraph, text=[
 <p>
 The desired HTML is something like:
 </p>
-<code id='html'><pre>&lth2&gtHello&lt/h2&gt
-&ltp&gtIt's nice to be &ltb&gtloud&lt/b&gt!&lt/p&gt
+<code id='html'><pre>
+&lt;h2&gt;Hello&lt;/h2&gt;
+&lt;p&gt;It's nice to be &lt;b&gt;loud&lt;/b&gt;!&lt;/p&gt;
 </pre></code>
 <p>
 With the above as the goal, it's not hard to imagine rendering the parsed nodes to HTML using a couple loops:
 </p>
-<code id=''><pre>StrList render(Arena* arena, Block* root) {
+<code id=''><pre>
+StrList render(Arena* arena, Block* root) {
     StrList out = {0};
-    for (Block* b = root; b-&gttype != Block::NIL; b = b-&gtnext) {
-        switch (b-&gttype) {
+    for (Block* b = root; b-&gt;type != Block::NIL; b = b-&gt;next) {
+        switch (b-&gt;type) {
             /* Do pre-content tags for Block type. EX: */
             case Block::ORD_LIST: {
-                StrList_add(arena, &ampout, strl("&ampltol&ampgt\n"));
+                StrList_add(arena, &amp;out, strl("&amp;ltol&amp;gt\n"));
             } break;
         }
     
-        b-&gtcontent = render_text(arena, b-&gttext);
-        StrList_append(&ampout, StrList_copy(arena, b-&gtcontent));    
+        b-&gt;content = render_text(arena, b-&gt;text);
+        StrList_append(&amp;out, StrList_copy(arena, b-&gt;content));    
     
-        switch (b-&gttype) {
+        switch (b-&gt;type) {
             /* Do post-content tags for Block type. EX: */
             case Block::ORD_LIST: {
-                StrList_add(arena, &ampout, strl("\n&amplt/ol&ampgt\n"));
+                StrList_add(arena, &amp;out, strl("\n&amp;lt/ol&amp;gt\n"));
             } break;                    
         }
     }
     return out;
 }
 </pre></code>
-<code id=''><pre>StrList render_text(Arena* arena, Text* root) {
+<br>
+<code id=''><pre>
+StrList render_text(Arena* arena, Text* root) {
     StrList out = {0};
     Text prev_filler = {root, Text::NIL, 0};
-    for (Text* t = root, *prev = &ampprev_filler; t-&gttype != Text::NIL; prev = t, t = t-&gtnext) {
-        switch (t-&gttype) {
-            /* Add start or end tags based on t-&gtend. EX: */
+    for (Text* t = root, *prev = &amp;prev_filler; t-&gt;type != Text::NIL; prev = t, t = t-&gt;next) {
+        switch (t-&gt;type) {
+            /* Add start or end tags based on t-&gt;end. EX: */
             case Text::BOLD: {
-                str s[2] = {strl("&ampltb&ampgt"), strl("&amplt/b&ampgt")};
-                StrList_add(arena, &ampout, s[t-&gtend]);
-                StrList_add(arena, &ampout, t-&gttext);
+                str s[2] = {strl("&amp;ltb&amp;gt"), strl("&amp;lt/b&amp;gt")};
+                StrList_add(arena, &amp;out, s[t-&gt;end]);
+                StrList_add(arena, &amp;out, t-&gt;text);
             } break;
         }
     }
     return out;
 }
 </pre></code>
+<br>
 <hr>
-<h2 id='generate'>Generating the Site
-</h2><p>
-The markdown compiler is a good step, but it needs to be told what to compile, and the results are still missing necessary HTML boilerplate. For my site I decided to have a 
-<code>src</code> folder for the markdown contents of my articles, and then compile everything to a <code>deploy</code> folder containing the generated HTML and other assets:</p>
-<code id=''><pre>- dev-dwarf.github.io
+<br>
+<h2 id='generate'>
+ Generating the Site
+</h2>
+<p>
+The markdown compiler is a good step, but it needs to be told what to compile, and the results are still missing necessary HTML boilerplate. For my site I decided to have a <code>src</code> folder for the markdown contents of my articles, and then compile everything to a <code>deploy</code> folder containing the generated HTML and other assets:
+</p>
+<code id=''><pre>
+- dev-dwarf.github.io
     - src
         foo.md
         etc...
@@ -308,7 +326,8 @@ The markdown compiler is a good step, but it needs to be told what to compile, a
 <p>
 I started a new file to drive this process. First I defined some structs to store data for each page, and help me manage lists of pages:
 </p>
-<code id=''><pre>/* site.h */
+<code id=''><pre>
+/* site.h */
 struct Page {
     Page *next; 
     str filename;
@@ -332,98 +351,99 @@ struct PageList {
 <p>
 Then there is a main loop that goes something like:
 </p>
-<code id=''><pre>global StrList dir;
+<code id=''><pre>
+global StrList dir;
 int main() {
     Arena *longa = Arena_create_default();
     Arena *tempa = Arena_create_default();
-<br>    /* ... set dir to src directory */
+
+    /* ... set dir to src directory */
     
     PageList allPages = get_pages_in_dir(longa, Page::DEFAULT);
-<br>    for (Page *n = allPages.first; n != 0; n = n-&gtnext) {
+
+    for (Page *n = allPages.first; n != 0; n = n-&gt;next) {
         compile_page(longa, tempa, n);
         Arena_reset_all(tempa);
     }
 }
 </pre></code>
 <p>
-The 
-<code>global StrList dir</code> holds the current directory/file. It's convenient to have it as a list so that I can pop off or switch out nodes to change the targeted file or directory. <code>get_pages_in_dir</code> just uses filesystem calls to make a list of markdown files in the <code>src</code> folder. <code>compile_page</code> loads the raw markdown, compiles it, and adds some enclosing HTML to the front and back. Finally it's written out to the equivalent HTML file in the <code>deploy</code> folder:</p>
-<code id=''><pre>void compile_page(Arena *longa, Arena *tempa, Page *page) {
-    StrList_append(&ampdir, page-&gtbase_dir);
+The <code>global StrList dir</code> holds the current directory/file. It's convenient to have it as a list so that I can pop off or switch out nodes to change the targeted file or directory. <code>get_pages_in_dir</code> just uses filesystem calls to make a list of markdown files in the <code>src</code> folder. <code>compile_page</code> loads the raw markdown, compiles it, and adds some enclosing HTML to the front and back. Finally it's written out to the equivalent HTML file in the <code>deploy</code> folder:
+</p>
+<code id=''><pre>
+void compile_page(Arena *longa, Arena *tempa, Page *page) {
+    StrList_append(&amp;dir, page-&gt;base_dir);
         
-    filename.str = page-&gtfilename;
-    StrList_add_node(&ampdir, &ampfilename);
-    switch_to_dir(&ampsrc);
-    page-&gtcontent = win32_load_entire_file(tempa, build_dir(tempa));
-    StrList_pop_node(&ampdir);
-<br>    filename.str = str_concat(tempa, str_cut(page-&gtfilename, 3), strl("html\0"));
-    StrList_add_node(&ampdir, &ampfilename);
-<br>    StrList html = {0};
-    StrList_add(tempa, &amphtml, HEADER);
-    StrList_add(tempa, &amphtml, strl("\t&lttitle&gtLCF/DD:"));
-    StrList_add(tempa, &amphtml, page-&gttitle);
-    StrList_add(tempa, &amphtml, strl("&lt/title&gt\n"));
-<br>    Block* blocks = parse(tempa, page-&gtcontent);
+    filename.str = page-&gt;filename;
+    StrList_add_node(&amp;dir, &amp;filename);
+    switch_to_dir(&amp;src);
+    page-&gt;content = win32_load_entire_file(tempa, build_dir(tempa));
+    StrList_pop_node(&amp;dir);
+
+    filename.str = str_concat(tempa, str_cut(page-&gt;filename, 3), strl("html\0"));
+    StrList_add_node(&amp;dir, &amp;filename);
+
+    StrList html = {0};
+    StrList_add(tempa, &amp;html, HEADER);
+    StrList_add(tempa, &amp;html, strl("\t&lt;title&gt;LCF/DD:"));
+    StrList_add(tempa, &amp;html, page-&gt;title);
+    StrList_add(tempa, &amp;html, strl("&lt;/title&gt;\n"));
+
+    Block* blocks = parse(tempa, page-&gt;content);
     StrList md = render(tempa, blocks);
-    StrList_append(&amphtml, md);
+    StrList_append(&amp;html, md);
     
-    StrList_add(tempa, &amphtml, FOOTER);
-<br>    switch_to_dir(&ampdeploy);
+    StrList_add(tempa, &amp;html, FOOTER);
+
+    switch_to_dir(&amp;deploy);
     win32_write_file(build_dir(tempa).str, html);
-<br>    page-&gtcontent = str_EMPTY; /* clear this because it was on the temp arena */
-    StrList_pop_node(&ampdir);
-    StrList_pop(&ampdir, page-&gtbase_dir.count);
+
+    page-&gt;content = str_EMPTY; /* clear this because it was on the temp arena */
+    StrList_pop_node(&amp;dir);
+    StrList_pop(&amp;dir, page-&gt;base_dir.count);
 }
 </pre></code>
 <p>
-And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found 
-<a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>on GitHub
-</a>. You may have noticed an unused type field for pages; the real version of the generator has <code>ARTICLE</code> pages and an <code>INDEX</code> page. <code>ARTICLE</code>s have slightly different HTML generated, and the <code>INDEX</code> gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.</p>
+And that's pretty much it for a heavily-idealized version of my static site generator! The actual thing can be found <a href='https://github.com/dev-dwarf/dev-dwarf.github.io'>on GitHub</a>. You may have noticed an unused type field for pages; the real version of the generator has <code>ARTICLE</code> pages and an <code>INDEX</code> page. <code>ARTICLE</code>s have slightly different HTML generated, and the <code>INDEX</code> gets a list of links to articles appended to it. I don't think it's worth writing about these yet as they are very hacked in and I want to change that system soon! However I am pleased with how easy it is to quickly hack in features like those given what I have described here as a base.
+</p>
 <hr>
-<h2 id='conc'>Conclusion
-</h2><p>
+<br>
+<h2 id='conc'>
+ Conclusion
+</h2>
+<p>
 Overall I'm pretty happy with the results of this project so far. The up-front time investment was a bit more than using Jekyll (about 4-days of hacking and writing), but for it I have a small, fast, and extendable static site generator tailored to my needs. The current version is ~700 lines of C-like C++, well under the 1000 LOC goal. I already hacked in some basic features to write this article, but I'd like to rework these soon. In addition, there's quite a few things I'd like to add:
 </p>
 <ol>
-<li> Generate an index/section list for articles.
-</li>
-<li> Generate an RSS feed from recent articles.
-</li>
-<li> After the first compile of each page, run in the background checking for changes and compile files automatically. Right now I manually run 
-<code>site.exe</code> to see my changes each time, but it would help my flow if that was taken care of for me.</li>
-<li> Introduce some sort of templating/custom generation for individual pages. I 
-<b>abhor</b> how most generators handle this sort of feature so I'm excited to look for a unique approach. I'd prefer something where I can easily hack in new templates in C++ instead of using some bogus templating language.</li>
-<li> Additional miscellaneous features like captions for images, subsections, and asides/expandable text. 
-</li>
-
+<li> Generate an index/section list for articles.</li>
+<li> Generate an RSS feed from recent articles.</li>
+<li> After the first compile of each page, run in the background checking for changes and compile files automatically. Right now I manually run <code>site.exe</code> to see my changes each time, but it would help my flow if that was taken care of for me.</li>
+<li> Introduce some sort of templating/custom generation for individual pages. I <b>abhor</b> how most generators handle this sort of feature so I'm excited to look for a unique approach. I'd prefer something where I can easily hack in new templates in C++ instead of using some bogus templating language.</li>
+<li> Additional miscellaneous features like captions for images, subsections, and asides/expandable text. </li>
 </ol>
 <p>
-I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without 
-<a href='https://github.com/dev-dwarf/lcf'>lcf
-</a>, my personal library of C code. </p>
-<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p><a class='btn' href='/writing.html#writing'>←  back to index</a>
-    </main> 
-    </div>
-    </body>
-    <div>
-    <hr>
-    <nav>
-    <table class="w33 left"><tr>
-    <td><a href="/index.html">home</a></td>
-    <td><a href="/projects.html">projects</a></td>
-    <td><a href="/writing.html">writing</a></td>
-    <td><a style="text-decoration-color: #EE802F !important" href='/rss.xml'>rss</a></td>
-    </tr></table>
-
-    <table class="w33 right"><tr>
-    <td><a href="https://github.com/dev-dwarf">github</a></td>
-    <td><a href="https://twitter.com/dev_dwarf">twitter</a></td>
-    <td><a href="https://dev-dwarf.itch.io">games</a></td>
-    <td class="light"><a class="light" onClick='toggleNight()'>light</a></td>
-    <td class="night"><a class="night" onClick='toggleNight()'>night</a></td> 
-    </tr></table>
-    <p><br><br><br></p>
-    </nav>
-    
-    </div>
-    </html>
+I should also mention that although the source code for the markdown compiler and my site are on github, they can't be run as is without <a href='https://github.com/dev-dwarf/lcf'>lcf</a>, my personal library of C code. 
+</p>
+<hr><p class='centert'> Feel free to message me with any comments about this article! <br> Email: <code>contact@loganforman.com</code> </p><a class='btn' href='/writing.html#writing'>←  back to index</a></main>
+</div>
+</body>
+<div>
+<hr>
+<nav>
+<table class='w33 left'><tr>
+<td><a href='/index.html'>home</a></td>
+<td><a href='/projects.html'>projects</a></td>
+<td><a href='/writing.html'>writing</a></td>
+<td><a style='text-decoration-color: #EE802F !important' href='/rss.xml'>rss</a></td>
+</tr></table>
+<table class='w33 right'><tr>
+<td><a href='https://github.com/dev-dwarf'>github</a></td>
+<td><a href='https://twitter.com/dev_dwarf'>twitter</a></td>
+<td><a href='https://dev-dwarf.itch.io'>games</a></td>
+<td class='light'><a class='light' onClick='toggleNight()'>light</a></td>
+<td class='night'><a class='night' onClick='toggleNight()'>night</a></td>
+</tr></table>
+<p><br><br><br></p>
+</nav>
+</div>
+</html>

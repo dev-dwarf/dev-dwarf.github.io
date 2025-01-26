@@ -1,12 +1,12 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Logan Forman</title>
-    <link>http://loganforman.com/</link>
-    <atom:link href="http://loganforman.com/rss.xml" rel="self" type="application/rss+xml" />
-    <description>Journey to the competence.</description>
+<rss version='2.0' xmlns:atom='http://www.w3.org/2005/Atom'>
+<channel>
+<title>Logan Forman</title>
+<link>http://loganforman.com/</link>
+<atom:link href='http://loganforman.com/rss.xml' rel='self' type='application/rss+xml' />
+<description>Journey to the competence.</description>
 <item>
 <title>Implementing A Simple Undo System</title>
-<description>Details about a nice undo system I implemented recently. </description>
+<description>Details about a nice undo system I implemented recently.</description>
 <link>https://loganforman.com//writing/implementing-a-simple-undo-system.html</link><guid isPermaLink='true'>https://loganforman.com//writing/implementing-a-simple-undo-system.</guid>
 <pubDate>08 Jan 2024, 08 Jan 2024 08:00:00 MST</pubDate>
 </item><item>
@@ -19,6 +19,5 @@
 <description>First post! A brief walkthrough of how I made the SSG for my personal website.</description>
 <link>https://loganforman.com//writing/making-a-ssg1.html</link><guid isPermaLink='true'>https://loganforman.com//writing/making-a-ssg1.</guid>
 <pubDate>Sun, 18 Dec 2022 08:00:00 MST</pubDate>
-</item>
-  </channel>
+</item></channel>
 </rss>

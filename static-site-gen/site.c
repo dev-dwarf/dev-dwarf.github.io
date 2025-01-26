@@ -182,7 +182,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
     if (str_eq(block->id, strl("sections"))) {
         StrList_push(tempa, front, strl("<ul class='sections'>\n"));
         s32 n = 0; s32 nfirst = 0;
-        for (Block* b = block; b->type != NIL; b = b->next) {
+        for (Block* b = blocks; b; b = b->next) {
             if ((b->type == HEADING || b->type == EXPAND)
                 && str_not_empty(b->id)) {
                 if (n == 0) {
@@ -199,7 +199,7 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
             }
             if (b->type == HEADING && str_not_empty(b->id)) {
                 StrList_pushv(tempa, front, strl("<li><a href='#"), b->id, strl("'>"));
-                StrList_append(front, render_text(tempa, b->text));
+                StrList_append(front, render_text_inline(tempa, b->text));
                 StrList_push(tempa, front, strl("</a></li>\n"));
             }
             if (b->type == EXPAND && str_not_empty(b->id)) {
@@ -253,29 +253,6 @@ void render_special_block(Arena *longa, Arena *tempa, Page *page, StrList* front
             }
         }
         StrList_push(tempa, front, strl("</table>"));
-    }
-    if (str_eq(block->id, strl("project"))) {
-        StrNode *param = block->content.first;
-        str title = param->str; param = param->next;
-        str date = param->str; param = param->next;
-        str link = param->str; param = param->next;
-        str img = param->str;
-        StrList_pushv(tempa, front, strl("<h2><a href="),
-                     link,
-                     strl(">"),
-                     title,
-                     strl("</a>"),
-                     strl(" ("),
-                     date,
-                     strl(")</h2>"),
-                     strl("<div class='project'><div class='project-image'><a href='"),
-                     link,
-                     strl("'><img src='"),
-                     img,
-                     strl("'></a></div><div class='project-text'>"));
-    }
-    if (str_eq(block->id, strl("project-end"))) {
-        StrList_push(tempa, front, strl("</div></div>"));
     }
 }
 

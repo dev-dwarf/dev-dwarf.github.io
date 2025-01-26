@@ -48,7 +48,7 @@ static s32 parse_start(Arena *a, Text *text, str *s, enum TextTypes type, str op
 }
 
 static s32 parse_end(Arena *a, Text *text, str *s, enum TextTypes type, str close) {
-    if (text->type == type && str_has_prefix(*s, close)) {
+    if (text->type == type && (str_has_prefix(*s, close) || s->len == 0)) {
         if (text->last_child->text.str + text->last_child->text.len >= (*s).str) {
             text->last_child->text = str_from_pointer_range(text->last_child->text.str, (*s).str);
         }
@@ -70,8 +70,6 @@ str parse_inline(Arena *a, Text *text) {
     } else if (text->type == IMAGE) {
         s64 loc = str_char_location(text->text, ')'); ASSERT(loc >= 0);
         text->data = str_first(text->text, loc);
-        text->text.len = 0;
-        return text->text;
     } else if (text->type == EXPLAIN) {
         s64 loc = str_char_location(text->text, ',');
         ASSERT(loc);
@@ -214,9 +212,10 @@ Block* parse_md(Arena *a, str s) {
             line = str_skip(line, loc);
             push_text(a, curr, line);
         } else if (c[0] == '@' && c[1] == '{') {
+            line = str_skip(line, 2);
             curr = curr->next = Arena_take_struct_zero(a, Block);
             curr->type = SPECIAL;
-            line = str_skip(line, 2);
+            curr->id = str_pop_at_first_delimiter(&line, strl(",}"));
             str_iter_delimiter(line, strl(",}"), sub) {
                 StrList_push(a, &curr->content, str_trim_whitespace(sub));
             }

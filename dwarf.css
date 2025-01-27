@@ -364,13 +364,7 @@ body[data-theme="night"] .light { display: block; text-decoration-color: var(--r
 body[data-theme="night"] .night { display: none; }
 
 /* mobile overrides */
-@media only screen and (max-width: 920px) {
-   body {
-        width: 96% !important;
-    }
-}
-
-@media only screen and (max-width: 650px) {
+@media only screen and (max-width: 850px) {
     .project-text {
         width: 100%;
     }
@@ -391,15 +385,23 @@ body[data-theme="night"] .night { display: none; }
         width: 100%;
     }
     .w25 {
-        width: 47%;
+        width: 100%;
     }
     .w66 {
         width: 100%;
     }
     .w33 {
-        width: 47%;
+        width: 100%;
     }
 
+    .left {
+        float:none;
+        margin-bottom: 1rem;
+    }
+    .right {
+        float:none;
+        margin-bottom: 1rem;
+    }
 
     pre {
         font-size: 10px; 

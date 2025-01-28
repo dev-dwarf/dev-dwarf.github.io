@@ -144,7 +144,6 @@ code {
 pre > span {
     line-height: 1.25;
     position: relative;
-    left: -4em; 
     counter-increment: source-line;
 }
 pre > span > a:first-child::before {
@@ -154,9 +153,9 @@ pre > span > a:first-child::before {
     position: relative;
     text-align: right;
     display: inline-block;
-    width: 5em;
+    width: 3rem;
     vertical-align: baseline;
-    padding-right: 1em;
+    padding-right: 0.5rem;
     content: counter(source-line);
 }
 pre > span > a:first-child:hover::before {

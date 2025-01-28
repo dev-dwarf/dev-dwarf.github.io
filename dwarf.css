@@ -114,23 +114,6 @@ h1, h2, h3, h4, h5, h6 {
     text-decoration-color: var(--high);
 }
 
-.project-image {
-    width: 44%;
-    float: right;
-    margin: auto;
-}
-
-.project-text {
-    width: 54%;
-    float: left;
-}
-
-.project:after {
-    content: "";
-    display: table;
-    clear: both;
-}
-
 li {
     padding: 5px ;
 }
@@ -189,44 +172,35 @@ abbr {
 a {
     color: var(--text);
     text-align: center;
-    text-decoration: underline 2px;
-    text-underline-offset: .25rem;
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: .2rem;
     text-decoration-color: var(--link) !important;
 }
-
+a:hover {
+    background-color: var(--link) !important;
+}
+a:visited {
+    text-decoration-color: var(--high) !important;
+}
 h1 a {
     text-decoration: none;
 }
-
-.sections a:link {
+.sections a {
     color: var(--text) !important;
     text-decoration-color: var(--high) !important;
 }
 .sections a:hover {
     background-color: var(--high) !important;
 }
+.sections a:visited {
+    text-decoration-style: solid;
+}
+td > a {
+    text-underline-offset: .25rem;
+}
 
-a:visited {
-    text-decoration-color: var(--low) !important;
-}
-a.current {
-    color: var(--text) !important;
-    text-decoration-color: var(--high) !important;
-}
-a:hover {
-    background-color: var(--link) !important;
-}
-a img {
-    border-color: #000!important;
-    border-bottom-color: var(--link) !important;
-}
-a:visited img {
-    border-color: #000 !important;
-    border-bottom-color: var(--low) !important;
-}
-a:hover img {
-    border-color: var(--link) !important;
-}
+
 
 /* tables */
 table {
@@ -317,21 +291,6 @@ summary > * {
 }
 .w33 {
     width: 31%;
-}
-
-.btn {
-    background: var(--low);
-    font-weight: bold;
-    font-family: "Code", monospace;
-    padding: 4px 2px;
-    box-shadow: 2px 2px var(--deep);
-}
-
-.btn:hover {
-    background: var(--deep);
-    /* margin-top: 2px; */
-    /* margin-left: 2px; */
-    /* box-shadow: -2px -2px var(--deep); */
 }
 
 .centered {
